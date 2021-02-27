@@ -5,8 +5,7 @@ cover: http://imgblog.mrdear.cn/springsecurity.png
 author: 
   nick: 屈定
 tags:
-  -  Spring Security    
-  - jwt
+  -  Spring
 categories: Spring系列专题
 urlname: framework-spring-security4
 date: 2017-06-30 18:19:22

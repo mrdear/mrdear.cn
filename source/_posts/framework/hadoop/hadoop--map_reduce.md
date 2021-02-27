@@ -6,7 +6,6 @@ author:
   nick: 屈定
 tags:
   - 大数据
-  - Hadoop
 categories: 大数据
 urlname: framework-hadoop-map-reduce
 date: 2018-09-23 21:48:32

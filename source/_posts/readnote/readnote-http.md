@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/uPic/blog_http.png-default
 author: 
   nick: 屈定
 tags:
-  - 工作
+  - 读书笔记
 categories: 读书笔记
 urlname: readnote-http
 date: 2020-07-19 19:51:30

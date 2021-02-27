@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/springsecurity.png
 author: 
   nick: 屈定
 tags:
-  - Spring Security
+  - Spring
 categories: Spring系列专题
 urlname: framework-spring-security1
 date: 2017-06-19 14:08:25 

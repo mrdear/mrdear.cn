@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/mrdearblog-osx.png
 author: 
   nick: 屈定
 tags:
-  - osx
+  - OSX
 categories: 杂七杂八
 urlname: osx_install
 date: 2019-02-17 18:21:45

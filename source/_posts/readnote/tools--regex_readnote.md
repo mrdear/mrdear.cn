@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/mrdearblog-regex.png
 author: 
   nick: 屈定
 tags:
-  - Regex
+  - 读书笔记
 categories: 读书笔记
 urlname: readnote-regex
 date: 2018-11-03 09:20:13

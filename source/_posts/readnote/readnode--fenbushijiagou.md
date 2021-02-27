@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/mrdear-readnote.png
 author: 
   nick: 屈定
 tags:
-  - 工作
+  - 读书笔记
 categories: 读书笔记
 urlname: readnote-distributed-service
 date: 2019-11-08 21:15:31

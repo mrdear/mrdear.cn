@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/1552216154.png
 author: 
   nick: 屈定
 tags:
-  - 工作
+  - 读书笔记
 categories: 读书笔记
 urlname: readnote-seckill
 date: 2019-03-10 19:14:33

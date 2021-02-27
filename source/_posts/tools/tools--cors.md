@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/zaolunzi2.png
 author: 
   nick: 屈定
 tags:
-  - cors
+  - 轮子
 categories: 工具
 urlname: tools-cors-anywhere
 date: 2021-02-21 09:51:50

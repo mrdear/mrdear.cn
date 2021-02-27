@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/mrdearblog_pro_git.png
 author: 
   nick: 屈定
 tags:
-  - Git
+  - 读书笔记
 categories: 读书笔记
 urlname: readnote-pro-git
 date: 2018-10-21 11:32:01

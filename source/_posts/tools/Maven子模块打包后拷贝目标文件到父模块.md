@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/maven.png
 author: 
   nick: 屈定
 tags:
-  - Maven    
+  - 轮子   
 categories: 实战总结
 urlname: mvn_submodule_copy
 date: 2017-07-29 15:15:56
@@ -13,11 +13,13 @@ updated: 2017-07-29 15:15:56
 ---
 看着这个标题一定想怎么会有这么奇怪的需求....
 嗯,我也认为这个是很奇怪的需求,但实际上确实存在.
+
 - - - - -
 
 ### 问题
 最近对公司一个大项目进行整改,该项目是写在一个模块下,也就是一个Maven项目,因此打算把其更改为Maven多模块项目.目录结构的变化如下:
 原目录结构
+
 ```java
 buy
    ---src

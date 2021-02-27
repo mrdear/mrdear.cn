@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/mrdearblog-apache-common-cli.png
 author: 
   nick: 屈定
 tags:
-  - Apache Common
+  - Apache
 categories: 框架与中间件
 urlname: framework-apache-common-cli
 date: 2018-11-11 15:07:44

@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 大数据
-  - Hbase
+  - 读书笔记
 categories: 读书笔记
 urlname: readnote-hbase
 date: 2019-01-01 10:21:18

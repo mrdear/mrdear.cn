@@ -6,6 +6,7 @@ author:
   nick: 屈定
 tags:
   - Redis
+  - 读书笔记
 categories: 读书笔记
 urlname: readnote-redis-study
 date: 2018-08-19 11:08:31

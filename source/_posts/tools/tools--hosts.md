@@ -6,6 +6,7 @@ author:
   nick: 屈定
 tags:
   - 轮子
+  - Alfred
 categories: 工具
 urlname: tools-hosts
 date: 2019-04-07 21:44:01

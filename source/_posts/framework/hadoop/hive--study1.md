@@ -6,7 +6,6 @@ author:
   nick: 屈定
 tags:
   - 大数据
-  - Hive
 categories: 大数据
 urlname: framework-hive-study1
 date: 2018-10-15 17:07:24

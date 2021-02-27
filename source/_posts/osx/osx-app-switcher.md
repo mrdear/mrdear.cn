@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/uPic/MAC-Hammerspoon.png-default
 author: 
   nick: 屈定
 tags:
-  - osx
+  - OSX
 categories: 杂七杂八
 urlname: osx_app_switcher
 date: 2020-08-01 12:43:53

@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/springmvc.png
 author: 
   nick: 屈定
 tags:
-  - Spring MVC
+  - Spring
 categories: Spring系列专题
 urlname: framework-springmvc-framework
 date: 2018-04-15 09:04:14
@@ -59,5 +59,5 @@ Spring MVC把执行流程完整的定义在了`DispatcherServlet`中,对于他�
 [Spring MVC--异常处理](https://mrdear.cn/posts/framework-springmvc-exception.html)
 
 如有问题,请指出以免误人子弟
- 
+
 

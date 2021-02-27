@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/linux.png
 author: 
   nick: 屈定
 tags:
-  - network
+  - 实战
 categories: 实战总结
 urlname: linux_tcp_close_wait
 date: 2018-05-03 12:05:04

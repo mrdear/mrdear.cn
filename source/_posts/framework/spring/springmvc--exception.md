@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/springmvc.png
 author: 
   nick: 屈定
 tags:
-  - Spring MVC
+  - Spring
 categories: Spring系列专题
 urlname: framework-springmvc-exception
 date: 2018-04-23 09:04:31

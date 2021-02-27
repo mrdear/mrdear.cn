@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/springmvc.png
 author: 
   nick: 屈定
 tags:
-  - Spring MVC
+  - Spring
 categories: Spring系列专题
 urlname: framework-spring-mvc-params
 date: 2018-04-18 06:04:46
@@ -14,6 +14,7 @@ updated: 2018-04-18 06:04:46
 承接上文,Spring MVC通过`HandlerMapping`定位到了具体的`HandlerExecutionChain`,也就是具体要执行的方法.本篇详细阐述Spring MVC执行具体方法的流程.
 
 ## HandlerAdapter
+
 `HandlerAdapter`用来适配`HandlerExecutionChain`的一个接口,从名称来看这里是**适配器模式**,适配器模式的本质在于**包装转换**,对于`HandlerExecutionChain`中不同的Handler提供适配功能,并且提供统一的调用方法,该接口主要有以下方法:
 ```java
 public interface HandlerAdapter {

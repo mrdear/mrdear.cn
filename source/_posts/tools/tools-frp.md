@@ -5,7 +5,7 @@ cover: http://imgblog.mrdear.cn/mrdearblog-frp.png
 author: 
   nick: 屈定
 tags:
-  - 教程
+  - 轮子
 categories: 工具
 urlname: tools-frp
 date: 2019-08-22 21:37:11
