@@ -9,8 +9,48 @@ tags:
 categories: 杂七杂八
 urlname: osx_install
 date: 2019-02-17 18:21:45
-updated: 2019-08-18 15:40:46
+updated: 2021-02-27 09:44:09
 ---
+
+## 2020年
+
+2020年AMD太YES了，因此叛逃到AMD平台，顺便做了一波更新，整体配置也从借由其他人的，改为自己来配置，更加符合自己需求，也在配置流程中对OC做了一个详细了解，出问题更加方便排查。这里额外夸一句，OC的文档质量真的非常高，按照流程来基本一次成功。
+
+### 电脑配置
+
+- OpenCore: 0.6.6
+- CPU: AMD Ryzen 7 5800X
+- GPU: RX 580 8G
+- Motherboard: X570 AORUS PRO WIFI
+- RAM: 光威（Gloway）8GB DDR4 3000频率 台式机内存条 弈Pro系列 * 4
+- OS: MacOS Big Sur
+- HardDrive: 970 EVO PLUS 256G
+- Wifi/Bluetooth: Motherboard comes with (建议使用有线网，会稳定很多)
+
+### EFI
+
+[Ryzen-5800x-X570-AORUS-PRO-WIFI-OC0.6.X](https://github.com/mrdear/Ryzen-5800x-X570-AORUS-PRO-WIFI-OC0.6.X)
+
+- 4K解码 正常
+- 蓝牙 正常
+- WIFI/有线 正常
+- imessage/apple store/hand off 正常
+- USB 正常
+- 睡眠唤醒 正常
+- HiDPI/165HZ：使用一键脚本无效，最后用了Hackintool定制解决
+- 音量/显示器亮度调节：使用第三方软件[MonitorControl](https://github.com/MonitorControl/MonitorControl)
+
+### 注意事项
+
+- BIOS: "Above 4G XXX" 关闭 (这里重点，和其他主板不一样，我这里需要关闭，自己在启动参数加0x200才可以)
+- BIOS: CMS 关闭
+- BIOS: fast boot 关闭
+- BIOS: Secure boot 关闭
+- OC: 填写你的机器型号 "Platform Info"
+
+
+
+## 2019年
 
 最近买了点零件组装了一台台式机，现在也装上了WIN10+OSX10.14.3体验下来还是很棒的，比我自己的MBP要流畅很多，本文分享下其中一些经验。
 
