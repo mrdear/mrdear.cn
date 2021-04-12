@@ -60,6 +60,9 @@ java -version 正确
 ### CommandLine
 `org.apache.commons.cli.CommandLine`是经过`Parse`解析后产出的结果，主要包含已识别命令集合以及未识别的命令集合。
 **清单2：CommandLine结构**
+
+这里需要搞清楚Args与Option的区别，Args一般指那些未指定解析规则的参数，比如 `login <username> <password>` ,Option也常叫做Flag，比如`login -u <username> -p <password>`,这里的u和p就是flag。
+
 ```java
     /** the unrecognized options/arguments */
     private final List<String> args = new LinkedList<String>();
