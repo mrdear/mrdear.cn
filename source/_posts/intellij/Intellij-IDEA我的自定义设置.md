@@ -9,7 +9,7 @@ tags:
 categories: 工具
 urlname: idea-setting-memo
 date: 2020-02-16 22:52:46
-updated: 2021-04-12 22:22:25
+updated: 2021-07-19 21:32:45
 ---
 
 无论是笔记本还是黑苹果都折腾了许多台了，每次拿到新电脑，对于装机总是要折腾许久。理想情况下一键初始化脚本通通搞定，现实情况下五花八门的软件，不靠谱的官方同步，等等问题总是带来很多麻烦，所以还是自己一步一步来最可靠。本文记录在初始化过程中的一些配置，一方面是备份，一方面是给其他人一些使用参考，本文会根据使用情况不断更新。
@@ -92,6 +92,7 @@ brew install --cask typora
 brew install --cask licecap
 brew install --cask openemu
 brew install --cask pixel-picker # 屏幕取色
+brew install --cask bob # 划词翻译,配合密码本使用
 ```
 
 
@@ -137,19 +138,32 @@ javax.print
 - Inspections
   - Serializable class without "SerializableUID" : 设置error告警
 
+### Build
+
+- Build tools
+
+  - Maven：拉取代码报地址连接失败时，需要配置以下参数
+
+  ```
+  Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true -Dmaven.wagon.http.ssl.ignore.validity.dates=true -Djava.net.preferIPv4Stack=true
+  ```
+
+  
+
 ### Plugin
 
 - INSTALL
   - .ignore
-  - AceJump
+  - Atom Material Icons：可以让IDEA流畅很多，原理未知
+  - ~~AceJump~~
   - CameCase
   - Class Decompile
   - Deno
-  - Emmylua
+  - ~~Emmylua~~
   - GenerateAllSetter
   - Go
   - Go Template
-  - Key Promoter X
+  - ~~Key Promoter X~~
   - Maven Helper
   - MyBatisX
   - PlantUML
