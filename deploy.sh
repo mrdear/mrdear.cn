@@ -10,4 +10,4 @@ hexo deploy
 
 # generate
 
-scp -r  public/* admin@txyun2:/home/admin/data/nl101531.github.io/
+scp -r  public/* root@txyun3:/root/server-conf/nginx/data/nl101531.github.io/

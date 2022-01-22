@@ -9,8 +9,29 @@ tags:
 categories: 杂七杂八
 urlname: osx_install
 date: 2019-02-17 18:21:45
-updated: 2021-02-27 09:44:09
+updated: 2021-12-26 20:31:05
 ---
+
+## 2021年
+
+下半年太忙碌了，也导致一直没怎么碰自己的电脑，周末花了点时间，将系统升级到了monterey，也顺便更新了自己的一些常用工具。当然，显卡还是买不起的价格。当前版本不是很完美，有线网卡没法使用，蓝牙不稳定，airdrop也同样不稳定，需要等待驱动进一步更新，不过我自己对这些并没多大需求，介意者勿升。
+
+### 电脑配置
+
+- OpenCore: 0.7.5
+- CPU: AMD Ryzen 7 5800X
+- GPU: RX 580 8G
+- Motherboard: X570 AORUS PRO WIFI
+- RAM: 光威（Gloway）8GB DDR4 3000频率 台式机内存条 弈Pro系列 * 4
+- OS: MacOS Monterey
+- HardDrive: 970 EVO PLUS 256G
+- Wifi/Bluetooth: Motherboard comes with (建议使用无线网，会稳定很多)
+
+### EFI
+
+[Ryzen-5800x-X570-AORUS-PRO-WIFI-OC0.7.X](https://github.com/mrdear/Ryzen-5800x-X570-AORUS-PRO-WIFI-OC0.7.X)
+
+
 
 ## 2020年
 
