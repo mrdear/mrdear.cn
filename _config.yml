@@ -207,7 +207,7 @@ offline:
   stripPrefix: public
   verbose: true
   runtimeCaching:
-      - urlPattern: /^http:\/\/imgblog\.mrdear\.cn
+      - urlPattern: /^https:\/\/imgblog\.mrdear\.cn
         handler: networkOnly
         options:
           origin: imgblog.mrdear.cn
