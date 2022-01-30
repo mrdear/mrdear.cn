@@ -4,7 +4,7 @@ document.onreadystatechange = function(){
     if (document.readyState === 'interactive') {
         timeout = window.setTimeout(function(){
             disableLoad();
-        },1500);
+        },500);
     }
 
     if (document.readyState === 'complete') {

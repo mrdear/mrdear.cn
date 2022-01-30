@@ -13,7 +13,6 @@
             proxy: '{{ config.gitTalk.proxy }}',
             owner: '{{ config.gitTalk.owner }}',
             admin: [{% for item in config.gitTalk.admin %}'{{ item }}', {% endfor %}],
-            labels: tags,
             id: md5(location.pathname)
         });
 
