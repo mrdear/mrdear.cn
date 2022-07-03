@@ -19,10 +19,10 @@ updated: 2018-07-01 03:07:13
 命令模式是一种行为型模式，其会把具体的行为封装成一个命令Command，接着指定命令接收者Receiver，最后是在Invoker中执行命令。
 
 其UML图如下：（图片来自[命令模式](http://design-patterns.readthedocs.io/zh_CN/latest/behavioral_patterns/command.html)）
-![](http://imgblog.mrdear.cn/1530426470.png?imageMogr2/thumbnail/!100p)
+![](https://imgblog.mrdear.cn/1530426470.png?imageMogr2/thumbnail/!100p)
 
 执行时序图如下：
-![](http://imgblog.mrdear.cn/1530426529.png?imageMogr2/thumbnail/!100p)
+![](https://imgblog.mrdear.cn/1530426529.png?imageMogr2/thumbnail/!100p)
 
 其中角色信息为
 - **Command**: 抽象命令类

@@ -27,8 +27,7 @@ java.net.BindException: Address already in use (Bind failed)
 	at org.apache.commons.httpclient.HttpConnection.open(HttpConnection.java:707) ~[commons-httpclient-3.1.jar:na]
 .....
 ```
-这个问题很奇怪,linux端口分配会避免端口冲突的,然后检查服务器发现大量tcp连接处于`CLOSE_WAIT`状态,不过对应的是另外一个项目.
-![](http://imgblog.mrdear.cn/1525269130.png?imageMogr2/thumbnail/!100p)
+这个问题很奇怪,linux端口分配会避免端口冲突的,然后检查服务器发现大量tcp连接处于`CLOSE_WAIT`状态,不过对应的是另外一个项目.![](http://imgblog.mrdear.cn/1525269130.png?imageMogr2/thumbnail/!100p)
 
 统计信息如下(命令`netstat -nat | awk 'FNR>2{print $NF}' | sort | uniq -c`),简直恐怖.
 ![](http://imgblog.mrdear.cn/1525269198.png?imageMogr2/thumbnail/!100p)
