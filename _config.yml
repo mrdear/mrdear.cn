@@ -9,7 +9,7 @@ description: 记录成为程序员以来的历程,分享自己的认知,如果�
 keywords: 屈定,技术开发,Java
 author: Qu Ding
 language: zh-cn
-timezone: ''
+timezone: 'GMT+8'
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://example.com/child' and root as '/child/'
@@ -110,7 +110,7 @@ node_sass:
 autoprefixer:
   exclude:
     - '*.min.css'
-  browsers:
+  browserslist:
     - 'last 2 versions'
 
 # Lunr
