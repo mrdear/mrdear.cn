@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /archives/
+Allow: /categories/
+Allow: /tags/
+
+Sitemap: http://mrdear.cn/sitemap.xml
+Sitemap: http://mrdear.cn/baidusitemap.xml
