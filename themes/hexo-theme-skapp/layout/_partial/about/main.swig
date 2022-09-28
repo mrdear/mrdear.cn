@@ -4,6 +4,6 @@
             {{ render(page.content) }}
         </div>
 
-        <div id="comment-container"></div>
+        <div id="comment-container" class="giscus"></div>
     </div>
 </main>

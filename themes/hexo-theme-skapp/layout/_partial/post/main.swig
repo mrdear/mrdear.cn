@@ -3,7 +3,7 @@
         {% include './content.swig' %}
 
         {% if page.comments && config.gitTalk %}
-            <div id="comment-container"></div>
+            <div id="comment-container" class="giscus"></div>
         {% endif %}
         {% if page.comments && config.disqus_shortname %}
             <div id="disqus_thread"></div>

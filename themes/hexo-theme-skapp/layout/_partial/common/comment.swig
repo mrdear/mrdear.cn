@@ -1,22 +1,19 @@
 {% if page.comments && config.gitTalk %}
-    <link rel="stylesheet" href="/js/gitalk.css">
-    <script src="/js/gitalk.min.js"></script>
-    <script src="/js/md5.min.js"></script>
-
-    <script>
-        var tags = [{% for tag in page.tags %}'{{ tag.name }}', {% endfor %}];
-
-        var gitalk = new Gitalk({
-            clientID: '{{ config.gitTalk.clientId }}',
-            clientSecret: '{{ config.gitTalk.clientSecret }}',
-            repo: '{{ config.gitTalk.repo }}',
-            proxy: '{{ config.gitTalk.proxy }}',
-            owner: '{{ config.gitTalk.owner }}',
-            admin: [{% for item in config.gitTalk.admin %}'{{ item }}', {% endfor %}],
-            id: md5(location.pathname)
-        });
-
-        gitalk.render('comment-container');
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
     </script>
 {% endif %}
 
