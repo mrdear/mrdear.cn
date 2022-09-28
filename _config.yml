@@ -9,7 +9,7 @@ description: 记录成为程序员以来的历程,分享自己的认知,如果�
 keywords: 屈定,技术开发,Java
 author: Qu Ding
 language: zh-cn
-timezone: 'GMT+8'
+timezone: ''
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://example.com/child' and root as '/child/'
@@ -110,7 +110,7 @@ node_sass:
 autoprefixer:
   exclude:
     - '*.min.css'
-  browserslist:
+  overrideBrowserslist:
     - 'last 2 versions'
 
 # Lunr
@@ -239,9 +239,7 @@ baidusitemap:
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
-- type: cos
-  appId: 1251403103
-  bucket: mrdear-1251403103
-  region: ap-shanghai
-  secretId: AKIDIPIwLVa7ZmkTwAosX1HSTFl35rNeJSyI
-  secretKey: DArJYYKr9ByUkkjU0HJ6ex1qPkqiLkxv
+  type: git
+  repo: https://github.com/mrdear/mrdear.cn
+  # example, https://github.com/hexojs/hexojs.github.io
+  branch: gh-pages
