@@ -1,1 +1,55 @@
-function getBaseType(e){return Object.prototype.toString.apply(e).slice(8,-1)}function eachObj(e,n){for(var o in e)n(e[o],o,e)}function getKeys(e,n){var o=[];return eachObj(e,function(e,n){o.push(n)}),o.sort(n)}function extend(o,e){return eachObj(e,function(e,n){o[n]=e}),o}function getPosition(e){var n=0,o=0;if(!e.tagName)return console.warn("element must be a HTML element object"),{x:null,y:null};for(;e!==document.body;)n+=e.offsetLeft,o+=e.offsetTop,e=e.offsetParent;return{x:n,y:o}}function isMobile(){return!!navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)}
+function getBaseType(target) {
+    return Object.prototype.toString.apply(target).slice(8, -1);
+}
+
+function eachObj(obj, fn) {
+    for(var key in obj) {
+        fn(obj[key], key, obj);
+    }
+}
+
+function getKeys(obj, sort) {
+    var keys = [];
+
+    eachObj(obj, function(value, key) {
+        keys.push(key);
+    });
+
+    return keys.sort(sort);
+}
+
+function extend(obj, target) {
+    eachObj(target, function(value, key) {
+        obj[key] = value;
+    });
+
+    return obj;
+}
+
+function getPosition(element) {
+    var x = 0;
+    var y = 0;
+    if (!element.tagName) {
+        console.warn('element must be a HTML element object');
+        return {
+            x: null,
+            y: null
+        };
+    }
+    while (element !== document.body) {
+        x += element.offsetLeft;
+        y += element.offsetTop;
+        element = element.offsetParent;
+    }
+    return {
+        x: x,
+        y: y
+    };
+}
+
+function isMobile() {
+    if ((navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)))
+        return true;
+    else
+        return false;
+}
