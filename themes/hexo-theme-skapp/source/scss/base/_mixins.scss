@@ -110,7 +110,7 @@
             margin: 10px 0;
 
             &:last-child {
-                margin-bottom: $main-fs * 1.5;
+                margin-bottom: calc($main-fs * 1.5);
             }
         }
 

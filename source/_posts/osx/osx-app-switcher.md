@@ -1,7 +1,7 @@
 ---
 title: OSX--OSX应用快速切换方案
 subtitle: 日常工作下应用窗口切换使用方案
-cover: http://imgblog.mrdear.cn/uPic/MAC-Hammerspoon.png-default
+cover: http://res.mrdear.cn/uPic/MAC-Hammerspoon.png-default
 author: 
   nick: 屈定
 tags:
@@ -27,7 +27,7 @@ updated: 2020-08-01 12:43:56
 
 ## 快捷键切换
 
-快捷键切换是使用最频繁的场景，因此为了达到完美体验，我总结了以下流程图，流程图的原则是定位到不同的应用，不存在则启动应用，存在则切换到该应用，同时应对多屏幕下多窗口，多次相同快捷键能够在窗口之间互相切换。![](http://imgblog.mrdear.cn/uPic/mac-app-switch.png-default "")
+快捷键切换是使用最频繁的场景，因此为了达到完美体验，我总结了以下流程图，流程图的原则是定位到不同的应用，不存在则启动应用，存在则切换到该应用，同时应对多屏幕下多窗口，多次相同快捷键能够在窗口之间互相切换。![](http://res.mrdear.cn/uPic/mac-app-switch.png-default "")
 
 
 

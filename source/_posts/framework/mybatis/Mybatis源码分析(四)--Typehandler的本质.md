@@ -1,7 +1,7 @@
 ---
 title: Mybatis源码分析(四)--TypeHandler的解析
 subtitle: 源码分析TypeHandler在Mybatis中是如何作为通用的数据转换器.
-cover: http://imgblog.mrdear.cn/mybatis.png
+cover: http://res.mrdear.cn/mybatis.png
 author: 
   nick: 屈定
 tags:
@@ -60,9 +60,9 @@ private final Map<JdbcType, TypeHandler<?>> JDBC_TYPE_HANDLER_MAP = new EnumMap<
     register(JdbcType.NCLOB, new NClobTypeHandler());
 ```
 那么对应的**JDBC_TYPE_HANDLER_MAP**内存里面为
-![](http://imgblog.mrdear.cn/1513402348.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1513402348.png?imageMogr2/thumbnail/!70p)
 **TYPE_HANDLER_MAP**内存里面接口如下图,注意在其`TypeHandler`中有一个key为null的转换器,其对应的注册方法自然为` register(String.class, new StringTypeHandler());`,那么也就是说当没指定jdbc类型时对于String.class类的转换均使用该转换器作为默认的`TypeHandler`.
-![](http://imgblog.mrdear.cn/1513402290.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1513402290.png?imageMogr2/thumbnail/!70p)
 
 #### 2.mybatis.type-handlers-package转换器
 该指令是配置一个转换器所在的包,然后扫描该包下的`TypeHandler`的实现类,自动注册为转换器,详情可以看`org.apache.ibatis.type.TypeHandlerRegistry#register(java.lang.String)`方法
@@ -116,12 +116,12 @@ public class UserIdentifyTypeHandler extends BaseTypeHandler<UserIdentifyType> {
 那么这个`TypeHandler`是什么时候初始化的呢?
 这里涉及到`ParameterMapping`这个类,该类是Mybatis存储参数映射的地方,其内部有方法`org.apache.ibatis.builder.BaseBuilder#resolveTypeHandler(java.lang.Class<?>, java.lang.Class<? extends org.apache.ibatis.type.TypeHandler<?>>)`,该方法会获取到对应的`TypeHandler`,然后从`typeHandlerRegistry`中获取,获取不到则使用反射生成一个.**生成后并没有加入到typeHandlerRegistry中,也就是该TypeHandler并非单例,多少个sqlStament中如果使用了该转换器那么就会实例化几个该转换器**,因此正确的使用方法是把该`TypeHandler`注册到`typeHandlerRegistry`中,然后在xml中使用.那么针对上述sql的`ParameterMapping`如下.
 另外由于我没有在xml中指定JavaType,那么其默认为Object,也就是参数设置是不能动态获取参数类型的.
-![](http://imgblog.mrdear.cn/1513414409.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1513414409.png?imageMogr2/thumbnail/!70p)
 
 ### 参数如何使用TypeHandler设置到sql中?
 上面说到对于每一个sqlSatment都会解析为一个ParameterMapping的Map集合,在该`ParameterMapping`中TypeHandler已经确定好了,那么设置参数就只需要简单的调用下`typeHandler.setParameter(ps, i + 1, value, jdbcType);`方法,具体可以参考`org.apache.ibatis.scripting.defaults.DefaultParameterHandler#setParameters`方法中对其的做法.
 这里有一个很重要的点就是这里的`TypeHandler`的选择没有和我传入的参数类型绑定,举个例子我把上述参数去掉typehandler变成`identity_type = #{type}`,那么得到的则是一个`UnknownTypeHandler`.
-![](http://imgblog.mrdear.cn/1513423812.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1513423812.png?imageMogr2/thumbnail/!70p)
 
 #### UnknownTypeHandler并不Unknow
 `UnknownTypeHandler`的实现中能获取到具体输入参数的类型,然后调用`org.apache.ibatis.type.UnknownTypeHandler#resolveTypeHandler(java.lang.Object, org.apache.ibatis.type.JdbcType)`方法从`TypeHandlerRegistry`中获取到真正的转换器,这里的获取是根据输入参数的具体类型的class名称.获取不到则使用`ObjectTypeHandler`作为转换器.

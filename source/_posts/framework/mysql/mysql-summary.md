@@ -1,7 +1,7 @@
 ---
 title: 读书笔记 -- MySQL45讲
 subtitle: 极客时间MySQL相关学习笔记
-cover: http://imgblog.mrdear.cn/mrdearblog-mysql.png
+cover: http://res.mrdear.cn/mrdearblog-mysql.png
 author: 
   nick: 屈定
 tags:
@@ -17,7 +17,7 @@ updated: 2019-04-14 22:50:29
 ### 表与索引
 引用评论中的一段解释：对于使用者来说，可以简单的认为每一张表都是有多个B+树组成，其中主键对应的B+树其连接着每一行的数据，称为主B+树，每一个索引所构成的树为辅B+树，其指向主树上的主键。因此当一个查询语句无法走任何索引时需要在主树上全量扫描，能走主键时会直接在主树上查找，走非主键索引时会定位到主键，然后回表其主B+树上查找，定位数据。
 
-![](http://imgblog.mrdear.cn/1555168911.png)
+![](http://res.mrdear.cn/1555168911.png)
 
 
 ### count(*)的原理
@@ -52,7 +52,7 @@ ON t.id = tmp.id
 ### 幻读到底是什么？
 这里直接用到了文章中的解释，数据库中的数据是在变化的，前一秒不满足要求的数据可能下一秒就满足了要求，此时锁对后满足的数据是无用的，因此如下图所示，同一条SQL，先后执行顺序不同，其结果也不同。
 
-![](http://imgblog.mrdear.cn/1555244207.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1555244207.png?imageMogr2/thumbnail/!100p)
 
 MySQL在可重复读隔离级别下，普通的查询是快照读，所以不存在该问题，对于`当前读`则会存在类似的问题，MySQL的解决方法是使用间隙锁，锁住间隙，防止在读取过程中其范围内新增合格的数据。
 

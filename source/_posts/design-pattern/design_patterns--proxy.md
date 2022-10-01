@@ -1,7 +1,7 @@
 ---
 title: 设计模式--动态代理的思考
 subtitle: 关于动态代理模式的一些案例，以及业务上的扩展
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:
@@ -26,7 +26,7 @@ updated: 2018-05-13 11:05:43
 
 ### 1. ORM框架的延迟加载
 ORM的延迟加载一般都是利用动态代理来实现,比如`Hibernate`、`Mybatis`，如下图所示,用户需要的是User类,因此利用`Cglib`,`Javaassit`等技术生成对应的代理类给用户，因为代理类UserProxy是User的子类,其利用`super`转发对User的请求到对应的`MethodInterceptor`中,从而达到拦截的目的，拦截后就可以判断是否需要延迟加载，需要则根据一定策略去对应的`Repository`中获取数据。
-![](http://imgblog.mrdear.cn/1525485610.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525485610.png?imageMogr2/thumbnail/!100p)
 
 ### 2.利用延迟加载优化FutureTask
 `FutureTask`是 Java5提供的一种异步任务编程方式。`FutureTask`存在的问题是获取值麻烦，需要手动调用 get()方法并且捕捉其中的异常信息,如下调用形式:
@@ -83,7 +83,7 @@ ORM的延迟加载一般都是利用动态代理来实现,比如`Hibernate`、`M
 
 ### 动态代理在RPC上的应用
 RPC遇到的问题是`Consumer`端只有接口，因此RPC框架`Consumer`的调用一般都是基于动态代理实现，原因是对于`Consumer`端，是无法拿到`Provider端`的实例，两端唯一有关联的就是接口，因此使用动态代理把请求利用TCP通信转到对应的`Provider端`,然后取回对方返回的数据再转成自己想要的数据.
-![](http://imgblog.mrdear.cn/1525487660.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525487660.png?imageMogr2/thumbnail/!100p)
 
 下面转自梁飞大大（dubbo作者）的博客，更能深切的体会到RPC原理的简单。
 [RPC框架几行代码就够了](http://javatar.iteye.com/blog/1123915#bc2402961)

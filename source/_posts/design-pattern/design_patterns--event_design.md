@@ -1,7 +1,7 @@
 ---
 title: 设计模式 -- 进程内事件机制设计
 subtitle: 关于进程内事件机制设计案例
-cover: http://imgblog.mrdear.cn/1592127121.png
+cover: http://res.mrdear.cn/1592127121.png
 author: 
   nick: 屈定
 tags:
@@ -48,7 +48,7 @@ public class UserNotifyEventTask implements ApplicationListener<UserNotifyEvent>
 }
 ```
 背后原理是什么样子呢？Spring的事件机制是典型的观察者模式，其主要目地是在Spring框架初始化生命周期过程中提供各阶段的通知能力，当然也支持自定义事件，用于业务系统。参考发布订阅模式，其中发布者为`ApplicationEventMulticaster`，订阅者为`ApplicationListener`，事件模型`ApplicationEvent`，进程内通知，因此发布者直接持有了全部的订阅者，基本流程如下：
-![](http://imgblog.mrdear.cn/spring-eventlistener.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/spring-eventlistener.png?imageMogr2/thumbnail/!100p)
 
 其中`ApplicationEventMulticaster`在Spring容器ApplicationContext创建时会一并创建，`ApplicationEventMulticaster`唯一实现类为`SimpleApplicationEventMulticaster`，如名称所示，就是一个简单的执行Listener的类，虽然提供了`taskExecutor`变量，但默认情况下为同步调用。Spring这一套事件机制设计的目地更多的考虑是内部事件分发，比如你的类感兴趣Spring容器刷新事件，则可以订阅`ContextRefreshedEvent`事件，较少的考虑到业务中事件处理，因此不建议业务中直接使用该模块作为进程内通信方式。
 
@@ -75,7 +75,7 @@ public class EventBusTest {
 - SubscriberRegistry：事件订阅者管理
 - Dispatcher：事件分发
 
-![](http://imgblog.mrdear.cn/guava-event-bus.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/guava-event-bus.png?imageMogr2/thumbnail/!100p)
 
 总体实现比较简单，`EventBus`作为入口提供事件注册以及发布能力，这里也可以使用`AsyncEventBus`提供的异步能力进行事件处理。当注册一个事件时，`EventBus`会将其转交到`SubscriberRegistry`，`SubscriberRegistry`根据定义逻辑解析出来事件处理方法，比如guava会解析提交类中被`@Subscribe`标注的方法作为事件订阅者，其第一个入参为其感兴趣的事件。当产生一个事件后，`EventBus`会将从`SubscriberRegistry`中获取到对应的订阅者，然后一并转交给`Dispatcher`进行处理，guava中`Dispatcher`的实现主要是依赖队列，当直接同步执行时，为直接调用，当异步执行时，则需要一个共享队列进行排队，当需要顺序执行时，则需要队列绑定到当前ThreadLocal，对类似场景Guava有着不同的封装实现。
 Guava的这一套API一直标准为BETA状态，但代码逻辑比简单，业务中直接使用也是很推荐的。

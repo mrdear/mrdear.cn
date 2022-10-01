@@ -1,7 +1,7 @@
 ---
 title: Java -- MetaSpace线上问题排查
 subtitle: MetaSpace相关线上问题排查分享
-cover: http://imgblog.mrdear.cn/uPic/1602989829261_UyHM4i.png-default
+cover: http://res.mrdear.cn/uPic/1602989829261_UyHM4i.png-default
 author: 
   nick: 屈定
 tags:

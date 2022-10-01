@@ -1,7 +1,7 @@
 ---
 title: 并行设计模式--immutable模式
 subtitle: 关于并行设计中的immutable模式学习笔记
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:

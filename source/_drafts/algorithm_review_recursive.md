@@ -1,7 +1,7 @@
 ---
 title: 实践--如何写递归?
 subtitle: 递归程序的写法也是有迹可循的,本篇学习如何正确的思考程序递归.
-cover: http://imgblog.mrdear.cn/1519217222.png
+cover: http://res.mrdear.cn/1519217222.png
 author: 
   nick: 屈定
 tags:

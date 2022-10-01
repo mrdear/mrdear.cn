@@ -1,7 +1,7 @@
 ---
 title: 设计模式--适配器模式的思考
 subtitle: 关于适配器模式的一些思考,不仅仅是会写出设计模式的代码,更重要的是理解其背后的设计之道.
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:
@@ -18,7 +18,7 @@ updated: 2018-03-14 10:03:54
 
 ## 什么是适配器模式
 适配器模式: 将一个类的接口转换为客户所期望的另一个接口.适配器让原本接口不兼容的类可以合作无间.类图如下:
-![](http://imgblog.mrdear.cn/1520949114.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1520949114.png?imageMogr2/thumbnail/!100p)
 
 Client: 调用方
 Target: 需要提供的新功能
@@ -49,7 +49,7 @@ Adapter是`InputStreamReader`
 ## Java Set集合中的适配器
 Java中的Set集合有者无序,唯一元素,查找复杂度O(1)等特性.这些特性Map数据结构的key是完全符合的,那么就可以利用适配器模式来完成Set的功能.
 以`HashSet`为例,其内部持有的是一个值为固定Object的Map,如下图
-![](http://imgblog.mrdear.cn/1520951534.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1520951534.png?imageMogr2/thumbnail/!100p)
 
 其所有的操作会通过`HashSet`这个适配器来操作`HashMap`这个被适配器.比如:
 ```java    
@@ -68,7 +68,7 @@ Adapter是`HashSet`
 ## Mybatis中的适配器模式
 Mybatis作为一款通用框架,对于日志处理必然需要适配到各种日志框架,比如`slf4j`,`log4j`,`logback`等,每个日志的API多多少少有点不同,这种情况下适配器模式就起到了转换的作用.
 以下图由于实现类太多,只列取了几个.
-![](http://imgblog.mrdear.cn/1520995813.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1520995813.png?imageMogr2/thumbnail/!100p)
 Mybatis有自己的`org.apache.ibatis.logging.Log`接口,框架内部使用的都是自己的Log,具体使用哪一个Log是由配置中的适配器决定的.
 以`org.apache.ibatis.logging.log4j2.Log4j2LoggerImpl`适配器为例,`org.apache.logging.log4j.Logger`为被适配者.`Log4j2LoggerImpl`是适配器,起到了转换的作用.
 ```java

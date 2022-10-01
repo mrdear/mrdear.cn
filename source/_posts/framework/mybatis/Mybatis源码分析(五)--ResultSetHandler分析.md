@@ -1,7 +1,7 @@
 ---
 title: Mybatis源码分析(五)--ResultSetHandler分析
 subtitle: 这一节主要是学习Mybatis是如何取出结果与对应的ResultMap映射的.
-cover: http://imgblog.mrdear.cn/mybatis.png
+cover: http://res.mrdear.cn/mybatis.png
 author: 
   nick: 屈定
 tags:
@@ -59,7 +59,7 @@ updated: 2018-01-14 23:15:47
 
 ### ResultMap所对应的数据结构
 在`org.apache.ibatis.mapping`包下有`ResultMap`和`ResultMapping`类,按照Mybatis默认的命名规则`ResultMap`则是一个xml钟ResultMap的数据结构,而其中的每一个映射配置则是`ResultMapping`,如下图.具体的属性也就是xml中所能使用的元素.
-![](http://imgblog.mrdear.cn/1516117084.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1516117084.png?imageMogr2/thumbnail/!100p)
 
 
 ### 结果映射是如何构造的
@@ -77,7 +77,7 @@ ResultMap inlineResultMap = new ResultMap.Builder(
           null).build();
       resultMaps.add(inlineResultMap);
 ```
-![](http://imgblog.mrdear.cn/1516116391.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1516116391.png?imageMogr2/thumbnail/!70p)
 
 #### 使用resultMap配置结果映射
 首先resultMap中大概会有如下的元素

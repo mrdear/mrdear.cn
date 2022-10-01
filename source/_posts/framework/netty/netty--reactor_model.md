@@ -1,7 +1,7 @@
 ---
 title: Netty -- Reactor模型的应用
 subtitle: 关于Netty如何使用Reactor模型应对大量连接的原理
-cover: http://imgblog.mrdear.cn/blog-netty.png
+cover: http://res.mrdear.cn/blog-netty.png
 author: 
   nick: 屈定
 tags:
@@ -27,22 +27,22 @@ Reactor模式有着众多不同的形式，理解不同的形式要理解后端�
 4. 写回数据 
 
 ### 单线程Reactor模式
-![](http://imgblog.mrdear.cn/1533135180.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1533135180.png?imageMogr2/thumbnail/!100p)
 单线程Reactor模式意思是以上`1，2，3，4`操作都在一个Reactor线程中执行，虽然Reactor的读取写回不会造成阻塞，但是业务操作就很可能造成阻塞，并且单线程对CPU的利用顶多到100%，因此处理能力是有限的，对于小量连接情况下问题不大，对于大量链接情况下，单个NIO线程因处理能力优先会导致连接大量超时，由于超时重试机制，导致系统负载越来越重。
 因此演变出多线程Reactor模式。
 另外值得一提的是Redis使用的就是单线程Reactor模式，因此当某一个命令执行时间过长比如keys操作，就会使得Redis阻塞，不过大多数命令都是非常迅速的，单线程Reactor模式也使得Redis的结构变得简单，这也符合官方所提倡的小巧、精炼。
 
 ### 多线程Reactor模式
-![](http://imgblog.mrdear.cn/1533219452.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1533219452.png?imageMogr2/thumbnail/!100p)
 从图可以看出多线程Reactor模式在单线程模式下把`3`业务操作（decode，compute，encode）等放到单独的线程池中处理，保证Reactor线程不会阻塞，而Reactor线程仍然要处理` 1，2，4`三个操作，因此处理能力受限于Reactor线程的处理，Reactor虽然是事件机制的异步处理，但是其承担连接负载量上来时仍然承受很大压力，因此主从Reactor模式被提了出来。
 
 ### 主从Reactor模式
-![](http://imgblog.mrdear.cn/1533220953.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1533220953.png?imageMogr2/thumbnail/!100p)
 相比多线程Reactor模式，主从Reactor模式下把步骤`2 读取，4 写回`两个操作放在**从Reactor线程池**中执行，那么**主Reactor线程**，也就是Acceptor只负责获取连接，建立之后将其注册到**从Reactor线程**中，因此大大提高了负载能力。这种模式的核心是**使用多个Reactor线程来分担连接**，同时为了避免并发问题还要保证一个Reactor线程可以处理多个连接，一个连接只能注册一个Reactor线程上。在Netty中一般推荐使用这种模式，主Reactor线程为Netty中的Boss线程，从Reactor线程为Worker线程，另外使用业务线程池处理对应的业务逻辑，这三者构成了Netty的线程模型。
 
 到这里可以简单总结一下，无论是单线程Reactor还是多线程以及主从Reactor，本质上Reactor做的都是同一个事情，多线程是因为事情比较多，单个忙不过来，分发给多个Reactor做，主从则是将事情进行分类，轻量级的事情单独使用一个完成，复杂级别的使用多个完成，以保证最优先响应，套用极客时间的一张图，可以很清晰的描述Netty中主从Reactor下，每个Reactor所承担的职责。
 
-![image-20201212133453587](http://imgblog.mrdear.cn/uPic/image-20201212133453587_1607751293.png-default)
+![image-20201212133453587](http://res.mrdear.cn/uPic/image-20201212133453587_1607751293.png-default)
 
 ## Netty线程模型中的角色
 
@@ -79,7 +79,7 @@ Socket属于内核对象，因此应用层要使用时必须通过操作系统�
 ### ChannelPipeline
 `ChannelPipeline`是聚合了`ChannelHandler`的管道，本质上是一个职责链路，在Worker线程中会对每一个Channel执行其所对应的pipeline链，完成整个生命周期。
 我画了一个不太好看的图描述整个结构，其中蓝色表示`ChannelInboundHandler`，红色表示`ChannelOutboundHandler`，绿色则承担两个角色，而每个Handler又会使用`ChannelHandlerContext`封装起来，在`ChannelPipeline`中组装成双向链表。
-![](http://imgblog.mrdear.cn/1533604786.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1533604786.png?imageMogr2/thumbnail/!100p)
 
 一个请求被Accept之后要从Head开始流转所有的`ChannelInboundHandler`，然后再从Tail开始流转所有的`ChannelOutboundHandler`。
 

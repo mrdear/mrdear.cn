@@ -1,7 +1,7 @@
 ---
 title: Java8 Lambda（二）-Stream原理
 subtitle: Java8学习记录(二)-Stream原理
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -19,7 +19,7 @@ updated:  2017-05-20 19:06:51
 >从`"张三","李四","王二","张四五"`中选出以`张`开头的名字,然后从再从中选出名字最长的一个,输出其长度.
 
 ### 1.一种直白的实现
-![](http://imgblog.mrdear.cn/1497141037.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1497141037.png?imageMogr2/thumbnail/!70p)
 
 **缺点**:
 1. 迭代次数过多
@@ -73,7 +73,7 @@ Stream做到的是对于多次调用合并到一次迭代中处理完所有的�
 - - - - -
 Stream结构示意图:
 
-![](http://imgblog.mrdear.cn/1497146463.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1497146463.png?imageMogr2/thumbnail/!70p)
 
 
 示例代码:
@@ -129,7 +129,7 @@ Stream结构示意图:
             sourceStage.sourceAnyStateful = true;
     }
 ```
-<img src="http://imgblog.mrdear.cn/1499071580.png?imageMogr2/thumbnail/!60p" height=500 align=right >
+<img src="http://res.mrdear.cn/1499071580.png?imageMogr2/thumbnail/!60p" height=500 align=right >
 调用过程如此用双向链表串联起来,每一步都得知其上一步与下一步的操作.
  data.stream()
  .filter(x -> x.length() == 2)
@@ -225,7 +225,7 @@ Stream结构示意图:
             list.add(t);
         }
 ```
-![](http://imgblog.mrdear.cn/1499071806.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1499071806.png?imageMogr2/thumbnail/!70p)
 
 #### 叠加后如何执行?
 执行操作是由终端操作来触发的,例如foreach操作
@@ -251,7 +251,7 @@ Sink opWrapSink(int flags, Sink<P_OUT> sink) ;
         return (Sink<P_IN>) sink;
     }
 ```
-![](http://imgblog.mrdear.cn/1499071772.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1499071772.png?imageMogr2/thumbnail/!70p)
 
 ```java
     @Override
@@ -292,7 +292,7 @@ Sink opWrapSink(int flags, Sink<P_OUT> sink) ;
         }
 ```
 那么就相当于sorted给原有操作断路了一次,然后又重新接上,再次遍历.
-![](http://imgblog.mrdear.cn/1499071708.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1499071708.png?imageMogr2/thumbnail/!70p)
 
 #### 如何收集到结果?
 foreach是不需要收集到结果的,但是对于collect这样的操作是需要拿到最终end产生的结果.end产生的结果在最后一个Sink中,这样的操作最终都会提供一个取出数据的get方法.

@@ -1,7 +1,7 @@
 ---
 title: Linux -- Expect Script入门
 subtitle: 使用Expect解决交互式程序自动化问题
-cover: https://imgblog.mrdear.cn/linux.png
+cover: https://res.mrdear.cn/linux.png
 author: 
   nick: 屈定
 tags:
@@ -59,7 +59,7 @@ expect "*# " # 匹配默认shell
 send "exit\r"
 ```
 
-![img](https://imgblog.mrdear.cn/uPic/linux-expect-2_1657938179.gif)
+![img](https://res.mrdear.cn/uPic/linux-expect-2_1657938179.gif)
 
 ### expect解析用户参数
 
@@ -114,7 +114,7 @@ if { $password == "" } {
 send_user "user is $user  passwd is $password \n"
 ```
 
-![expect](https://imgblog.mrdear.cn/uPic/expect_1657942393.gif)
+![expect](https://res.mrdear.cn/uPic/expect_1657942393.gif)
 
 ### 更加完善的登录ssh判断
 

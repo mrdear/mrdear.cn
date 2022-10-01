@@ -1,7 +1,7 @@
 ---
 title: 谈谈这次跳槽经历
 subtitle: 工作一年跳槽的一些经验分享
-cover: http://imgblog.mrdear.cn/blog_mrdear_work.png
+cover: http://res.mrdear.cn/blog_mrdear_work.png
 author: 
   nick: 屈定
 tags:

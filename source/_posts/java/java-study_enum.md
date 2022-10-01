@@ -1,7 +1,7 @@
 ---
 title: Java--Enum的思考
 subtitle: 枚举类是Java5引进的特性,本文主要对其原理的剖析,更加彻底的了解枚举类的实质.
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:

@@ -1,7 +1,7 @@
 ---
 title: Mybatis源码分析(二)--Sqlsession的执行流程
 subtitle: Mybatis中Sqlsession管理下的sql执行器是如何工作的?
-cover: http://imgblog.mrdear.cn/mybatis.png
+cover: http://res.mrdear.cn/mybatis.png
 author: 
   nick: 屈定
 tags:
@@ -84,7 +84,7 @@ Select是最复杂的处理,其拥有多样的返回值类型,从源码中可以
 
 ### Executor的装饰器模式设计
 Mybatis的`Executor`的结构如下,目前的Mybatis(3.4.6)在`BaseExecutor`中增加了`protected Executor wrapper`这个内部被装饰对象,其是想往标准的装饰器模式转变.
-![](http://imgblog.mrdear.cn/1520503047.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1520503047.png?imageMogr2/thumbnail/!100p)
 其中`CachingExecutor`为二级缓存实现,当在Mybatis Config中配置了`cacheEnabled`才会用其包裹当前的`Executor`,利用类似AOP环绕通知的方式实现缓存.
 `BaseExecutor`为基本装饰器,其实现了`Executor`接口,并且内部也持有一个`protected Executor wrapper;`被包装对象.
 `SimpleExecutor`为最基本装饰器实现类,提供最基本的增删改查需求.
@@ -92,7 +92,7 @@ Mybatis的`Executor`的结构如下,目前的Mybatis(3.4.6)在`BaseExecutor`中�
 `ReuseExecutor`在原有基础上增加了复用SQL功能.
 
 除去上述问题,接下来的执行流程是很清晰的
-![](http://imgblog.mrdear.cn/1520504301.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1520504301.png?imageMogr2/thumbnail/!100p)
 
 ### BaseExecutor
 ```java    

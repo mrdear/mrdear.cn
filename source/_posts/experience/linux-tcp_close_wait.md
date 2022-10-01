@@ -1,7 +1,7 @@
 ---
 title: 实践 -- 服务器大量CLOSE_WAIT连接分析
 subtitle: 线上服务器产生大量CLOSE_WAIT,问题排查记录
-cover: http://imgblog.mrdear.cn/linux.png
+cover: http://res.mrdear.cn/linux.png
 author: 
   nick: 屈定
 tags:
@@ -27,14 +27,14 @@ java.net.BindException: Address already in use (Bind failed)
 	at org.apache.commons.httpclient.HttpConnection.open(HttpConnection.java:707) ~[commons-httpclient-3.1.jar:na]
 .....
 ```
-这个问题很奇怪,linux端口分配会避免端口冲突的,然后检查服务器发现大量tcp连接处于`CLOSE_WAIT`状态,不过对应的是另外一个项目.![](http://imgblog.mrdear.cn/1525269130.png?imageMogr2/thumbnail/!100p)
+这个问题很奇怪,linux端口分配会避免端口冲突的,然后检查服务器发现大量tcp连接处于`CLOSE_WAIT`状态,不过对应的是另外一个项目.![](http://res.mrdear.cn/1525269130.png?imageMogr2/thumbnail/!100p)
 
 统计信息如下(命令`netstat -nat | awk 'FNR>2{print $NF}' | sort | uniq -c`),简直恐怖.
-![](http://imgblog.mrdear.cn/1525269198.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525269198.png?imageMogr2/thumbnail/!100p)
 
 ### CLOSE_WAIT
 TCP关闭连接时四次挥手的过程,如下图所示(图来自网络):
-![](http://imgblog.mrdear.cn/1525269601.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525269601.png?imageMogr2/thumbnail/!100p)
 
 有图可知,主动方发起关闭请求也就是`FIN`包后,被动方接收到包,**被动方接着进入`CLOSE_WAIT`状态**,接着被动方发送`FIN`包告知主动方自己已关闭后进入`LAST_ACK`状态.
 那么当被动方这个`FIN`包没有发送成功,那么其就一直处于`CLOSE_WAIT`状态.那么问题成功转换为以下几个小问题:

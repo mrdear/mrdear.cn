@@ -1,7 +1,7 @@
 ---
-title: 关于IoC与AOP的一些理解
+title: Spring -- 关于IoC与AOP的一些理解
 subtitle: IoC与AOP要解决的关键问题是什么?怎么解决?
-cover: http://imgblog.mrdear.cn/ioc_aop.png
+cover: http://res.mrdear.cn/ioc_aop.png
 author: 
   nick: 屈定
 tags:
@@ -101,7 +101,7 @@ AOP是一种设计思想，这种设计思想的目的是不侵入你原有代�
 
 从软件重用的角度来看，OOP设计只能在对象继承树的纵向上扩展重用，AOP则使的可以在横向上扩展重用，借助三棱镜分光原理可以更好地理解其AOP横向扩展的本质。(图片来自 《冒号课堂》)
 
-![](http://imgblog.mrdear.cn/1557521693.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1557521693.png?imageMogr2/thumbnail/!100p)
 
 
 
@@ -197,7 +197,7 @@ Spring AOP是基于动态代理实现了一种无侵入式的代码扩展方式�
 - MethodInterceptor: AOP的拦截，AOP相关操作一般在其内部完成。
 两者混合使用可以构造出如下结构:
 `MethodInvocation`是对`HelloService。sayHello();`的封装，而`MethodInterceptor`持有了`MethodInvocation`，在调用其之前进行了增强处理，这就是AOP的实质。
-![](http://imgblog.mrdear.cn/1523635444.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523635444.png?imageMogr2/thumbnail/!100p)
 
 ### 处理this
 假设`HelloService`被AOP增强，那么调用`sayHello()`时执行`this。sayWorld()`这行代码会走AOP处理吗?

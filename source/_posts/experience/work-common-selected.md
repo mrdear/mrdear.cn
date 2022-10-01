@@ -1,7 +1,7 @@
 ---
 title: 实践 -- 前后端如何统一选择框查询？
 subtitle: 针对中后台管理系统，选择框查询统一化的设计
-cover: http://imgblog.mrdear.cn/blog_mrdear_work.png
+cover: http://res.mrdear.cn/blog_mrdear_work.png
 author: 
   nick: 屈定
 tags:
@@ -14,7 +14,7 @@ updated: 2020-01-05 00:03:32
 
 ## 前言
 在开发中后台系统过程中，经常会出现一个表格上面有众多选项框，如下图所示。往往每一个搜索框后端都要做一个新的接口，前端也需要为了适配后端的接口而重新开发相关组件，那么有没有某种做法能让这些重复劳动简单化呢？另外每个选项框的可选值随着业务的发展，会逐渐增多，这个过程中又如何保证前端代码不需要修改，后端业务上线后，前端能够自动适配？本文将提供一种做法，统一掉类似的查询需求。
-![](http://imgblog.mrdear.cn/1578144555.png)
+![](http://res.mrdear.cn/1578144555.png)
 
 ## 设计
 按照传统的做法，一个表单一个接口，有些复杂的表头，可能要多个接口一起返回，比如上述查询条件中，**状态**，**来源**可能来自于后端定义的业务枚举，而**供货商通道**，**运营商**可能来自于DB表，后端在实现时可能会将其放在一个接口中一起返回给前端，前端拿到后，在分别对应到对应的选项框。遇到第二个表格，则可能需要再增加一个接口应对第二个表格的表头，这个过程中接口数量增加，造成的是前端开发成本的增加，如果出现关联逻辑，则前端还要做选择框关联，会更加麻烦，那么设计的第一步就是统一接口，这种业务全局只有一个接口。
@@ -64,7 +64,7 @@ selected字段为当前哪些选项卡已经被选择，后端根据已经选择
 ### 前端统一组件
 接口统一后，对于前端来说就很容易做出一个通用组件，组件的样子大概如下，其中`SelectGroup`是一个表格的所有搜索内容，`ConfigQueryService`则是请求API的封装，其参数是selectGroup发生变化时，主动传递过来。
 为了加快响应速度，`ConfigQueryService`需要做一定的触发限流，以及key维度的缓存配置，否则每次变动都请求接口，这个耗时有点无法接受。
-![](http://imgblog.mrdear.cn/1578149077.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1578149077.png?imageMogr2/thumbnail/!100p)
 
 举个例子，以开局的图为例，当进入该页面后，`SearchGroup`会调用`ConfigQueryService`发出如下请求
 ```json
@@ -105,7 +105,7 @@ selected字段为当前哪些选项卡已经被选择，后端根据已经选择
     "selected":{"channel":["A"]}
 }
 ```
-![](http://imgblog.mrdear.cn/1578144555.png)
+![](http://res.mrdear.cn/1578144555.png)
 
 那么最大的问题，性能该如何解决？对于选项框，绝大多数都是无需关联的，对于这种前端可以在key维度上做个缓存，比如**key上增加个shouldInitCache属性**，代表可以在启动时就获取数据到内存，那么这一部分就不需要请求接口，直接命中缓存。对于关联类型的
 选择框，除了加缓存，目前没想到特别好的处理方式。
@@ -114,7 +114,7 @@ selected字段为当前哪些选项卡已经被选择，后端根据已经选择
 该设计增加了后端的复杂性，因此后端需要一套良好的框架让每一个值之间水平分布，扩展新的值也只是增加一个新的实现类而已，那么该如何设计呢？
 
 首先根据以上描述，可以简单理出一个后端流程图，从流程图中可以得出，后端获取到入参后，会根据选项框key做一个并行分发逻辑，然后统一获取到结果后，再返回给前端，这个流程很简单。
-![](http://imgblog.mrdear.cn/1578150378.png)
+![](http://res.mrdear.cn/1578150378.png)
 
 为了避免贴大量代码，这里逻辑尽量用图来表示，如下图所示，后端首先使用**策略模式**把不同的选择框获取值逻辑进行分离，即接口`ConfigKeyQueryStrategy`，该接口入参为`Map<ConfigKeyEnum, Set<String>> selected`即已经选择的值，每一个选择框是能感知其与哪些框进行关联，因此当关联时，该选项框实现策略就能获取到所关联的值，从而进行过滤。然后在`ConfigKeyQueryService`中做路由，即该接口要感知到所有的策略，如果项目是Spring，则可以在项目启动时直接根据接口把对应的策略实现类全部获取到。另外分离之后由于逻辑没交集，所以策略之间是可以并行运行，因此路由可以按照下面逻辑来实现。
 ```java
@@ -123,7 +123,7 @@ SearchResult result = req.getKeys()
             .map(x -> new Pair<>(x, CACHE_BEAN.get(x).search(req.getSelected())))
             .collect(SearchResult::new, (l, x) -> l.put(x.getKey(), x.getValue()), SearchResult::merge);
 ```
-![](http://imgblog.mrdear.cn/1578152122.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1578152122.png?imageMogr2/thumbnail/!100p)
 
 该方案最大的优势是`ConfigKeyQueryStrategy`接口被水平管理起来，每一个选项框查询逻辑自己来控制，如果是枚举类，则直接返回Enum.values()，如果需要去DB查询，则调用对应DAO，如果是不经常改变的数据，则可以加一层缓存，每一个选项框之间水平拆分，逻辑清晰简单，扩展则仅仅需要增加新的`ConfigKeyQueryStrategy`实现类。
 

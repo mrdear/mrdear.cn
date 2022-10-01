@@ -1,7 +1,7 @@
 ---
 title: Guava -- Bloom Filter原理
 subtitle: 学习Guava的Bloom Filter设计原理
-cover: http://imgblog.mrdear.cn/1552703974.png
+cover: http://res.mrdear.cn/1552703974.png
 author: 
   nick: 屈定
 tags:
@@ -19,7 +19,7 @@ updated: 2019-03-16 10:41:54
 
 ## 布隆过滤器的原理
 布隆过滤器原理很简单，用一个很大的bit位数组与多个无偏hash函数(即计算出来的hash值呈均匀分布)，当存入一个元素时，使用每一个hash函数进行hash，再与bit数组取模，得出的位置置为1。判断一个元素是否存在时，同样也是利用这样的方法判断对应的数组位是不是否为1。
-![](http://imgblog.mrdear.cn/1552347090.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1552347090.png?imageMogr2/thumbnail/!100p)
 
 从原理上可以得出布隆过滤器的特性：
 1. 存在不一定真的存在：存在则可能对应的数组位与其他key产生了碰撞。
@@ -27,7 +27,7 @@ updated: 2019-03-16 10:41:54
 
 那么问题又来了，布隆过滤器既然有一定误判率，怎么使这个误判率降低？
 具体有相关公式，不过一般使用直接计算工具，比如[bloom-calculator](https://krisives.github.io/bloom-calculator/)，100w的数据判断，万分之一的误判率才需要2M内存，优势巨大。
-![](http://imgblog.mrdear.cn/1552347883.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1552347883.png?imageMogr2/thumbnail/!100p)
 
 ## 常见实现方案
 

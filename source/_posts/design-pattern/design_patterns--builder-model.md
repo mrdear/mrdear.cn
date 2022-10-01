@@ -1,7 +1,7 @@
 ---
 title: 设计模式--Builder模式的思考
 subtitle: 关于Builder模式的一些思考,不仅仅是会写出设计模式的代码,更重要的是理解其背后的设计之道.
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:

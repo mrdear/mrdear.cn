@@ -1,7 +1,7 @@
 ---
 title: Mybatis源码分析(一)--Mapper的动态代理
 subtitle: 分析Mapper接口是如何自动生成对应Java类,并与mapper.xml所关联起来的.
-cover: http://imgblog.mrdear.cn/mybatis.png
+cover: http://res.mrdear.cn/mybatis.png
 author: 
   nick: 屈定
 tags:
@@ -21,7 +21,7 @@ updated: 2017-09-07 22:04:05
 1. 对外的行为接口Subject,对于调用方Client可见
 2. RealSubject真实的Subject,其包含具体的接口行为,对于Client不可见
 3. 代理类Proxy,其是RealSubject的替身,也可以当成对RealSubject的一层包装,对于Client不可见.
-![](http://imgblog.mrdear.cn/1504793889.png?imageMogr2/thumbnail/!150p)
+![](http://res.mrdear.cn/1504793889.png?imageMogr2/thumbnail/!150p)
 
 ### JDK动态代理Example
 案例采取Java的动态代理形式开发,按照上述类图定义角色

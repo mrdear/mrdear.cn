@@ -1,7 +1,7 @@
 ---
 title: 实践--用户登录注册相关设计
 subtitle: 最近一个小项目中关于用户表以及密码安全等相关设计经验
-cover: http://imgblog.mrdear.cn/blog_mrdear_work.png
+cover: http://res.mrdear.cn/blog_mrdear_work.png
 author: 
   nick: 屈定
 tags:
@@ -56,7 +56,7 @@ updated: 2018-08-18 03:08:53
 
 ### 登录流程
 登录流程是相对比较复杂的，这里使用流程图来描述这一过程：
-![](http://imgblog.mrdear.cn/1534420580.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1534420580.png?imageMogr2/thumbnail/!100p)
 大体流程分两种，一种是站内密码登录，这种方式比较简单，就是传统的密码判断是否正确，然后写回登录信息。另一种是第三方登录，该种登录需要考虑用户是否只是绑定第三方账号，是否已经注册等问题，为了让第三方登录与注册流畅进行，当用户未注册时还需要主动帮其注册账号，主动注册就会涉及到一些用户表中的必要信息生成，比如邮箱可以生成`xx-uid@weixin.com`等系统默认邮箱。
 
 

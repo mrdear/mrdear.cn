@@ -1,7 +1,7 @@
 ---
 title: 实践 -- Velocity渲染SQL如何避免注入？
 subtitle: 使用Velocity提高SQL的灵活性，但是需要确保不会发生SQL注入
-cover: http://imgblog.mrdear.cn/blog_mrdear_work.png
+cover: http://res.mrdear.cn/blog_mrdear_work.png
 author: 
   nick: 屈定
 tags:
@@ -26,12 +26,12 @@ updated: 2020-01-11 10:53:10
 
 ## Velocity渲染SQL该怎么避免注入？
 Velocity本质上是字符串拼接，给定什么就拼接什么，实际上是逻辑与数据没有分离开来，最后生成的是plain sql，提交给DB执行，因此非常容易发生注入，那么解决思路如下图所示，经过velocity模板渲染后生成两部分的内容，1是预编译SQL，2是对应的参数集合，这样就做到了逻辑与数据的分离，DB层面使用`PreparedStatement`进行预编译执行，彻底解决SQL注入的风险。
-![](http://imgblog.mrdear.cn/1578410687.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1578410687.png?imageMogr2/thumbnail/!100p)
 
 ### 实现逻辑
 
 实现逻辑也不复杂，Velocity在进行**变量替换输出**时，会调用对应的钩子函数`ReferenceInsertionEventHandler`修改对应的输出，那么实现策略就相当简单了，只需要如下图所示，在Velocity与输出时间增加该钩子函数，替换输出字符串为占位符，然后将参数放入List集合中存储。
-![](http://imgblog.mrdear.cn/1578581443.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1578581443.png?imageMogr2/thumbnail/!100p)
 
 ## 参考
 

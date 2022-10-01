@@ -1,7 +1,7 @@
 ---
 title: Netty -- 粘包与半包详解
 subtitle: 关于使用Netty过程中遇到的粘包与半包问题详细解释
-cover: http://imgblog.mrdear.cn/blog-netty.png
+cover: http://res.mrdear.cn/blog-netty.png
 author: 
   nick: 屈定
 tags:
@@ -27,7 +27,7 @@ updated: 2020-12-19 13:47:47
 
 本文接下来会从整个链路角度，来详细解释产生这种问题的本质原因，以及介绍一些经典应用层协议的优秀解法。
 
-![image-20201212143540829](http://imgblog.mrdear.cn/uPic/image-20201212143540829_1607754940.png-default)
+![image-20201212143540829](http://res.mrdear.cn/uPic/image-20201212143540829_1607754940.png-default)
 
 
 
@@ -57,7 +57,7 @@ curl 'https://www.baidu.com/' \
   --compressed
 ```
 
-![image-20201213102222625](http://imgblog.mrdear.cn/uPic/image-20201213102222625_1607826142.png-default)
+![image-20201213102222625](http://res.mrdear.cn/uPic/image-20201213102222625_1607826142.png-default)
 
 ### TCP层传输
 
@@ -65,13 +65,13 @@ curl 'https://www.baidu.com/' \
 
 TCP会根据MSS大小进行判断，MSS到底多大，受限于MTU，MTU表示一个网络包的最大长度，是数据链路层的限制，在网卡处可以设置，路由器处也可以设置，一般为1500字节，MSS是一般为1460 (MTU(1500) - IP头部(20) - TCP头部(20))。
 
-![image-20201213095903320](http://imgblog.mrdear.cn/uPic/image-20201213095903320_1607824743.png-default)
+![image-20201213095903320](http://res.mrdear.cn/uPic/image-20201213095903320_1607824743.png-default)
 
 在三次握手时，通讯双方为了最大效率会协商MSS大小，确定最优MSS，一般是最小的一个值，就像木桶效应一样，盛水量取决于最短的一块木板。当TCP收到的数据长度超过或者接近MSS时，再发送数据，避免大量小包问题，从而提高网络效率。
 
 正是因为这样，所以应用层的消息到TCP层后，如下图所示会拆分成多个数据段，每个数据段长度小于或者等于MSS，数据块 + TCP头部，组成了TCP层的数据段，因此数据段是TCP层数据传输的最小单位。
 
-![image-20201213104229881](http://imgblog.mrdear.cn/uPic/image-20201213104229881_1607827349.png-default)
+![image-20201213104229881](http://res.mrdear.cn/uPic/image-20201213104229881_1607827349.png-default)
 
 ### IP层传输
 
@@ -79,7 +79,7 @@ IP层主要与数据链路层打交道，也就是路由器的端口，由于路
 
 分片的过程首先是获取MTU，也就是最大网络包长度限制，MTU一般是物理端口支持最大包长度(1518) - MAC头部(14) - 尾部校验+FCS(4) = 1500，知道MTU后，拆包就按照MTU长度拆即可，拆出来的小包不需要有TCP头了，直接附属上IP头即可，如下图所示，数据块1被拆分为数据包1.1和数据包1.2，其中1.2部分只需要IP头部即可，因此数据包是IP层的最小传输单位。
 
-![image-20201213104242456](http://imgblog.mrdear.cn/uPic/image-20201213104242456_1607827362.png-default)
+![image-20201213104242456](http://res.mrdear.cn/uPic/image-20201213104242456_1607827362.png-default)
 
 ### 粘包原因以及长连接短连接
 
@@ -93,7 +93,7 @@ IP层主要与数据链路层打交道，也就是路由器的端口，由于路
 
 UDP是仅仅是为了传输开发的协议，UDP在接收到应用层消息体后，是直接将全部消息体丢给IP层，依赖IP层的分片，自身传输仍然是以消息为单位，那么服务端接收到的自然也是IP层重组合并之后的消息，因此不会出现粘包以及半包现象。
 
-![image-20201213123059614](http://imgblog.mrdear.cn/uPic/image-20201213123059614_1607833859.png-default)
+![image-20201213123059614](http://res.mrdear.cn/uPic/image-20201213123059614_1607833859.png-default)
 
 ## 粘包与半包常见解决方案
 
@@ -103,13 +103,13 @@ TCP只是在保证可靠性的前提下，尽可能提高网络利用率，粘�
 
 HTTP/1.1目前仍然在广泛使用，在HTTP/1.1当中，开启keep-alive后，TCP连接会被复用，也就是长连接，此时粘包和半包问题都会出现，为了解决类似问题，HTTP对于消息格式有一个强制性要求，借用极客时间的图，第一行是请求行，三个字段使用空格分割，以CRLF结尾，中间部分是请求头，以：号分割，CRLF结尾，以单独一个空行CRLF标识请求头结束，接着是请求体内容。
 
-![image-20201213142451806](http://imgblog.mrdear.cn/uPic/image-20201213142451806_1607840691.png-default)
+![image-20201213142451806](http://res.mrdear.cn/uPic/image-20201213142451806_1607840691.png-default)
 
 服务端解析时，针对请求行和请求头则逐个字节扫描，当发现是LF标识结尾时，即可解析已读取内容，当检测到CRLF之后又一个CRLF则标识请求头解析完毕，接着解析请求体。请求体解析有两种形式，第一种是已知请求体长度，在表单请求中比较常见，其会在Header中声明Content-Length，服务端根据该字段确定接下来再读取多少个字节作为请求体。第二种是不知道请求体长度，比如文件上传，HTTP提供了`Transfer-Encoding: chunked`这一header标识，开启之后，HTTP会分块传输数据，每一块大小是指定的，终止块是一个长度为0的块。有了这些标准，在粘包以及半包情况下，服务端就知道是该拆分还是该等待。
 
 举个实际案例，在Netty的`io.netty.handler.codec.http.HttpObjectDecoder`中，Netty定义了一套状态机流转方式来解析HTTP消息，博主画了一个图，基本模式就是先读取请求行，然后解析请求头，在解析请求头的过程中，判断接下来状态是读取payload还是直接结束，其中黄色框的读取完后，会重置状态，解析下一个HTTP消息，有兴趣的可以翻阅相关源代码查阅。
 
-![image-20201219104653989](http://imgblog.mrdear.cn/uPic/image-20201219104653989_1608346014.png-default)
+![image-20201219104653989](http://res.mrdear.cn/uPic/image-20201219104653989_1608346014.png-default)
 
 简单总结一下，本质上还是使用那个CRLF这一特殊标识定义了消息在各种状态的结束符号，服务端在解析流程中，根据结束符号进行状态流转。
 
@@ -119,7 +119,7 @@ HTTP/2.0相比1.1版本，增加了HTTP连接的多路复用，怎么理解呢�
 
 在HTTP2中为了支持多路复用，引入了Stream Frame这一结构，当多个HTTP请求使用同一个连接时，HTTP2会给每一个请求分配一个ID，然后将请求数据包装成一个个Stream Frame，丢给TCP连接传输。对于服务端，同一个HTTP请求的数据还是顺序传输的，当接收到一个Stream Frame后，根据头部的Length判断该包的大小，当读取结束时，开始进行整个包的解析。
 
-![image-20201219115329530](http://imgblog.mrdear.cn/uPic/image-20201219115329530_1608350009.png-default)
+![image-20201219115329530](http://res.mrdear.cn/uPic/image-20201219115329530_1608350009.png-default)
 
 那么还有个问题，怎么判断一个HTTP请求数据发送完毕了呢？该问题分为两部分，一是解析Header结束，二是整个请求结束，针对这种情况，Stream Frame的flag属性针对Header结束定义了**END_HEADERS**标识，针对整个流则特别定义了一个**END_STREAM**，因此服务端根据flag标识，能够确定下一步是该读取payload还是结束数据解析。
 

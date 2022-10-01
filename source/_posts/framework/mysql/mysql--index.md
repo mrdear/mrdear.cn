@@ -1,7 +1,7 @@
 ---
 title: MySQL -- 索引指南
 subtitle: MySQL关于索引的一些总结
-cover: http://imgblog.mrdear.cn/mrdearblog-mysql.png
+cover: http://res.mrdear.cn/mrdearblog-mysql.png
 author: 
   nick: 屈定
 tags:
@@ -16,35 +16,35 @@ updated: 2020-03-28 11:03:00
 
 ## 索引的组织结构
 在InnoDB下，索引文件与数据文件是合并在一起的，想象一下，一颗树，非叶子节点都是索引文件，叶子节点都是数据文件，从而构成一张完整的表数据，因此还有一种专业说法叫**索引组织表**。该模式下索引文件即数据文件，数据文件即索引文件，但是为了提高查询速度，必然会在逻辑上分为索引与数据两部分内容，索引大多数时候都是存放在内存中，当一个查询在索引中定位数据后，会去**磁盘**中加载对应的数据内容，因此一定程度上磁盘IO的次数成为了提高索引性能的关键点。因此极力避免磁盘IO的次数，是索引设计的一个导向标。
-![](http://imgblog.mrdear.cn/1577593728.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1577593728.png?imageMogr2/thumbnail/!70p)
 
 ### 索引的数据结构
 在了解数据结构前，需要了解索引的目地在于检索，二分搜索则是一种很有效的检索方式，二分搜索在检索过程中会遇到哪些问题？
 
 对于一颗普通的二叉树(34，22，89，5，23，77，91)，如下图所示，当树的深度为3时，其检索一个数最多需要三次比较。
-![](http://imgblog.mrdear.cn/1585370159.png?imageMogr2/thumbnail/!50p)
+![](http://res.mrdear.cn/1585370159.png?imageMogr2/thumbnail/!50p)
 如果树的深度变成了7，那么检索则需要七次比较，此时从对比角度，其性能退化成了链表。
-![](http://imgblog.mrdear.cn/1585370272.png?imageMogr2/thumbnail/!50p)
+![](http://res.mrdear.cn/1585370272.png?imageMogr2/thumbnail/!50p)
 
 为了解决树的深度太高的问题，出现了一种平衡二叉树，即每个节点的左子树对比右子树，节点高度差不能超过1，如下图所示，树的深度为5，节点数为31，对于动则几十万的数据表来说，平衡树仍然会导致树的深度很高。
-![](http://imgblog.mrdear.cn/1585370469.png?imageMogr2/thumbnail/!50p)
+![](http://res.mrdear.cn/1585370469.png?imageMogr2/thumbnail/!50p)
 
 为了解决上述问题，B树出现了，B树本质上可以理解为一颗平衡M叉树，M为每一个节点能够拥有的子节点数，M称为B树的阶。假设M为100，那么一个高度为3的B树，则大约可以容纳 100w的数据量，那么自然很适合存储索引，如下图所示，当要查找数据29时，第一步找到磁盘块1(17-35)，定位到P2，去磁盘块3(26，38)查找，定位到P2，去磁盘块8查找，找到数据。
 B树在定位数据上已经很棒了，但是对于范围类查找磁盘IO次数难以控制，比如查询13-75之间的所有数据，则需要从根节点开始不停的搜索，直到找到两边边界位置。
-![](http://imgblog.mrdear.cn/1585370824.png?imageMogr2/thumbnail/!50p)
+![](http://res.mrdear.cn/1585370824.png?imageMogr2/thumbnail/!50p)
 
 B+树是在此基础的优化，与B树最大的不同有两点。1：其叶子节点只存放数据，非叶子节点存放索引。2：非叶子节点的关键字也会同时存在在子节点中，并且是在子节点中所有关键字的最大 (或最小)，因此叶子节点之间使用双向链表连接。如下图所示结构。
 
-![](http://imgblog.mrdear.cn/1585371447.png?imageMogr2/thumbnail/!50p)
+![](http://res.mrdear.cn/1585371447.png?imageMogr2/thumbnail/!50p)
 
 **1. 为什么非叶子节点不能存放数据？**
 该问题本质上是为什么不能使用B树的结构。这里借用 [为什么 MySQL 使用 B+ 树 · Why's THE Design?](https://draveness.me/whys-the-design-mysql-b-plus-tree) 中的描述图。
-![](http://imgblog.mrdear.cn/1577590939.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1577590939.png?imageMogr2/thumbnail/!100p)
 B树的非叶子节点中会存放数据，因此每一次查询都必须从根节点开始，因为每一个节点上都可能会有数据，因此对于范围类型查询就会很吃力，磁盘IO次数会增加不少。其次由于节点中包含数据，一般情况下数据比索引会大很多，因此也不适合全部存放到内存，索引本身就会消耗掉一些磁盘IO，而B+树则改进了这些缺点，更加优化了索引定位后，再获取数据这一策略。
 
 **2. 叶子节点为什么使用双向链表？**
 对于B+树，其叶子节点使用双向链表关联起来，假设查询条件`where age > 5 and age < 9`，其中age存在索引，那么根据age查询到9这个节点后，其可以利用索引的有序性，直接通过双向链表进行范围查询，而不需要再次从根节点出发。
-![](http://imgblog.mrdear.cn/1577590950.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1577590950.png?imageMogr2/thumbnail/!100p)
 
 ## 索引的类型
 

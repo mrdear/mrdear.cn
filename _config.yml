@@ -166,10 +166,10 @@ offline:
   stripPrefix: public
   verbose: true
   runtimeCaching:
-      - urlPattern: /^https:\/\/imgblog\.mrdear\.cn
+      - urlPattern: /^https:\/\/res\.mrdear\.cn
         handler: networkOnly
         options:
-          origin: imgblog.mrdear.cn
+          origin: res.mrdear.cn
       - urlPattern: /^https:\/\/mrdear.cn\/$/
         handler: networkOnly
         options:

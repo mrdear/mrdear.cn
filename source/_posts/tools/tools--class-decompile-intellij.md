@@ -1,7 +1,7 @@
 ---
 title: IDEA插件 -- Class Decompile
 subtitle: 一款支持asm,javap,cfr反编译对应.class文件的插件
-cover: http://imgblog.mrdear.cn/idea.png
+cover: http://res.mrdear.cn/idea.png
 author: 
   nick: 屈定
 tags:
@@ -23,12 +23,12 @@ JB插件地址: [https://plugins.jetbrains.com/plugin/13914-class-decompile](htt
 
 ## 插件功能
 插件的使用很简单，对着Java，Kotlin等JVM上语言文件或者是class文件点击右键，选择`Show Decompile Code`，即可反编译对应的class文件，如下图所示：
-![](http://imgblog.mrdear.cn/1583656954.png?imageMogr2/thumbnail/!60p)
+![](http://res.mrdear.cn/1583656954.png?imageMogr2/thumbnail/!60p)
 
 ### Javap支持
 `javap`是JDK自带的反编译工具，因此支持需要依赖`External Tools`功能支持，如下图所示在对应菜单中配置javap命令入口，插件则会自动调用对应的javap指令进行反编译。
 
-![](http://imgblog.mrdear.cn/1583656067.png?imageMogr2/thumbnail/!60p)
+![](http://res.mrdear.cn/1583656067.png?imageMogr2/thumbnail/!60p)
 
 ## 反编译能做什么
 

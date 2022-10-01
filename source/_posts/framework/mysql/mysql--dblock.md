@@ -1,7 +1,7 @@
 ---
 title: MySQL--DB实现分布式锁思路
 subtitle: 利用DB实现一个分布式锁
-cover: http://imgblog.mrdear.cn/mrdearblog-mysql.png
+cover: http://res.mrdear.cn/mrdearblog-mysql.png
 author: 
   nick: 屈定
 tags:
@@ -29,7 +29,7 @@ CREATE TABLE `lock` (
 
 ## 悲观锁实现
 对于悲观锁业务中常见的操作有以下两种：
-![](http://imgblog.mrdear.cn/1570368096.png?imageMogr2/thumbnail/!35p)
+![](http://res.mrdear.cn/1570368096.png?imageMogr2/thumbnail/!35p)
 
 **针对A：**
 A场景当一台机器获取到锁后，其他机器处于排队状态，锁释放后其他机器才能够继续下去，这种应用层面解决是相当麻烦，因此一般使用DB提供的行锁能力，即`select xxx from xxx for update`。A场景一般都和业务强关联，比如库存增减，使用业务对象作为行锁即可。需要注意的是，该方案本质上锁压力还是在数据库上，当阻塞住的线程过多，且操作耗时，最后会出现大量锁超时现象。

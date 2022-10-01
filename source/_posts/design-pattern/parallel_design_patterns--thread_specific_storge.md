@@ -1,7 +1,7 @@
 ---
 title: 并行设计模式--Thread Specific Storge模式
 subtitle: 关于Thread Specific Storge模式的一点探讨，涉及ThreadLocal与ObjectPool
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:
@@ -34,7 +34,7 @@ ThreadLocal策略比较简单，其原理是在`Thread`类中私有化一个属�
   }
 ```
 上述代码在内存中的结构如下，其对象本身`ThreadLocal`会作为`ThreadLocalMap`的key存储。
-![](http://imgblog.mrdear.cn/1526516764.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1526516764.png?imageMogr2/thumbnail/!100p)
 既然是Map结构，那么会有几个问题：
 **ThreadLocalMap是如何解决hash冲突的？**
 `ThreadLocalMap`是一个简单的Map实现，其没有构造对应的冲突链，而是当遇到冲突时**顺延到下一个槽位**，也就是常说的开放地址法，具体逻辑可以在`java.lang.ThreadLocal.ThreadLocalMap#set`中看到。
@@ -91,7 +91,7 @@ ThreadLocal策略比较简单，其原理是在`Thread`类中私有化一个属�
 
 ### 对象池的控制原理
 以`apache common pool2`为例，其`GenericObjectPool`的实现原理主要是`ConcurrentMap`与`LinkedBlockingDeque（非JDK版本）`，如下图所示：
-![](http://imgblog.mrdear.cn/1526557246.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1526557246.png?imageMogr2/thumbnail/!100p)
 对象池本质上是一个**集生产与消费，且支持可回收的工厂**。生产则对应着用户获取对象时，如果当前`idleObjects`中不存在则主动去创建对象，消费则对应着Client的`borrowObject`操作，可回收则是`returnObject`还回池中操作。作为工厂其由责任对生产出的产品个数与消费能力的变化进行调整，因此还需要有一个后台线程做这件事，对应着是`org.apache.commons.pool2.impl.BaseGenericObjectPool.Evictor`类定时清理策略。
 
 对应的核心操作解析：

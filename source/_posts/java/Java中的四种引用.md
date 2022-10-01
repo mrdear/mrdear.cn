@@ -1,7 +1,7 @@
 ---
 title: Java--Java中的四种引用
 subtitle: 学习Java中四种引用的异同.
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -13,7 +13,7 @@ updated: 2020-05-04 09:58:00
 ---
 
 Java中存在四种引用,StrongReference(强引用) 、SoftReferenc(软引用) 、WeakReferenc(弱引用)、PhantomReference(虚引用).虽然不常用,但是对于理解Java的回收等级还是很有帮助的,一句话来说这些引用只是不同回收等级的一种表现形式.
-![](http://imgblog.mrdear.cn/1509454563.png)
+![](http://res.mrdear.cn/1509454563.png)
 
 - - - - -
 ### StrongReference(强引用)
@@ -165,7 +165,7 @@ public abstract class Reference<T> {
 }
 ```
 `Reference`有个内部类`java.lang.ref.Reference.ReferenceHandler`，其继承了Thread类，会在类加载阶段创建一个高优先级守护线程，如下图所示，通过Debug可以很容易发现该线程。GC在完成回收时，会把被回收对象加入到`ReferenceQueue`中，然后该线程会去扫描`ReferenceQueue`队列，获取被回收对象后，执行自定义清理方法，这样完成了整个通知流程。
-![](http://imgblog.mrdear.cn/1550536750.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1550536750.png?imageMogr2/thumbnail/!100p)
 
 
 第二个问题，`WeakHashMap`是如何清理的？`WeakHashMap`主要在所有public方法中都调用了`expungeStaleEntries`进行主动清理，该方法会扫描引用队列，发现对象后，则将对应的value置为null，从而协助GC。从这里来看，如果声明WeakHashMap后不再访问，实际上还是会有内存泄漏风险，而并不是自动回收不会出现泄漏。

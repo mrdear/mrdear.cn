@@ -1,7 +1,7 @@
 ---
 title: Spring MVC--返回值的解析
 subtitle: 关于Spring MVC是如何决定返回形式的分析
-cover: http://imgblog.mrdear.cn/springmvc.png
+cover: http://res.mrdear.cn/springmvc.png
 author: 
   nick: 屈定
 tags:
@@ -32,7 +32,7 @@ public interface HandlerMethodReturnValueHandler {
 }
 ```
 `HandlerMethodReturnValueHandler`的继承结构大概如下,由于子类众多,所以只列出了几个:
-![](http://imgblog.mrdear.cn/1523765027.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523765027.png?imageMogr2/thumbnail/!100p)
 
 从功能上来分大概会有两类,一种是直接写回数据不需要经过视图解析器`ViewResolver`,其表现是继承了`AbstractMessageConverterMethodProcessor`抽象模板类,一种则是封装到`ModelAndViewContainer`中,转交给视图解析器后再返回,这里的分析重点关注前者.
 

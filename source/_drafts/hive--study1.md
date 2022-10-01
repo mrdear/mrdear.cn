@@ -1,7 +1,7 @@
 ---
 title: Hive -- 从日志分析学习Hive（一）
 subtitle: 从Nginx日志分析案例来阐述Hive的一些知识点
-cover: http://imgblog.mrdear.cn/mrdearblog-hive.png
+cover: http://res.mrdear.cn/mrdearblog-hive.png
 author: 
   nick: 屈定
 tags:

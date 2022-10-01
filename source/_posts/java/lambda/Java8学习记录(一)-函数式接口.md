@@ -1,7 +1,7 @@
 ---
 title: Java8 Lambda（一）-函数式接口
 subtitle: Java8学习记录(一)-函数式接口
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:

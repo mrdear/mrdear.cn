@@ -1,7 +1,7 @@
 ---
 title: 工具 -- nginx实现cors-anywhere
 subtitle: 自己开放的一个cors域名,可以很方便反向代理
-cover: http://imgblog.mrdear.cn/zaolunzi2.png
+cover: http://res.mrdear.cn/zaolunzi2.png
 author: 
   nick: 屈定
 tags:

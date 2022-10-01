@@ -1,7 +1,7 @@
 ---
 title: 并行设计模式--Future、Callback、Promise
 subtitle: 关于Future，Callback，Promise的一些原理分析
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:

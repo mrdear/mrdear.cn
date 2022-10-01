@@ -1,7 +1,7 @@
 ---
 title: 实践 -- 项目日志配置经验分享
 subtitle: 项目中日志配置相关经验分享
-cover: http://imgblog.mrdear.cn/mrdear_logger.png
+cover: http://res.mrdear.cn/mrdear_logger.png
 author: 
   nick: 屈定
 tags:
@@ -23,7 +23,7 @@ Java中日志生态是比较乱的，因此在项目中如何使用日志成了�
 那么最佳实践自然是一套门面，一套实现，其他都为桥接，如下图所示，这种方式下结构非常清晰，且日志实现类可以随时更换，不会影响到现有应用，目前主流组合有 slf4j + logback + 各种桥接，slf4j + log4j2 + 各种桥接，配置时可以作为参考。
 也因此日志该如何配置即变成了如何保证应用中有且仅有一套门面，一套实现日志框架。
 
-![](http://imgblog.mrdear.cn/1585407394.png?imageMogr2/thumbnail/!50p)
+![](http://res.mrdear.cn/1585407394.png?imageMogr2/thumbnail/!50p)
 
 ## 门面日志以及桥接的实现原理
 在分析之前，我们大致可以想象到，门面日志相当于定义了一套输出日志的标准API，桥接类相当于复写了对应实现类，然后在内部将对应日志行为转接到slf4j，接下来以slf4j+log4j2为例，描述这一流程。

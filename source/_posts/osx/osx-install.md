@@ -1,7 +1,7 @@
 ---
 title: OSX--OSX+WIN10双系统台式机组装经验
 subtitle: 黑苹果安装的一些经验
-cover: http://imgblog.mrdear.cn/mrdearblog-osx.png
+cover: http://res.mrdear.cn/mrdearblog-osx.png
 author: 
   nick: 屈定
 tags:
@@ -109,7 +109,7 @@ EFI使用：[https://github.com/SuperNG6/MSI-B360-10.14.3-EFI](https://github.co
 ### 配置OSX
 加上黑苹果，目前有三台OSX设备，因此装机初始化我是选择依赖于`brew`，启动OSX之后首先安装`brew`，然后执行初始化脚本即可。
 由于脚本涉及到好多私人帐号信息，这里不放出了，大概思路是配置要安装的软件，然后安装之后扫描本地是否有配置脚本，有的话则执行配置脚本来配置。
-![](http://imgblog.mrdear.cn/1550397633.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1550397633.png?imageMogr2/thumbnail/!100p)
 
 **清单1: brew配置脚本示例**
 ```sh
@@ -266,7 +266,7 @@ Scroll Lock        46 00
 这里使用到了第三方软件，安装后即可调节。
 
 软件地址： [https://github.com/JoniVR/MonitorControl](https://github.com/JoniVR/MonitorControl)
-![](http://imgblog.mrdear.cn/1550843545.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1550843545.png?imageMogr2/thumbnail/!100p)
 
 目前用起来挺完美的，后续有问题会继续更新该文章。
 

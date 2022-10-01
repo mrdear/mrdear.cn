@@ -1,7 +1,7 @@
 ---
 title: 造轮子--Excel报表工具
 subtitle: 帮助业务上快速导出报表的一款工具
-cover: http://imgblog.mrdear.cn/zaolunzi2.png
+cover: http://res.mrdear.cn/zaolunzi2.png
 author: 
   nick: 屈定
 tags:
@@ -53,7 +53,7 @@ public class UserWithAnnotation {
 ```
 
 ### 单张表
-![](http://imgblog.mrdear.cn/1530326628.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1530326628.png?imageMogr2/thumbnail/!100p)
 
 **export**
 
@@ -93,11 +93,11 @@ public class UserWithAnnotation {
 ### 多张表+自定义header
 sheet1最顶部有自定义的title
 
-![](http://imgblog.mrdear.cn/1530326869.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1530326869.png?imageMogr2/thumbnail/!100p)
 
 sheet2为普通表格
 
-![](http://imgblog.mrdear.cn/1530326912.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1530326912.png?imageMogr2/thumbnail/!100p)
 
 **export**
 由于自定义的title往往非常复杂且多变，很难做到通用，因此这里是直接抛出一个钩子，可以自己实现自己想要的任何操作。

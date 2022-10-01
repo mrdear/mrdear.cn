@@ -1,7 +1,7 @@
 ---
 title: Java学习记录--自动拆箱与装箱
 subtitle: 关于拆箱与装箱的深入分析.
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:

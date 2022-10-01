@@ -1,7 +1,7 @@
 ---
 title: 读书笔记 -- 正则闯关记录
 subtitle: 读正则指引过程中闯关RegexGolf的记录。
-cover: http://imgblog.mrdear.cn/mrdearblog-regex.png
+cover: http://res.mrdear.cn/mrdearblog-regex.png
 author: 
   nick: 屈定
 tags:

@@ -100,7 +100,7 @@ body {
     left: 0;
     width: 100%;
     background-color: transparent;
-    height: $nav-height + $pad * 2;
+    height: calc($nav-height + $pad * 2);
     transition: height $transition;
     z-index: $z-index--top;
 
@@ -153,7 +153,7 @@ body {
 .page__info {
     position: absolute;
     left: 0;
-    top: calc(50% + #{($nav-height + $pad * 2) / 2});
+    top: calc(50% + (calc($nav-height + $pad * 2) / 2));
     transform: translateY(-50%);
     display: block;
     width: 100%;

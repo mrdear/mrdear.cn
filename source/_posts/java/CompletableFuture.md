@@ -1,7 +1,7 @@
 ---
 title: Java -- 线程池使用不当引发的死锁
 subtitle: 由于CompletableFuture与线程池混合使用不当,造成了线程池的死锁现象
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -18,7 +18,7 @@ updated: 2021-02-20 22:54:04
 
 主要业务是发起DAG图的执行，如下图所示，用户发起一个DAG任务请求，该请求到达Planner后，异步去启动一个DAG任务，当执行到DAG时，该DAG会异步遍历整个图，然后阻塞的获取最后结果。
 
-![image-20210217160324691](http://imgblog.mrdear.cn/uPic/image-20210217160324691_1613832332.png-default)
+![image-20210217160324691](http://res.mrdear.cn/uPic/image-20210217160324691_1613832332.png-default)
 
 原有业务系统太过于复杂，因此我将相关逻辑提取了出来，简述为以下代码表示，其中关键链路如下：
 
@@ -72,7 +72,7 @@ public class Test {
 
 该代码在运行一段时间后，发生了死锁，具体现象为：ThreadPool中queue在不停的累计，但所有的core thread全部处于WAITING状态。也就是说线程池中的每一个线程都在等待某一个信号，从而导致queue中的任务无法消费。
 
-![image-20210220171444574](http://imgblog.mrdear.cn/uPic/image-20210220171444574_1613832332.png-default)
+![image-20210220171444574](http://res.mrdear.cn/uPic/image-20210220171444574_1613832332.png-default)
 
 ## 问题原因
 

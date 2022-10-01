@@ -1,7 +1,7 @@
 ---
 title: 读书笔记 -- 《Maven实战》
 subtitle: 读《Maven实战》了解的知识，加深了对Maven配置的了解以及jar的查找流程
-cover: https://imgblog.mrdear.cn/maven.png
+cover: https://res.mrdear.cn/maven.png
 author: 
   nick: 屈定
 tags:
@@ -32,7 +32,7 @@ updated: 2022-02-01 20:36:38
 - 查找id=central仓库，该过程会使用servers做认证，使用mirrors做拉取地址替换
 - 根据release以及snapshot的配置，查找其他仓库，该过程同样使用servers以及mirrors做认证以及地址替换
 
-![image-20220201211136346](https://imgblog.mrdear.cn/uPic/image-20220201211136346_1643721096.png)
+![image-20220201211136346](https://res.mrdear.cn/uPic/image-20220201211136346_1643721096.png)
 
 ## 如何配置合理？
 

@@ -1,7 +1,7 @@
 ---
 title: Mockito -- Mockito原理
 subtitle: 了解Mockito的原理，为了更加自由的mock对象
-cover: http://imgblog.mrdear.cn/uPic/Mockito.png-default
+cover: http://res.mrdear.cn/uPic/Mockito.png-default
 author: 
   nick: 屈定
 tags:
@@ -38,7 +38,7 @@ User user = mockService.queryUser("xxx");
 Assertions.assertEquals("屈定", user.getOwner());
 ```
 简单来看，我们可以猜想到所谓的Mock测试技术原理应是预先定义好该方法返回值，使用AOP技术拦截对应的方法执行，当拦截直接返回对应的值，从而达到Mock效果，如下图所示：
-![](http://imgblog.mrdear.cn/uPic/mockito_simple_struct.png-default "")
+![](http://res.mrdear.cn/uPic/mockito_simple_struct.png-default "")
 
 问题回到Mockito，可以提出以下三个问题为思考的切入点：
 - Mockito是如何创建AOP对象的
@@ -76,7 +76,7 @@ public <T> T mock(Class<T> typeToMock, MockSettings settings) {
 对应细节都在`createMock(...)`方法中，这里就不贴代码，直接说结论。Mockito内部有一套插件机制，其中生成代理类对应`MockMaker`扩展点，默认实现为`org.mockito.internal.creation.bytebuddy.SubclassByteBuddyMockMaker`，即用ByteBuddy技术生成对应代理类，`ByteBuddy`博主了解的不是很多，但根据`SubclassBytecodeGenerator`处的源码可以发现其本质是使用**继承**动态创建需要代理类的子类，然后复写对应方法达到拦截目的，因此也说明了Mockito不支持final类，不支持static，private等方法mock的原因，不过这个算不上缺点，private方法外部根本不用关心，因此无需考虑mock，static方法作为全局使用的工具类型方法，如果也需要mock那么说明存在坏代码的味道，最好的做法是重构，而不是想方设法的mock。另外Mockito提供了`InlineByteBuddyMockMaker`实现类，该类利用**Instrumentation API**特性实现了静态方法，私有方法，final方法等拦截，更加强大，该特性还在试验中，感兴趣的可以尝试。
 
 `ByteBuddy`代理类默认拦截器为`org.mockito.internal.creation.bytebuddy.MockMethodInterceptor`类。该类面向ByteBuddy提供的调用入口，内部会将参数包装后，给到真正的Mock拦截器`org.mockito.invocation.MockHandler`，进而决定返回或者插桩定义。`MockHandler`的实现可以理解为下图结构，
-![](http://imgblog.mrdear.cn/uPic/mockito_method_handler.png-default "")
+![](http://res.mrdear.cn/uPic/mockito_method_handler.png-default "")
 
 **3.**Mockito如何保证线程安全
 

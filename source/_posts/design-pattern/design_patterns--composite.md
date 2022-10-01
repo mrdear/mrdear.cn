@@ -1,7 +1,7 @@
 ---
 title: 设计模式--组合模式的思考
 subtitle: 关于组合模式的一些思考,不仅仅是会写出设计模式的代码,更重要的是理解其背后的设计
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:
@@ -99,7 +99,7 @@ public interface SqlNode {
 }
 ```
 其有如下子类(子类太多,省略了一些),按照这些子类再翻译下上面的sql
-![](http://imgblog.mrdear.cn/1522562685.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1522562685.png?imageMogr2/thumbnail/!100p)
 ```txt
 -- select  MixedSqlNode
     -- select  StaticTextSqlNode
@@ -110,7 +110,7 @@ public interface SqlNode {
         -- <foreach item="list" ..... ForEachSqlNode 内部的contents为MixedSqlNode
             -- #{item} StaticTextSqlNode
 ```
-![](http://imgblog.mrdear.cn/1522563076.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1522563076.png?imageMogr2/thumbnail/!100p)
 
 从结构上来说,非叶子节点,例如`IfSqlNode`,`ForEachSqlNode`是可以一直嵌套的,所实现的关键就是`SqlNode`接口与`MixedSqlNode`实现类.
 从客户端角度来说里面的节点这些都是不关心的,其只需要拿到`SqlNode rootSqlNode`实例,然后调用下`rootSqlNode.apply(context)`即可获取到自己想要的sql原型.
@@ -118,7 +118,7 @@ public interface SqlNode {
 
 ## SpringMVC中的组合模式
 SpringMVC中对参数的解析使用的是`HandlerMethodArgumentResolver`接口,该类有一个实现类为`HandlerMethodArgumentResolverComposite`,该类为一个组合类,其结构如下:
-![](http://imgblog.mrdear.cn/1524061073.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1524061073.png?imageMogr2/thumbnail/!100p)
 其本身实现了`HandlerMethodArgumentResolver`接口,又持有其他`HandlerMethodArgumentResolver`对象,那么这种设计就是组合模式设计.,在它的实现方法中是对其他组合模式中的节点进行循环处理,从而选择最适合的一个.
 ```java
 private HandlerMethodArgumentResolver getArgumentResolver(MethodParameter parameter) {
@@ -141,7 +141,7 @@ private HandlerMethodArgumentResolver getArgumentResolver(MethodParameter parame
 Netty中的`CompositeByteBuf`使用了组合设计模式，但是其有点特殊，Netty所描述的零拷贝是应用层面上不做任意的数据复制，而是使用组合的方式拷贝，比如有两个Buf，`headByteBuf`与`tailByteBuf`，那么现在的需求是把两个合在一起，很自然的想到先创建一个新的buf，然后把`headByteBuf`复制进去，再把`tailByteBuf`复制进去，这个过程中涉及到两次应用层面的拷贝，自然不是高效的做法，那么`CompositeByteBuf`的实现是什么样子的呢？
 
 `CompositeByteBuf`的意思是组合，他所采取的方式是把`headByteBuf`与`tailByteBuf`组合起来，对外相当于一个新的Buf，这样的方式不会产生任何应用层面的数据拷贝，原理如下示意图所示：
-![](http://imgblog.mrdear.cn/1531922378.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1531922378.png?imageMogr2/thumbnail/!100p)
 
 那么这也是一种组合设计模式的思想，更可以说是一种妙用。
 

@@ -1,7 +1,7 @@
 ---
 title: Java--CAS操作分析
 subtitle: Java中有关CAS操作的理解与分析
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -18,7 +18,7 @@ CAS操作在Java中的应用很广泛,比如`ConcurrentHashMap`,`ReentrantLock`�
 
 ## JMM
 一般的理解Java内存模型为主内存与工作内存,如下图所示:
-![Java内存模型](http://imgblog.mrdear.cn/1522837030.png?imageMogr2/thumbnail/!100p)
+![Java内存模型](http://res.mrdear.cn/1522837030.png?imageMogr2/thumbnail/!100p)
 工作内存是为了提高效率,在内部缓存了主内存中的变量,避免每次都要去主内存拿,但是变量被修改之后写回主内存的时机是不可控的,因此就会带来并发下变量一致性问题.对此Java提供了以下关键字:
 >  volatile: 保证多线程之间的可见性,可以理解为其操作都是直接操作主内存的变量,每次读直接从主内存读,每次修改完立即写回主内存.
 >  synchronized: 提供的锁机制在进入同步块时从主内存读取变量,同步块结束时写回变量到主内存.

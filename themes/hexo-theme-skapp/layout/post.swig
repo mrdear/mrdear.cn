@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block pagejs %}
-    {{ js('js/page/post.js') }}
+    {{ js('/js/page/post.js') }}
 {% endblock %}
 
 {% block other %}

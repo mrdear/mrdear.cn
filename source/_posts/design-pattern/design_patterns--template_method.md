@@ -1,7 +1,7 @@
 ---
 title: 设计模式--模板方法模式的思考
 subtitle: 关于模板方法模式的一些思考,不仅仅是会写出设计模式的代码,更重要的是理解其背后的设计之道.
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:
@@ -15,11 +15,11 @@ updated: 2018-04-27 11:04:27
 
 ## 模板方法模式
 模板方法模式可以说是抽象类的一种特性,可以定义抽象(abstract)方法与常规方法,抽象方法延迟到子类中实现.因此标准的模板方法一般是一个抽象类+具体的实现子类,抽象类(AbstractClass)负责整个执行流程的定义,而子类(ConcreteClass)负责某一具体流程的实现策略,类图如下:
-![](http://imgblog.mrdear.cn/1521982796.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1521982796.png?imageMogr2/thumbnail/!100p)
 
 ## Mybatis中的模板方法模式
 实际中由于模板方法很好的兼容性,因此经常与其他设计模式混用,并且在模板类之上增加一个接口来提高系统的灵活性.因此模板类经常作为中间层来使用,比如Mybatis的`Executor`的设计,其中在`Executor`与具体实现类之间增加中间层`BaseExecutor`作为模板类.
-![](http://imgblog.mrdear.cn/1521983235.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1521983235.png?imageMogr2/thumbnail/!100p)
 
 作为模板类的`BaseExecutor`到底做了什么呢?举一个代码比较短的例子,下面的代码是Mybatis缓存中获取不到时执行去DB查询所需要的结果,顺便再放入缓存中的流程.其中`doQuery()`方法便是一个抽象方法,其被延迟到子类中来实现.而缓存是所有查询都需要的功能,因此每一个查询都会去执行.
 ```java
@@ -119,10 +119,10 @@ public class InstrumentedHashSet<E> extends HashSet<E> {
 
 随后在`第17条: 要么为继承而设计,并提供说明文档,要么就禁止继承`指出为继承而设计是一种可取的行为,在我看来模板方法设计模式就是一种为继承而设计的方式.模板方法设计模式主要有两点本意:
 1.尽早的使用模板类,也就是Abstract或者Base开头的类来让实现类分叉,分叉的越早,对于结构上的理解就越清晰,比如下方Spring MVC对URL的处理,可以很清晰的看到一种处理是定位到具体的执行方法`AbstractHandlerMethodMapping`,一种是定位到另一个URL,可能是静态资源,可能是其他页面`AbstractUrlHandlerMapping`.
-![](http://imgblog.mrdear.cn/1524840843.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1524840843.png?imageMogr2/thumbnail/!100p)
 
 2.降低子类的实现接口的复杂度,主要是模板类中实现了接口的方法,然后把不变的固定,变化的使用抽象接口延迟到子类中,让子类的任务更加清晰合理.比如`Mybatis的BaseExector`就通过`doQuery()`把变化的查询步骤延迟到了子类中实现.另外有一种模板类是单纯的提供代码复用,其可以当成是不含有业务属性的一个方法库,提供对所有子类都有用的公共方法.这个我在我公司订单系统中采用,如下图所示(这里只列出一部分,实际上最下层的Service还会承担更多角色),`AbstractOrderService`只是单纯的提供数据获取,比如获取用户信息,获取优惠券信息等方法,具体的创建逻辑在子类中,比如`BizVipOrderService`创建vip订单,`BizResearchOrderService`创建研究员订单.当子类有通性是则可以在上层增加专属抽象类来提前分叉,最终保证每一个订单创建走的流程都是可控的,当要修改某一个订单的规则时,比如vip订单可以使用优惠券,则只需要改其子类而不用担心对其他的订单类型创建有影响.
 最后通过组合类提供对外的入口访问.降低外部操作的复杂性.另外最底层子类也可以实现其他接口,比如观察者来实现状态更改的通知处理.
-![](http://imgblog.mrdear.cn/1524841389.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1524841389.png?imageMogr2/thumbnail/!100p)
 
 那么**这种设计就是为继承而设计**,这种设计出来的类有一个特点,通常是以`Abstract/Base`开头,其就是为了继承,而不想让其他人实例化自身.最后继承作为面向对象的一大特性,掖着不用还能叫面向对象编程吗?

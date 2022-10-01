@@ -1,7 +1,7 @@
 ---
 title: Java -- 字符串常量池介绍
 subtitle: 关于Java 字符串常量池一些常见问题以及自己的理解
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -21,7 +21,7 @@ JVM所使用的内存中，字符串作为一种特殊的基础数据类型，�
 
 ### String Pool是什么结构
 `String Pool`在JDK当中是一个类似HashTable的结构，其特点线程安全，不可扩容，但是可以rehash
-![](http://imgblog.mrdear.cn/1584239599.png?imageMogr2/thumbnail/!60p)
+![](http://res.mrdear.cn/1584239599.png?imageMogr2/thumbnail/!60p)
 
 ### String Pool存在什么区域
 JDK6之前，`String Pool`存放在永久代，因此大小受到永久代的限制，默认1009大小，且不可更改。从JDK7开始`String Pool`转移到了堆内存当中，默认大小为60013(用素数降低冲突概率)，此时可以通过`-XX:StringTableSize`参数进行控制大小，可以使用`-XX:+PrintStringTableStatistics`参数，让JVM退出时打印出常量池使用情况。

@@ -1,7 +1,7 @@
 ---
 title: Spring -- Cache原理
 subtitle: 描述Spring中Cache的使用以及对应的处理原理
-cover: http://imgblog.mrdear.cn/mrdearblog-springboot.png
+cover: http://res.mrdear.cn/mrdearblog-springboot.png
 author: 
   nick: 屈定
 tags:
@@ -22,7 +22,7 @@ Spring Cache相关实现逻辑都在Spring Context的`org.springframework.cache`
 
 ### 注册缓存管理器
 Spring Cache提供的缓存管理主要分为`CacheManager`用于管理多个缓存,以及`Cache`用户具体缓存存放实现，结构如下图所示。
-![](http://imgblog.mrdear.cn/1569655100.png?imageMogr2/thumbnail/!50p)
+![](http://res.mrdear.cn/1569655100.png?imageMogr2/thumbnail/!50p)
 
 关于`CacheManager`的配置主要有基于Spring Boot的自动配置类`CacheAutoConfiguration`，用户可以自定义`CacheManagerCustomizer`往缓存管理器中实例化具体缓存类，如下图所示，该配置会自动选择缓存的实现，然后在实例化前调用对应的`CacheManagerCustomizer`执行用户业务逻辑。
 ```java
@@ -85,7 +85,7 @@ Spring Cache提供了四个Annotation方便开发人员使用缓存，而不建�
 ```
 
 那么到这里，Spring Cache大致工作原理可以猜测出来大概，我们可以简单的理解为下图流程，然后再深入具体分析案例加深理解。
-![](http://imgblog.mrdear.cn/uPic/spring-cache-visit.png)
+![](http://res.mrdear.cn/uPic/spring-cache-visit.png)
 
 ### 实现原理
 由上述流程可以得到，Spring Cache主要有CacheManager负责管理类缓存，由CacheInterceptor使用AOP方式来实现缓存，因此实现原理从这两个方面入手。
@@ -95,10 +95,10 @@ Spring Cache提供了四个Annotation方便开发人员使用缓存，而不建�
 - 缓存实现类：比如ConcurrentMapCacheManager，CaffeineCacheManager等缓存直接实现
 - 缓存组合类：比如CompositeCacheManager，其利用组合模式组合多个缓存，比如分布式缓存再套一层本地缓存，就可以用该类实现
 - 缓存代理以及装饰类：比如TransactionAwareCacheManagerProxy，TransactionAwareCacheDecorator，其让缓存行为感知到当前事务，在事务行为之后，执行对应缓存逻辑。
-![](http://imgblog.mrdear.cn/uPic/V93gDC.png)
+![](http://res.mrdear.cn/uPic/V93gDC.png)
 
 **CacheManager**的结构也很好理解，所谓的Manager本质上是一个K-Cache的Map，也就是一个Manager会对应多个缓存，该多个缓存都是由同一个缓存构造器构造而来，所以也可以理解为Manager管理的是具有相同特点的一类缓存，以`CaffeineCacheManager`为例，其数据结构如下：
-![](http://imgblog.mrdear.cn/uPic/spring-cache-manager.png "")
+![](http://res.mrdear.cn/uPic/spring-cache-manager.png "")
 
 #### CacheInterceptor
 Spring注册缓存管理器后，需要对指定Annotation注解方法进行拦截并执行缓存逻辑，该套实现方案依赖AOP，关于AOP可以参考我另一篇文章[关于IoC与AOP的一些理解
@@ -108,7 +108,7 @@ Spring注册缓存管理器后，需要对指定Annotation注解方法进行拦�
 - CacheInterceptor：要缓存代理类，执行拦截的入口
 - CacheOperationSource：被缓存注解标识的方法，该类自动配置时收集了所有被Cache相关注解标注的方法
 - CacheOperation：每一个注解针对的缓存操作，比如CachePut针对CachePutOperation类
-![](http://imgblog.mrdear.cn/uPic/spring-cache-interceptor.png "")
+![](http://res.mrdear.cn/uPic/spring-cache-interceptor.png "")
 
 其中`CacheInterceptor`拦截后，将调用方法进行封装，转到`CacheAspectSupport#execute()`中，该方法也是整个缓存执行到的核心逻辑。
 

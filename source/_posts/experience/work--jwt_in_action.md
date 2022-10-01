@@ -1,7 +1,7 @@
 ---
 title: 实践 -- JWT实战总结
 subtitle: 公司使用JWT替换现有Session登录机制的经验分享.
-cover: http://imgblog.mrdear.cn/1522294160.png
+cover: http://res.mrdear.cn/1522294160.png
 author: 
   nick: 屈定
 tags:
@@ -38,7 +38,7 @@ Token为了保证其可靠性,因此必须有签名串并且还需要HTTPS防止
 
 ### 如何与现有结构兼容?
 兼容实际上判断有没有下发Token,没有则使用原本Session的验证,在验证成功后下发Token,保证下次请求可以使用Token验证,那么这样跑一段时间则能保证绝大部分活跃用户切换到了Token流程.
-![](http://imgblog.mrdear.cn/1522253886.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1522253886.png?imageMogr2/thumbnail/!100p)
 
 ## 旧Redis如何清理?
 旧Redis中存储着大量key为UUID并且没有失效时间的字符串,清理只能扫描所有的key,然后判断是不是UUID的格式,判断是否有失效时间,没有则删除.那么会有以下问题

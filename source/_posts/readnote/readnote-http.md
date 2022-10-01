@@ -1,7 +1,7 @@
 ---
 title: 读书笔记 -- 透视HTTP协议
 subtitle: 极客时间透视HTTP协议读书笔记
-cover: http://imgblog.mrdear.cn/uPic/blog_http.png-default
+cover: http://res.mrdear.cn/uPic/blog_http.png-default
 author: 
   nick: 屈定
 tags:

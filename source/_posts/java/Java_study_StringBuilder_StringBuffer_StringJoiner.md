@@ -1,7 +1,7 @@
 ---
 title: Java--StringBuilder,StringBuffer,StringJoiner
 subtitle: java.util源码阅读系列,阅读中查漏补缺巩固自己的基础知识.
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -19,7 +19,7 @@ updated: 2018-02-12 09:02:56
 ### 简介
 StringBuilder,StringBuffer三个类在平时工作中很常用,因此详细了解下还是很必须的,由类图可以很清晰的得到其底层都是基于char[]数组的存储,基于数组存储必然会遇到与List集合一样的扩容问题,那么这两个类可以理解为专为字符定制的List集合(实际上与List也非常相似).其中`AbstractStringBuilder`作为BaseParent其封装了很多通用的操作,比如最麻烦的扩容操作,掌握`StringBuilder,StringBuffer`基本上只要了解`AbstractStringBuilder`就好了.
 另外`StringJoiner`是Java8所提供的的一个字符串工具类,从类图来看和其他的类都没关系,其内部只是对StringBuilder的一种封装,便于更加轻松地连接字符串.
-![](http://imgblog.mrdear.cn/1518444191.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1518444191.png?imageMogr2/thumbnail/!100p)
 
 ### AbstractStringBuilder
 `AbstractStringBuilder`是提供字符串连接的核心,其成员变量有`value: char[]`存储容器,`count: int`实际字符串大小,int类型也决定了最大长度不能超过`Integer.MAX_VALUE`,实际上代码中最大长度定义的是`Integer.MAX_VALUE - 8`,不知道为什么减8.....

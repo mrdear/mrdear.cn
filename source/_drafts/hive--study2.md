@@ -1,7 +1,7 @@
 ---
 title: Hive -- 从日志分析学习Hive（二）
 subtitle: 从Nginx日志分析案例来阐述Hive的一些知识点
-cover: http://imgblog.mrdear.cn/mrdearblog-hive.png
+cover: http://res.mrdear.cn/mrdearblog-hive.png
 author: 
   nick: 屈定
 tags:
@@ -58,7 +58,7 @@ hive.error.on.empty.partition=false #空分区产生，是否报异常
 
 ### 动态分区的原理
 动态分区的隐藏条件是**根据分区字段作为中间结果的分区输出条件**，举个例子，在上述导入数据的SQL中，当执行完`select xx from ods_mrdear_access_src_log DISTRIBUTE BY dt`时所产生的临时结果数据已经是分区后的结果，如下所示：
-![](http://imgblog.mrdear.cn/1541318893.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1541318893.png?imageMogr2/thumbnail/!100p)
 然后利用`MoveOperator`从临时目录移动到最终表空间下，需要合并的话还会执行`MergeOperator`把多个结果集合并成一个，完成动态分区。
 
 
@@ -151,7 +151,7 @@ STAGE PLANS:
         ListSink
 ```
 转换为图则如下：
-![](http://imgblog.mrdear.cn/1541236387.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1541236387.png?imageMogr2/thumbnail/!100p)
 
 ## Map以及Reduce数量
 在Hive中可以使用其提供的参数来控制Map以及Reduce的任务数量，从而针对不同的需求最大化性能。

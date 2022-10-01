@@ -1,7 +1,7 @@
 ---
 title: Spring Boot -- 如何获取已加载的JAR文件流
 subtitle: Spring Boot获取Fat Jar内部的依赖包
-cover: http://imgblog.mrdear.cn/mrdearblog-springboot.png
+cover: http://res.mrdear.cn/mrdearblog-springboot.png
 author: 
   nick: 屈定
 tags:
@@ -39,7 +39,7 @@ file:/Users/quding/.m2/repository/org/apache/commons/commons-lang3/3.7/commons-l
 ```txt
 file:/Users/quding/workspace/git/jar-mvn1/target/jar-mvn1-1.0-SNAPSHOT.jar
 ```
-![](http://imgblog.mrdear.cn/1552829550.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1552829550.png?imageMogr2/thumbnail/!100p)
 
 ### 打包成war运行
 写了个接口，返回值是一个具体的文件路径，原因也很简单，因为Tomcat在启动一个webapp时会将对应的war解压，然后针对解压后的路径使用一个单独的类加载器进行加载。
@@ -51,7 +51,7 @@ file:/Users/quding/workspace/git/jar-mvn1/target/jar-mvn1-1.0-SNAPSHOT.jar
 ```
 ### 打包成fat jar
 fat jar是Spring Boot引入的一种新格式，其打包后的结构与war包比较类似，但是可以直接执行并不需要先解压再加载，打包后类似目录如下：
-![](http://imgblog.mrdear.cn/1552834775.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1552834775.png?imageMogr2/thumbnail/!100p)
 1. BOOT-INF/classes  -- 用户代码
 2. BOOT-INF/lib  --依赖第三方架包
 3. org/springframewora/boot/loader   -- Fat jar启动核心，后续会分析。

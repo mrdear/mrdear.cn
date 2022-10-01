@@ -1,7 +1,7 @@
 ---
 title: 造轮子--Command Search Alfred
 subtitle: 利用alfred写的常用命令搜索插件
-cover: http://imgblog.mrdear.cn/zaolunzi2.png
+cover: http://res.mrdear.cn/zaolunzi2.png
 author: 
   nick: 屈定
 tags:
@@ -94,14 +94,14 @@ updated: 2021-02-22 22:36:02
 ## 数据保存
 该插件对应命令数据支持外置的(便于云端保存,丢到同步盘中即可),因此自己指定一个路径后,以参数形式传入即可.
 
-![](https://imgblog.mrdear.cn/uPic/PJgMxW_1614003592.png)
+![](https://res.mrdear.cn/uPic/PJgMxW_1614003592.png)
 
 ## 更多变量支持
 变量的支持依赖于alfred，可以在自己的脚本中配置多个变量，在后面使用`Utils`工具替换。
 
-![](http://imgblog.mrdear.cn/1539613678.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1539613678.png?imageMogr2/thumbnail/!100p)
 
 ## 演示
 
-![](https://imgblog.mrdear.cn/uPic/yulan_1614005703.gif)
+![](https://res.mrdear.cn/uPic/yulan_1614005703.gif)
 

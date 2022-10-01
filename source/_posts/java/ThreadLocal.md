@@ -1,7 +1,7 @@
 ---
 title: Java -- ThreadLocal问题分析
 subtitle: 关于ThreadLocal内存泄漏以及用错值等问题分析，并提出了一些标准用法
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -21,7 +21,7 @@ updated: 2020-11-28 00:02:42
 在讨论之前，需要了解下Java中`WeakReference`作用，感兴趣的可以参考[Java中的四种引用](https://mrdear.cn/posts/java_reference.html)。简单点来说在GC工作时，如果`WeakReference`对象没有被强引用所关联，那么就会被GC回收，这个回收是ThreadLocal泄漏原因的根源。
 ThreadLocal主要实现依赖`ThreadLocalMap`类，该类使用开放地址法解决hash冲突，当put数据时，`ThreadLocalMap`会将对应的数据封装为`java.lang.ThreadLocal.ThreadLocalMap.Entry`对象，填充hash槽，该对象是一个`WeakReference`子类，被跟踪对象则是ThreadLocal本身，如下图所示，其中`ThreadLocal`标红代表被弱引用所跟踪。
 
-![](http://imgblog.mrdear.cn/1588561192.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1588561192.png?imageMogr2/thumbnail/!100p)
 
 **清单一：Entry对象**
 
@@ -38,14 +38,14 @@ ThreadLocal主要实现依赖`ThreadLocalMap`类，该类使用开放地址法�
 ```
 
 当对应的Entry中ThreadLocal被回收后，Entry中value又是强引用，导致此时Entry无法被释放，就会出现内存泄漏，如下图所示。此时Entry对象永远无法被访问到，也无法被回收，但仍然占用着内存。本质问题是生命周期短的对象引用了生命周期长的对象，导致自身无法释放。
-![](http://imgblog.mrdear.cn/1588561933.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1588561933.png?imageMogr2/thumbnail/!100p)
 
 ### 什么情况下泄漏
 
 以下内容只考虑日常开发中使用习惯，不过多考虑极端情况。
 
 泄漏的本质是弱引用被回收，换句话说不让弱引用被回收即可以解决泄漏，这也是日常开发下建议ThreadLocal对象声明为`static final`全局变量的好处，当这样声明后，关系图如下所示，此时ThreadLocal由于存在强引用，除非对应的ClassLoader被回收，否则不会被GC回收。
-![](http://imgblog.mrdear.cn/1588578060.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1588578060.png?imageMogr2/thumbnail/!100p)
 
 那么声明为`static final`可以高枕无忧吗？当然不行，此时虽然不会因为弱引用问题导致内存泄漏，但是会出现一些线程池中线程分配了部分ThreadLocal对象，但却一直没有使用该对象，那么这些分配未使用过的对象则无法回收，一直处于占坑状态，需要等线程生命周期结束后才能释放，这种也算一种内存泄漏。这种没有比较好的解决方案，常见的是调整线程生命周期，避免线程持续时间太长，二是养成开发意识，在对应行为处使用ThreadLocal需要回收对应内存，对于大部分业务中ThreadLocal的使用来说，所幸的是一般不会造成大问题，顶多是耗费多一点内存。
 
@@ -99,7 +99,7 @@ ThreadLocal主要实现依赖`ThreadLocalMap`类，该类使用开放地址法�
 
 博主当时想也没想，就直接把用户权限的获取写成了一个策略实现类，踩了坑。本质问题是获取用户信息的`RequestUserHolder`本质上是从ThreadLocal中获取，而`parallelStream`底层实现为forkjoin，会根据当前负载情况拆分任务到CommonPool线程池中执行。由于存在线程复用，因此用户信息在请求线程ThreadLocal，调用到parallelStream后，第一次创建CommonPool线程池时，是能够传递ThreadLocal到子线程，之后线程复用，无法传递ThreadLocal，造成数据混乱使用。
 
-![image-20201127232939603](http://imgblog.mrdear.cn/uPic/image-20201127232939603_1606492904.png-default)
+![image-20201127232939603](http://res.mrdear.cn/uPic/image-20201127232939603_1606492904.png-default)
 
 ## 如何更好的使用ThreadLocal？
 

@@ -1,7 +1,7 @@
 ---
 title: 造轮子-- time-format-alfred插件
 subtitle: 利用Alfred的workflow制作的一款时间转换工具
-cover: http://imgblog.mrdear.cn/zaolunzi2.png
+cover: http://res.mrdear.cn/zaolunzi2.png
 author: 
   nick: 屈定
 tags:
@@ -26,19 +26,19 @@ updated: 2019-01-30 21:38:25
 
 2.配置常用时区，格式为 `./time-format-alfred -time={query} UTC America/Los_Angeles`,直接在后面追加即可，使用逗号隔开
 
-![](http://imgblog.mrdear.cn/1548854492.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1548854492.png?imageMogr2/thumbnail/!100p)
 
 3.输入时间`time now`，可以使用now代指当前时间
 
-![](http://imgblog.mrdear.cn/1548854370.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1548854370.png?imageMogr2/thumbnail/!100p)
 
 4.输入时间`time 1548854618000`
 
-![](http://imgblog.mrdear.cn/1548854650.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1548854650.png?imageMogr2/thumbnail/!100p)
 
 5.输入时间以及指定该时间所属时区`time 2019-01-30 21:24:44,gmt-7`,表示当前时间是GMT-7时区的时间,同样其他时间也同样支持该时区表示方法。
 
-![](http://imgblog.mrdear.cn/1548854736.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1548854736.png?imageMogr2/thumbnail/!100p)
 
 6.支持格式列表
 ```go

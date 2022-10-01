@@ -1,7 +1,7 @@
 ---
 title: 读书笔记 --《Pro Git》
 subtitle: 读Pro Git的一些摘要以及自己的理解
-cover: http://imgblog.mrdear.cn/mrdearblog_pro_git.png
+cover: http://res.mrdear.cn/mrdearblog_pro_git.png
 author: 
   nick: 屈定
 tags:
@@ -22,27 +22,27 @@ updated: 2018-10-21 11:32:01
 
 Git保存的并不是文件差异，而是一系列不同时刻的被修改文件的快照。可以把Git理解为一个本地的内容寻址文件管理系统，管理着众多版本的文件。
 下图是Git保存的对象，其利用树结构指向不同的版本。
-![](http://imgblog.mrdear.cn/1539992969.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1539992969.png?imageMogr2/thumbnail/!100p)
 
 ### Blob
 Blob通常用来存储文件内容，做文件镜像使用。
-![](http://imgblog.mrdear.cn/1540046588.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540046588.png?imageMogr2/thumbnail/!100p)
 
 ### Tree
 在工作区做的变更使用树形来维护，树可以指向Blob，也就是变更文件，或者指向其他的树来关联未变更的文件。
-![](http://imgblog.mrdear.cn/1540046709.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540046709.png?imageMogr2/thumbnail/!100p)
 
 ### Commit对象
 Commit对象指向**一个**tree对象，另外Commit中还保存着相关提交者信息，以及上一个提交，一个Commit可能存在多个parent对象，比如两个分支汇聚到一点，产生的这个commit就会有两个parent。
-![](http://imgblog.mrdear.cn/1540046768.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540046768.png?imageMogr2/thumbnail/!100p)
 
 ### Tag
 Tag指向一个Commit对象。
-![](http://imgblog.mrdear.cn/1540047016.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540047016.png?imageMogr2/thumbnail/!100p)
 
 ## 工作模型
 Git的工作模型揭露了我们在git项目中所采取的操作造成的影响。
-![](http://imgblog.mrdear.cn/1540047257.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540047257.png?imageMogr2/thumbnail/!100p)
 
 **Work Directory**：工作空间，就是被Git所管理的本地项目目录。
 **Index**：可以理解为Git的暂存区。
@@ -50,15 +50,15 @@ Git的工作模型揭露了我们在git项目中所采取的操作造成的影�
 
 **1. 本地添加文件**
 本地添加只会改变`work directory`
-![](http://imgblog.mrdear.cn/1540091450.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540091450.png?imageMogr2/thumbnail/!100p)
 
 **2. git add**
 添加到暂存区，本质上是把本地目录修改的文件copy一份到Index区域。
-![](http://imgblog.mrdear.cn/1540047927.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540047927.png?imageMogr2/thumbnail/!100p)
 
 **3. git commit**
 Commit之后Head对应的本地分支中也会多一份文件镜像。
-![](http://imgblog.mrdear.cn/1540047986.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540047986.png?imageMogr2/thumbnail/!100p)
 
 了解了这些那么很多命令就很好理解了。
 
@@ -87,13 +87,13 @@ git commit --amend [文件名]
 ```
 
 ### 变基Rebase
-![](http://imgblog.mrdear.cn/1539960913.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1539960913.png?imageMogr2/thumbnail/!100p)
 当前在experiment分支，执行`git rebase master`，Git会进行如下操作：
 1. 找到C4,C3最近的共同祖先C2
 2. 找到C2-C4之间的所有变更文件，存为临时文件。
 3. 将当前分支Head指向C3
 4. 依次把临时文件应用在C3，这个过程中会产生冲突，产生则需要手动订正，然后`git rebase --continue`继续apply
-![](http://imgblog.mrdear.cn/1539961166.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1539961166.png?imageMogr2/thumbnail/!100p)
 
 Rebase原则：“只对尚未推送或分享给别人的本地修改执行变基操作清理历史，从不对已推送至别处的提交执行变基操作”
 

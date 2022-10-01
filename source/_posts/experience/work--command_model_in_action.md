@@ -1,7 +1,7 @@
 ---
 title: 实践--如何封装第三方服务？
 subtitle: 业务开发中经常与第三方打交道，因此不可避免的要封装各种库，这里提供一点经验。
-cover: http://imgblog.mrdear.cn/designpattern.png
+cover: http://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:
@@ -19,10 +19,10 @@ updated: 2018-07-01 03:07:13
 命令模式是一种行为型模式，其会把具体的行为封装成一个命令Command，接着指定命令接收者Receiver，最后是在Invoker中执行命令。
 
 其UML图如下：（图片来自[命令模式](http://design-patterns.readthedocs.io/zh_CN/latest/behavioral_patterns/command.html)）
-![](https://imgblog.mrdear.cn/1530426470.png?imageMogr2/thumbnail/!100p)
+![](https://res.mrdear.cn/1530426470.png?imageMogr2/thumbnail/!100p)
 
 执行时序图如下：
-![](https://imgblog.mrdear.cn/1530426529.png?imageMogr2/thumbnail/!100p)
+![](https://res.mrdear.cn/1530426529.png?imageMogr2/thumbnail/!100p)
 
 其中角色信息为
 - **Command**: 抽象命令类
@@ -48,7 +48,7 @@ updated: 2018-07-01 03:07:13
 回到问题本身，如何使用命令模式简化第三方请求？根据上文命令模式的简要讲解，可以发现命令模式与第三方服务的需求很像，第三方给我们提供接口，我们使用接口完成某一个功能，接口就是遥控器按钮，第三方就是遥控器本身。
 
 在第三方请求过程中往往有以下几种角色：
-![](http://imgblog.mrdear.cn/1530007398.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1530007398.png?imageMogr2/thumbnail/!100p)
 
 - Req：请求的参数包装类，命令模式下的Command
 - Client：与使用者交互的类，其主要功能是控制整个与第三方交互的流程，给出使用者所期望的返回信息，往往全局单例。命令模式下的Invoker与Receiver
@@ -106,7 +106,7 @@ com
         └── commom.java ....      // 一些对外公共的类
 ```
 下图是笔者在对接云账户结算平台时所定义的包结构，可以作为参考。
-![](http://imgblog.mrdear.cn/1530420796.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1530420796.png?imageMogr2/thumbnail/!100p)
 
 #### 提高扩展灵活性建议
 对于灵活性的提升需要使用依赖倒置原则，也就是关键点需要依赖对应的接口。比如在一个封装过程中其`HttpClient`的实现往往就需要暴露出接口，便于使用方针对连接复用，参数调优等等。

@@ -1,7 +1,7 @@
 ---
 title: Java--读写锁的实现原理
 subtitle: 关于读写锁的源码分析，加深自己的理解
-cover: http://imgblog.mrdear.cn/javastudy.png
+cover: http://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -88,7 +88,7 @@ public class ReadWriteLock {
 
 ### ReentrantReadWriteLock的结构
 `ReentrantReadWriteLock`的核心是由一个基于AQS的同步器`Sync`构成，然后由其扩展出`ReadLock`（共享锁），`WriteLock`（排它锁）所组成。
-![](http://imgblog.mrdear.cn/1529279710.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1529279710.png?imageMogr2/thumbnail/!100p)
 
 并且从`ReentrantReadWriteLock`的构造函数中可以发现`ReadLock`与`WriteLock`使用的是同一个Sync，具体怎么实现同一个队列既可以为共享锁，又可以表示排他锁下文会具体分析。
 
@@ -118,7 +118,7 @@ public class ReadWriteLock {
     static int exclusiveCount(int c) { return c & EXCLUSIVE_MASK; }
 ```
 从代码中获取读写状态可以看出其是把`state（int32位）`字段分成高16位与低16位，其中高16位表示读锁个数，低16位表示写锁个数，如下图所示（图来自[Java并发编程艺术](https://item.jd.com/11740734.html)）。
-![](http://imgblog.mrdear.cn/1529281211.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1529281211.png?imageMogr2/thumbnail/!100p)
 该图表示当前一个线程获取到了写锁，并且重入了两次，因此低16位是3，并且该线程又获取了读锁，并且重入了一次，所以高16位是2，当写锁被获取时如果读锁不为0那么读锁一定是获取写锁的这个线程。
 
 #### 读锁的获取

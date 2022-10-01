@@ -1,7 +1,7 @@
 ---
 title: Mybatis源码分析(三)--动态Sql中的参数解析
 subtitle: 分析对于输入参数Mybatis是如何映射到xml中.
-cover: http://imgblog.mrdear.cn/mybatis.png
+cover: http://res.mrdear.cn/mybatis.png
 author: 
   nick: 屈定
 tags:
@@ -62,9 +62,9 @@ Mybatis中参数解析对于开发人员来说是至关重要的,不然很容易
   }
 ```
 那么执行完毕后对于上述例子,names里面如下图所示,由于`config.isUseActualParamName()`为true,所以#{0}这种写法这里并不支持,而且也不建议这种写法,无可读性.
-![](http://imgblog.mrdear.cn/1504965737.png?imageMogr2/thumbnail/!120p)
+![](http://res.mrdear.cn/1504965737.png?imageMogr2/thumbnail/!120p)
 接下来执行`method.convertArgsToSqlCommandParam(args)`获取到实际输入的参数,对于上面例子我获取到的是个Map集合,如下图所示,对于单一实体例如User那么获取到的就是该实体.
-![](http://imgblog.mrdear.cn/1505017418.png?imageMogr2/thumbnail/!120p)
+![](http://res.mrdear.cn/1505017418.png?imageMogr2/thumbnail/!120p)
 再看我所用的sql写法,那么这里只能获取到name的值,sql处理时就会报错.
 ```xml
 SELECT * FROM user WHERE username = #{name} AND age = #{age} AND email = #{email} 
@@ -86,7 +86,7 @@ SELECT * FROM user WHERE username = #{name} AND age = #{age} AND email = #{email
 	</select>
 ```
 按照上述流程Mybatis解析出来的输入参数如下图
-![](http://imgblog.mrdear.cn/1505020777.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1505020777.png?imageMogr2/thumbnail/!100p)
 
 接下进入`DefaultSqlSession`的处理中,在其中有如下方法会多参数进一步判断,可以看出对于单一参数为`Collection`或者`Array`时Mybatis都会给默认命名方案.(这里是在3.3.0之前的版本只会处理List)
 ```java
@@ -126,18 +126,18 @@ Mybatis这里要做的就是把参数的各种形式尽可能都放在`ContextMa
     bindings.put(DATABASE_ID_KEY, configuration.getDatabaseId());
   }
 ```
-![](http://imgblog.mrdear.cn/1505023031.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1505023031.png?imageMogr2/thumbnail/!70p)
 
 #### SqlNode
 SqlNode是动态Sql解析和完善`ContextMap`的地方,对于我上述sql会转换为其三个子类,相关解析方法都在其内部.
-![](http://imgblog.mrdear.cn/1505027107.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1505027107.png?imageMogr2/thumbnail/!70p)
 解析后的sql如下图
 ```sql
 SELECT * FROM user WHERE username = ? AND age = ? AND email = ?
 		OR id in (  ?, ?, ?)
 ```
 此时`ContextMap`如下,其中有`_frch_item_2`这种形式的参数,这是Mybatis对foreach解析后所生成的键,便于填充数据,具体可以看`ForeachSqlNode`
-![](http://imgblog.mrdear.cn/1505027407.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1505027407.png?imageMogr2/thumbnail/!100p)
 那么接下来要做的事情就是一一设置进去这些值.
 
 #### ParameterHandler
@@ -204,7 +204,7 @@ SELECT * FROM user WHERE username = ? AND age = ? AND email = ?
   }
 ```
 那么针对上面的例子,这里先是去boundSql中的addtionParameters中获取参数,该参数一般是sql解析时动态生成的,比如foreach生成的_frch_xx,获取不到的话再去原始的ParamsObject中获取,该处的解析为递归形式了.
-![](http://imgblog.mrdear.cn/1505526788.png?imageMogr2/thumbnail/!70p)
+![](http://res.mrdear.cn/1505526788.png?imageMogr2/thumbnail/!70p)
 
 ### 总结
 Mybatis的SQL解析总体流程如下:
