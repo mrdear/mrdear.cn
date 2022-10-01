@@ -173,10 +173,10 @@
 <li>Timestamp：以UTC时间戳作为内部存储，没有时区含义，仅仅是显示时会转换为对应时区时间字符串展示。</li>
 <li>Datetime：以字符串常量形式存储，本质上隐含了写入时的时区信息，因此时区切换会造成隐藏时区丢失。</li>
 </ul>
-<p>一个应用写入数据到DB过程中，需要经历以下三个模块<br><img src="http://res.mrdear.cn/1582431086.png?imageMogr2/thumbnail/!100p"></p>
-<p>其中把MySQL当成服务端，那么应用以及MySQL驱动都可以作为客户端，客户端之间可以认为以Date类传输，Date类内部就是时间戳，因此不会发生时区丢失，那问题就变成了客户端与服务端之间时间是如何传输？通过Debug源码可以发现，客户端接收到的服务端范围为byte[]数组，使用String方法序列化后，为不带时区信息的<code>yyyy-MM-dd HH:mm:ss</code>字符串, 详细代码可以参考<code>com.mysql.cj.protocol.a.MysqlTextValueDecoder#getTimestamp</code>。客户端与服务端之间通过<strong>字符串传输</strong>，字符串默认隐含时区，因此会发生时间丢失，搞明白了传输，那么网上最常见的几种错误例子就很好懂了。<br><img src="http://res.mrdear.cn/1582638478.png?imageMogr2/thumbnail/!100p"></p>
-<h3 id="MySQL写入时间延迟8小时？"><a href="#MySQL写入时间延迟8小时？" class="headerlink" title="MySQL写入时间延迟8小时？"></a>MySQL写入时间延迟8小时？</h3><p>针对这种情况，一般有两种可能性，第一种应用时区GMT+8，MySQL驱动时区没有配置或者也是GMT+8，MySQL时区为UTC，那么传输流程如下图，因为客户端与服务端是字符串传输，导致时区丢失，最终写入时间则延迟8小时。<br><img src="http://res.mrdear.cn/1582431095.png?imageMogr2/thumbnail/!100p"></p>
-<p>第二种情况，应用时区GMT+8, MySQL驱动时区UTC，MySQL时区为GMT+8，那么传输流程如下图，同样本质原因也是字符串传输丢失了时区信息。<br><img src="http://res.mrdear.cn/1582431104.png?imageMogr2/thumbnail/!100p"></p>
+<p>一个应用写入数据到DB过程中，需要经历以下三个模块<br><img src="http://res.mrdear.cn/1582431086.png"></p>
+<p>其中把MySQL当成服务端，那么应用以及MySQL驱动都可以作为客户端，客户端之间可以认为以Date类传输，Date类内部就是时间戳，因此不会发生时区丢失，那问题就变成了客户端与服务端之间时间是如何传输？通过Debug源码可以发现，客户端接收到的服务端范围为byte[]数组，使用String方法序列化后，为不带时区信息的<code>yyyy-MM-dd HH:mm:ss</code>字符串, 详细代码可以参考<code>com.mysql.cj.protocol.a.MysqlTextValueDecoder#getTimestamp</code>。客户端与服务端之间通过<strong>字符串传输</strong>，字符串默认隐含时区，因此会发生时间丢失，搞明白了传输，那么网上最常见的几种错误例子就很好懂了。<br><img src="http://res.mrdear.cn/1582638478.png"></p>
+<h3 id="MySQL写入时间延迟8小时？"><a href="#MySQL写入时间延迟8小时？" class="headerlink" title="MySQL写入时间延迟8小时？"></a>MySQL写入时间延迟8小时？</h3><p>针对这种情况，一般有两种可能性，第一种应用时区GMT+8，MySQL驱动时区没有配置或者也是GMT+8，MySQL时区为UTC，那么传输流程如下图，因为客户端与服务端是字符串传输，导致时区丢失，最终写入时间则延迟8小时。<br><img src="http://res.mrdear.cn/1582431095.png"></p>
+<p>第二种情况，应用时区GMT+8, MySQL驱动时区UTC，MySQL时区为GMT+8，那么传输流程如下图，同样本质原因也是字符串传输丢失了时区信息。<br><img src="http://res.mrdear.cn/1582431104.png"></p>
 <h3 id="该怎么解决"><a href="#该怎么解决" class="headerlink" title="该怎么解决"></a>该怎么解决</h3><p>如果可以修改MySQL Server时区，最佳方案肯定是应用，Driver，MySQL Server三者时区保持一致，一致的话，是最不会出问题的情况，也是最便于理解的情况，其次如果业务是多时区，那么字段尽量选择<strong>TimeStamp</strong>，存储时间戳，即使切换时区也不会受到影响。<br>当无法修改MySQL Server时区时，那么可以通过Driver来控制当前连接session下的时区，达到修改MySQL Server时区效果，具体举个例子，应用运行在UTC时区，MySQL Server运行在GMT+8时区，且由于某种原因无法变更。那么此时可以在连接中配置<code>serverTimezone=UTC&amp;useLegacyDatetimeCode=false</code>，修改Driver的时区为UTC，然后在数据源配置<code>newConnectionSQL=set time_zone=&#39;+00:00&#39;</code>，当建立连接后执行该SQL，设置session下Server的时区为UTC。</p>
 
         

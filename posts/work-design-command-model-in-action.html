@@ -153,8 +153,8 @@
     <div class="post__content">
         <p>业务开发中经常会对接某某第三方服务，因此会经常写一些SDK供服务使用，一种比较好的做法就是使用命令模式封装第三方服务，命令模式对于调用方来说简洁明了，也正是封装最根本的目的，便于调用方使用。</p>
 <h2 id="命令模式"><a href="#命令模式" class="headerlink" title="命令模式"></a>命令模式</h2><h3 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h3><p>命令模式是一种行为型模式，其会把具体的行为封装成一个命令Command，接着指定命令接收者Receiver，最后是在Invoker中执行命令。</p>
-<p>其UML图如下：（图片来自<a target="_blank" rel="noopener" href="http://design-patterns.readthedocs.io/zh_CN/latest/behavioral_patterns/command.html">命令模式</a>）<br><img src="https://res.mrdear.cn/1530426470.png?imageMogr2/thumbnail/!100p"></p>
-<p>执行时序图如下：<br><img src="https://res.mrdear.cn/1530426529.png?imageMogr2/thumbnail/!100p"></p>
+<p>其UML图如下：（图片来自<a target="_blank" rel="noopener" href="http://design-patterns.readthedocs.io/zh_CN/latest/behavioral_patterns/command.html">命令模式</a>）<br><img src="https://res.mrdear.cn/1530426470.png"></p>
+<p>执行时序图如下：<br><img src="https://res.mrdear.cn/1530426529.png"></p>
 <p>其中角色信息为</p>
 <ul>
 <li><strong>Command</strong>: 抽象命令类</li>
@@ -172,7 +172,7 @@
 </ol>
 <p>广义上来说前后端交互过程也算是一种命令模式，他们的交互是HTTP协议，也就是具体的命令对象，每次在命令中填充不同的参数，服务端会返回对应所需要的内容，而客户端不需要理会服务端是如何处理的，只需要知道自己可以使用哪些命令（请求参数），这样理解是不是更能体会到命令模式的本质。</p>
 <h2 id="如何封装？"><a href="#如何封装？" class="headerlink" title="如何封装？"></a>如何封装？</h2><p>回到问题本身，如何使用命令模式简化第三方请求？根据上文命令模式的简要讲解，可以发现命令模式与第三方服务的需求很像，第三方给我们提供接口，我们使用接口完成某一个功能，接口就是遥控器按钮，第三方就是遥控器本身。</p>
-<p>在第三方请求过程中往往有以下几种角色：<br><img src="http://res.mrdear.cn/1530007398.png?imageMogr2/thumbnail/!100p"></p>
+<p>在第三方请求过程中往往有以下几种角色：<br><img src="http://res.mrdear.cn/1530007398.png"></p>
 <ul>
 <li>Req：请求的参数包装类，命令模式下的Command</li>
 <li>Client：与使用者交互的类，其主要功能是控制整个与第三方交互的流程，给出使用者所期望的返回信息，往往全局单例。命令模式下的Invoker与Receiver</li>
@@ -188,7 +188,7 @@
 
 <h3 id="其他问题"><a href="#其他问题" class="headerlink" title="其他问题"></a>其他问题</h3><h4 id="包结构建议"><a href="#包结构建议" class="headerlink" title="包结构建议"></a>包结构建议</h4><p>分包原则就是整个jar的package该如何组织，这里参考<code>alipay-sdk</code>的分法。其中<code>internal</code>包是你不想被外部使用的一些类定义，比如转为此次对接定制的签名类，定制的Http类等等，因为Java没有对应的module作用域，因此放在<code>internal</code>中算是一种约定。</p>
 <figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">com</span><br><span class="line">└── alipay</span><br><span class="line">    └── api</span><br><span class="line">        ├── domain    // 一些实体类，主要为request与response服务，构成其内部的属性</span><br><span class="line">        ├── internal    // 仅供sdk使用的内部工具，不希望外部使用</span><br><span class="line">        ├── request    // 发送请求信息的包装类</span><br><span class="line">        └── response   // 封装返回信息的包装类</span><br><span class="line">        └── commom.java ....      // 一些对外公共的类</span><br></pre></td></tr></table></figure>
-<p>下图是笔者在对接云账户结算平台时所定义的包结构，可以作为参考。<br><img src="http://res.mrdear.cn/1530420796.png?imageMogr2/thumbnail/!100p"></p>
+<p>下图是笔者在对接云账户结算平台时所定义的包结构，可以作为参考。<br><img src="http://res.mrdear.cn/1530420796.png"></p>
 <h4 id="提高扩展灵活性建议"><a href="#提高扩展灵活性建议" class="headerlink" title="提高扩展灵活性建议"></a>提高扩展灵活性建议</h4><p>对于灵活性的提升需要使用依赖倒置原则，也就是关键点需要依赖对应的接口。比如在一个封装过程中其<code>HttpClient</code>的实现往往就需要暴露出接口，便于使用方针对连接复用，参数调优等等。</p>
 <p>举个例子，笔者在对接第三方平台时会把Http请求以接口形式暴露出去，如下所示：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">YunzhanghuWebClient</span> &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 单纯的get请求</span></span><br><span class="line"><span class="comment">   *</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@return</span> 结果</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  String <span class="title function_">yzh_Get</span><span class="params">(Map&lt;String, Object&gt; headers, String url, Map&lt;String, Object&gt; queryParam)</span> <span class="keyword">throws</span> Exception;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 单纯的post请求</span></span><br><span class="line"><span class="comment">   *</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@return</span> 结果</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  String <span class="title function_">yzh_Post</span><span class="params">(Map&lt;String, Object&gt; headers, String url, Map&lt;String, Object&gt; formParam)</span> <span class="keyword">throws</span> Exception;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>

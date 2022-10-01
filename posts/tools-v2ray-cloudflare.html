@@ -148,13 +148,13 @@
 
     <div class="post__content">
         <p>由于一些原因，需要利用cloudflare作为请求流量中转，进而访问到对应的VPS机器，本文记录下整个操作流程。</p>
-<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>本质原理是将v2ray伪装成web服务，然后利用CDN进行流量转发，从而隐藏真实VPS地址，请求路径如下图所示。<br><img src="http://res.mrdear.cn/1583580459.png?imageMogr2/thumbnail/!60p"></p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>本质原理是将v2ray伪装成web服务，然后利用CDN进行流量转发，从而隐藏真实VPS地址，请求路径如下图所示。<br><img src="http://res.mrdear.cn/1583580459.png"></p>
 <h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><ol>
 <li>自有域名，可配置解析</li>
 <li>cloudflare帐号</li>
 <li>vps (如果国内无法访问，mac下可以利用<strong>FinalShell</strong>使用海外加速连接ssh)</li>
 </ol>
-<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><h3 id="配置域名"><a href="#配置域名" class="headerlink" title="配置域名"></a>配置域名</h3><p>登录cloudflare后，按照提示添加对应域名信息，之后添加你的域名，假设值<code>abc.com</code>，IP记录指向对应的VPS IP，注意一点，解析选择<code>DNS ONLY</code>。<br><img src="http://res.mrdear.cn/1583581398.png?imageMogr2/thumbnail/!100p"></p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><h3 id="配置域名"><a href="#配置域名" class="headerlink" title="配置域名"></a>配置域名</h3><p>登录cloudflare后，按照提示添加对应域名信息，之后添加你的域名，假设值<code>abc.com</code>，IP记录指向对应的VPS IP，注意一点，解析选择<code>DNS ONLY</code>。<br><img src="http://res.mrdear.cn/1583581398.png"></p>
 <h3 id="配置VPS"><a href="#配置VPS" class="headerlink" title="配置VPS"></a>配置VPS</h3><p>vps端配置主要有v2ray服务端以及caddy转发请求，得益于社区的强大能力，这些一键脚本即可完成。</p>
 <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash &lt;(curl -s -L https://git.io/v2ray.sh)</span><br></pre></td></tr></table></figure>
 <p>有几个选项注意下</p>
@@ -170,7 +170,7 @@
 <p>如果没开启,则使用下面命令</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo modprobe tcp_bbrplus</span><br></pre></td></tr></table></figure>
 
-<h3 id="配置转发"><a href="#配置转发" class="headerlink" title="配置转发"></a>配置转发</h3><p>登录cloudflare，将之前配置DNS ONLY的域名改成<strong>proxy</strong>，即点下对应的灰云。<br><img src="http://res.mrdear.cn/1583581531.png?imageMogr2/thumbnail/!100p"></p>
+<h3 id="配置转发"><a href="#配置转发" class="headerlink" title="配置转发"></a>配置转发</h3><p>登录cloudflare，将之前配置DNS ONLY的域名改成<strong>proxy</strong>，即点下对应的灰云。<br><img src="http://res.mrdear.cn/1583581531.png"></p>
 <p>然后在<code>SSL/TLS</code>选项卡中，将<code>SSL/TLS encryption mode</code>改成full，就完成了配置</p>
 <h3 id="客户端配置"><a href="#客户端配置" class="headerlink" title="客户端配置"></a>客户端配置</h3><p>客户端就不多说了，主要有几点，客户端访问的是你CDN配置，也就是你的域名，端口443，协议ws，开始TLS，就可以愉快的使用了。</p>
 

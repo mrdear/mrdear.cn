@@ -153,20 +153,20 @@
     <div class="post__content">
         <p>依托于IDEA database所提供的<code>Scripted Extensions</code>功能,所写的代码生成脚本.<br>总体逻辑很简单,获取IDEA提供的表结构,然后填充一些模板需要的信息,定位到具体的velocity模板,渲染,写回文件.</p>
 <p>Github：<a target="_blank" rel="noopener" href="https://github.com/mrdear/dalgen-script-intellij">dalgen-script-intellij</a></p>
-<p>Velocity模板信息<br><img src="http://res.mrdear.cn/1540564282.png?imageMogr2/thumbnail/!100p"></p>
+<p>Velocity模板信息<br><img src="http://res.mrdear.cn/1540564282.png"></p>
 <h2 id="使用介绍"><a href="#使用介绍" class="headerlink" title="使用介绍"></a>使用介绍</h2><p>使用前建议先看看脚本代码,groovy不是很熟,所以还是用Java风格来写的,很容易看懂</p>
 <ol>
 <li>copy脚本到IDEA执行的位置<code>Scratches and Consoles -&gt; Extensions -&gt; Database Tools and SQL -&gt; schema</code>中.</li>
 </ol>
-<p><img src="http://res.mrdear.cn/1540563274.png?imageMogr2/thumbnail/!100p"></p>
+<p><img src="http://res.mrdear.cn/1540563274.png"></p>
 <ol start="2">
 <li>在database tools中选择对应的表,右键执行该脚本</li>
 </ol>
-<p><img src="http://res.mrdear.cn/1540563321.png?imageMogr2/thumbnail/!100p"></p>
+<p><img src="http://res.mrdear.cn/1540563321.png"></p>
 <ol start="3">
 <li>在弹出来的文件选择框中选择目标地址(文件生成地址)即可生成.</li>
 </ol>
-<p><img src="http://res.mrdear.cn/1540563345.png?imageMogr2/thumbnail/!100p"></p>
+<p><img src="http://res.mrdear.cn/1540563345.png"></p>
 <p>整个流程简单又不失灵活,脚本自定义,模板自定义,根据项目的不同可以很容易的产出各种模板.</p>
 <h2 id="备注"><a href="#备注" class="headerlink" title="备注"></a>备注</h2><p>由于脚本的限制,该方案只能一次生成,第二次生成就会被覆盖掉,目前没有特别好的方案,可以手动与IntelliJ的history来进行比较,然后合并.<br>目前有个想法是提供IntelliJ的插件来完成脚本执行,生成临时文件,调用IntelliJ的API进行merge,遇到冲突再弹出Diff窗口进行比较,手工合并,这样的话整个流程就比较流畅了,<br>希望以后能实现.</p>
 

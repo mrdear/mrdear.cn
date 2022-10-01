@@ -174,13 +174,13 @@
 
 <p>使用位移以及|操作完成了数据的拼接。这种想法除了分布式ID外，也可以在业务中很高性能的生成各种ID。博主曾经在设计事件系统ID生成逻辑时，使用过类似方案：<code>1bits + 8bits(ip最后一位) + 12bits(事件码编号) + 2bits(时戳类型，毫秒，秒，分钟) + 41bits(时间戳，简单去重可自定义)</code>，因为系统压力不大，所以去重也不需要考虑很复杂，可以说很实用了。</p>
 <h2 id="Java-ReentrantReadWriteLock设计"><a href="#Java-ReentrantReadWriteLock设计" class="headerlink" title="Java ReentrantReadWriteLock设计"></a>Java ReentrantReadWriteLock设计</h2><p>Java的ReentrantReadWriteLock是一个可重入读写锁，即写锁，读锁可以多次被获取，且拥有读读不互斥，读写互斥，写写互斥等特性，实现这些特性则需要标记当前写锁获取次数，读锁获取次数。JDK在这里的实现巧妙的使用了32位INT类型数据，其中高16位标识读写数量，低16位标识写锁数量。比如下图，由于写锁存在，所以必然有一个线程获取到了该锁，并且写锁重入2次，读锁也被获取，且重入1次。</p>
-<p><img src="http://res.mrdear.cn/1529281211.png?imageMogr2/thumbnail/!100p" alt="img"></p>
+<p><img src="http://res.mrdear.cn/1529281211.png" alt="img"></p>
 <p>按照这种形式定下来后，JDK需要提供一些快速执行四则运算的方法，如下所示，位移以及位运算结合。</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">int</span> <span class="string">state</span> <span class="string">=</span> <span class="string">xxx</span> <span class="string">,标识当前锁状态</span></span><br><span class="line"></span><br><span class="line"><span class="string">获取读锁数量：state</span> <span class="string">&gt;&gt;&gt;</span> <span class="number">16</span></span><br><span class="line"><span class="string">获取写锁数量:</span> <span class="string">state</span> <span class="string">&amp;</span> <span class="string">(ob1111111111111111)</span></span><br><span class="line"><span class="string">写锁+1</span> <span class="string">：</span> <span class="string">state</span> <span class="string">+</span> <span class="number">1</span></span><br><span class="line"><span class="string">读锁+1</span> <span class="string">：state</span> <span class="string">+</span> <span class="string">(ob10000000000000000)</span></span><br></pre></td></tr></table></figure>
 
 <p>JDK线程池里面也有类似做法，这种有点黑科技的感觉，业务代码还是不要学习这种写法，业务追求的是简单，好理解。</p>
 <h2 id="Bloom-Filter"><a href="#Bloom-Filter" class="headerlink" title="Bloom Filter"></a>Bloom Filter</h2><p>Bloom Filter是利用二进制0，1两个真假属性来判断对应值是否包含的一种策略。以下图为例，key1经过三个不同hash函数(f,g,h)分别映射到三个bit槽，key2同样也是。因为hash冲突以及计算bit槽时取余操作，所以Bloom Filter存在不一定真的存在，但不存在则一定不存在，利用该特性可以实现白名单，黑名单等业务需求，并且存在判断也可以作为一些底层存储的前置拦截，减少穿透请求。</p>
-<p><img src="http://res.mrdear.cn/1552347090.png?imageMogr2/thumbnail/!100p" alt="img"></p>
+<p><img src="http://res.mrdear.cn/1552347090.png" alt="img"></p>
 <p>不过这些都不是今天讨论的内容，Bloom Filter给二进制操作上带来的问题是如何构造超长的bit位？这个需要我们了解下。</p>
 <h3 id="JDK-BitSet"><a href="#JDK-BitSet" class="headerlink" title="JDK BitSet"></a>JDK BitSet</h3><p>JDK的做法使用long[]数组来标识bit set，每一个long位64个bit位，那么一个BitSet初始化后，就是N*64长度，通过取余定操作可以先定位到对应long位置，然后再使用位运算修改bit位。</p>
 <h3 id="Redis-BitMap"><a href="#Redis-BitMap" class="headerlink" title="Redis BitMap"></a>Redis BitMap</h3><p>Redis与Java实现类似，不过内部使用的是char[]数组，在C语言中一个char占一个字节，相当于8bit。每一段变小，会造成全遍历统计时数据量庞大，比如统计一共多少个1，Redis在此基础上做了个优化，将对应char[]数组分组，加入128个char一组进行遍历，大大提高了统计效率。</p>

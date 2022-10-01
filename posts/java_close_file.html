@@ -152,7 +152,7 @@
 
     <div class="post__content">
         <p>在Java编程中，对于一些文件的使用往往需要主动释放，比如<code>InputStream</code>，<code>OutputStream</code>，<code>SocketChannel</code>等等，那么有没有想过为什么要主动释放这些资源？难道GC回收时不会释放吗？本文主要是对这一系列问题分析解答。（本文所使用的环境默认为Linux）</p>
-<h2 id="应用是如何操作文件的？"><a href="#应用是如何操作文件的？" class="headerlink" title="应用是如何操作文件的？"></a>应用是如何操作文件的？</h2><p>在Linux系统中有一种一切皆文件的说法，无论是真实的文件，还是网络的Socket连接，或者是挂载的磁盘等等，操作系统所规定只要内核才有权限操作这些文件，应用的文件操作则必须委托操作系统内核来执行，这也是常说的内核态与用户态。那么在内核与应用之间就需要有一个关联关系，来标识用户所要操作的文件，在Linux下就是文件描述符。换句话说文件描述符的存在是为应用程序与基础操作系统之间的交互提供了通用接口。<br>引用<a target="_blank" rel="noopener" href="https://blog.csdn.net/cywosp/article/details/38965239">网上一张图片</a><br><img src="http://res.mrdear.cn/1533374536.png?imageMogr2/thumbnail/!100p"><br>那么由图可知以下特性：</p>
+<h2 id="应用是如何操作文件的？"><a href="#应用是如何操作文件的？" class="headerlink" title="应用是如何操作文件的？"></a>应用是如何操作文件的？</h2><p>在Linux系统中有一种一切皆文件的说法，无论是真实的文件，还是网络的Socket连接，或者是挂载的磁盘等等，操作系统所规定只要内核才有权限操作这些文件，应用的文件操作则必须委托操作系统内核来执行，这也是常说的内核态与用户态。那么在内核与应用之间就需要有一个关联关系，来标识用户所要操作的文件，在Linux下就是文件描述符。换句话说文件描述符的存在是为应用程序与基础操作系统之间的交互提供了通用接口。<br>引用<a target="_blank" rel="noopener" href="https://blog.csdn.net/cywosp/article/details/38965239">网上一张图片</a><br><img src="http://res.mrdear.cn/1533374536.png"><br>那么由图可知以下特性：</p>
 <ul>
 <li>每一个进程有自己的文件描述符表</li>
 <li>不同的描述符可能指向同一个文件，文件描述符这个数字只是针对当前进程有意义。</li>

@@ -160,10 +160,10 @@
 
 <h3 id="打包成jar运行"><a href="#打包成jar运行" class="headerlink" title="打包成jar运行"></a>打包成jar运行</h3><p>单纯的打包为一个jar，Java会把其中的依赖第三方jar解压后一起放入到jar中，如下图所示，因此定位到的是我最终打包为的jar文件，而并非第三方jar文件。因此如果是在这种环境下推荐使用指定classpath形式。<br><strong>清单3: 打包成jar输出</strong></p>
 <figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file:/Users/quding/workspace/git/jar-mvn1/target/jar-mvn1-1.0-SNAPSHOT.jar</span><br></pre></td></tr></table></figure>
-<p><img src="http://res.mrdear.cn/1552829550.png?imageMogr2/thumbnail/!100p"></p>
+<p><img src="http://res.mrdear.cn/1552829550.png"></p>
 <h3 id="打包成war运行"><a href="#打包成war运行" class="headerlink" title="打包成war运行"></a>打包成war运行</h3><p>写了个接口，返回值是一个具体的文件路径，原因也很简单，因为Tomcat在启动一个webapp时会将对应的war解压，然后针对解压后的路径使用一个单独的类加载器进行加载。<br><strong>清单4: 打包成war包输出</strong></p>
 <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line"><span class="attr">&quot;jarFile&quot;</span><span class="punctuation">:</span> <span class="string">&quot;file:/Users/quding/develop/apache-tomcat-8.5.38/webapps/ROOT/WEB-INF/lib/commons-lang3-3.7.jar&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
-<h3 id="打包成fat-jar"><a href="#打包成fat-jar" class="headerlink" title="打包成fat jar"></a>打包成fat jar</h3><p>fat jar是Spring Boot引入的一种新格式，其打包后的结构与war包比较类似，但是可以直接执行并不需要先解压再加载，打包后类似目录如下：<br><img src="http://res.mrdear.cn/1552834775.png?imageMogr2/thumbnail/!100p"></p>
+<h3 id="打包成fat-jar"><a href="#打包成fat-jar" class="headerlink" title="打包成fat jar"></a>打包成fat jar</h3><p>fat jar是Spring Boot引入的一种新格式，其打包后的结构与war包比较类似，但是可以直接执行并不需要先解压再加载，打包后类似目录如下：<br><img src="http://res.mrdear.cn/1552834775.png"></p>
 <ol>
 <li>BOOT-INF/classes  – 用户代码</li>
 <li>BOOT-INF/lib  –依赖第三方架包</li>

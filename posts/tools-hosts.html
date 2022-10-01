@@ -161,8 +161,8 @@
 <li>快捷打开文件：选中某一个文件后可以很方便的打开，然后进行编辑。</li>
 <li>快捷切换Hosts：选中一个文件后，enter直接切换对应的Hosts文件。</li>
 </ol>
-<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>实现过程很简单，使用Alfred过程中发现一行代码也不需要写，直接自带功能就足以满足上述需求，整个workflow如下所示：<br><img src="http://res.mrdear.cn/1554645326.png?imageMogr2/thumbnail/!100p"></p>
-<h3 id="输入"><a href="#输入" class="headerlink" title="输入"></a>输入</h3><p>该workflow的输入是准备好的不同环境的hosts文件，每一个环境对应一个文件，方便自己区分，也方便CURD操作。<br><img src="http://res.mrdear.cn/1554645307.png?imageMogr2/thumbnail/!100p"></p>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>实现过程很简单，使用Alfred过程中发现一行代码也不需要写，直接自带功能就足以满足上述需求，整个workflow如下所示：<br><img src="http://res.mrdear.cn/1554645326.png"></p>
+<h3 id="输入"><a href="#输入" class="headerlink" title="输入"></a>输入</h3><p>该workflow的输入是准备好的不同环境的hosts文件，每一个环境对应一个文件，方便自己区分，也方便CURD操作。<br><img src="http://res.mrdear.cn/1554645307.png"></p>
 <h3 id="替换"><a href="#替换" class="headerlink" title="替换"></a>替换</h3><p>替换过程中要解决的问题是如何自动输入sudo的密码，这里使用<code>sudo -S</code>指令，该执行会让sudo从标准输入stdin中读取密码，因此在前面加上<code>echo</code>把密码输入到对应的标准输入中。</p>
 <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">&#x27;123456&#x27;</span> | sudo -S cmd</span><br></pre></td></tr></table></figure>
 <h3 id="打开文件"><a href="#打开文件" class="headerlink" title="打开文件"></a>打开文件</h3><p>Alfred的<code>File Open</code>节点不支持参数路径，因此没办法使用，这里直接使用一个bash脚本，该脚本很简单，该脚本调用对应的软件打开该文件即可，其中<code>query</code>为对应的文件路径。</p>

@@ -152,7 +152,7 @@
 
     <div class="post__content">
         <p>本文的思路是先学习JDK <code>ByteBuffer</code>，然后再看看Netty的<code>Bytebuf</code>是如何解决这类问题的。</p>
-<h2 id="JDK-ByteBuffer"><a href="#JDK-ByteBuffer" class="headerlink" title="JDK ByteBuffer"></a>JDK ByteBuffer</h2><h3 id="关系与分类"><a href="#关系与分类" class="headerlink" title="关系与分类"></a>关系与分类</h3><p>JDK的<code>ByteBuffer</code>继承关系图如下：<br><img src="http://res.mrdear.cn/1531753200.png?imageMogr2/thumbnail/!100p"><br>其中</p>
+<h2 id="JDK-ByteBuffer"><a href="#JDK-ByteBuffer" class="headerlink" title="JDK ByteBuffer"></a>JDK ByteBuffer</h2><h3 id="关系与分类"><a href="#关系与分类" class="headerlink" title="关系与分类"></a>关系与分类</h3><p>JDK的<code>ByteBuffer</code>继承关系图如下：<br><img src="http://res.mrdear.cn/1531753200.png"><br>其中</p>
 <ul>
 <li><strong>HeapByteBuffer</strong>：缓冲区分配在JVM堆中，由Java虚拟机回收，当网络通信时需要先拷贝到直接内存，然后再由操作系统操作。</li>
 <li><strong>DirectByteBuffer</strong>：缓冲区分配在直接内存中，因此在网络请求时就可以避免来回内存间的拷贝，缺点是内存回收麻烦，其内部通过虚引用来控制内存，当该类被回收时（full gc），虚引用触发回收逻辑，使用<code>java.nio.DirectByteBuffer.Deallocator#run</code>主动释放该区域内存。</li>
