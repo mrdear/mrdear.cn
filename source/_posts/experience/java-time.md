@@ -71,17 +71,17 @@ db中常用的为TimeStamp以及Datetime两个字段，两者的区别如下：
 - Datetime：以字符串常量形式存储，本质上隐含了写入时的时区信息，因此时区切换会造成隐藏时区丢失。
 
 一个应用写入数据到DB过程中，需要经历以下三个模块
-![](http://res.mrdear.cn/1582431086.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1582431086.png)
 
 其中把MySQL当成服务端，那么应用以及MySQL驱动都可以作为客户端，客户端之间可以认为以Date类传输，Date类内部就是时间戳，因此不会发生时区丢失，那问题就变成了客户端与服务端之间时间是如何传输？通过Debug源码可以发现，客户端接收到的服务端范围为byte[]数组，使用String方法序列化后，为不带时区信息的`yyyy-MM-dd HH:mm:ss`字符串, 详细代码可以参考`com.mysql.cj.protocol.a.MysqlTextValueDecoder#getTimestamp`。客户端与服务端之间通过**字符串传输**，字符串默认隐含时区，因此会发生时间丢失，搞明白了传输，那么网上最常见的几种错误例子就很好懂了。
-![](http://res.mrdear.cn/1582638478.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1582638478.png)
 
 ### MySQL写入时间延迟8小时？
 针对这种情况，一般有两种可能性，第一种应用时区GMT+8，MySQL驱动时区没有配置或者也是GMT+8，MySQL时区为UTC，那么传输流程如下图，因为客户端与服务端是字符串传输，导致时区丢失，最终写入时间则延迟8小时。
-![](http://res.mrdear.cn/1582431095.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1582431095.png)
 
 第二种情况，应用时区GMT+8, MySQL驱动时区UTC，MySQL时区为GMT+8，那么传输流程如下图，同样本质原因也是字符串传输丢失了时区信息。
-![](http://res.mrdear.cn/1582431104.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1582431104.png)
 
 ### 该怎么解决
 如果可以修改MySQL Server时区，最佳方案肯定是应用，Driver，MySQL Server三者时区保持一致，一致的话，是最不会出问题的情况，也是最便于理解的情况，其次如果业务是多时区，那么字段尽量选择**TimeStamp**，存储时间戳，即使切换时区也不会受到影响。

@@ -43,7 +43,7 @@ protected HandlerAdapter getHandlerAdapter(Object handler) throws ServletExcepti
 }
 ```
 `HandlerAdapter`的继承体系如下所示:
-![](http://res.mrdear.cn/1523704257.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523704257.png)
 1. `SimpleControllerHandlerAdapter`处理实现了`Controller`接口的handler.
 2. `SimpleServletHandlerAdapter`处理实现了`Servlet`接口的handler.
 3. `HttpRequestHandlerAdapter`处理实现了`HttpRequestHandler`接口的handler.静态资源映射就是使用该Adapter进行处理.
@@ -213,7 +213,7 @@ public final Object resolveArgument(MethodParameter parameter, ModelAndViewConta
 }
 ```
 其中参数的绑定和转换都依赖`WebDataBinder`这个类,相比`DataBinder`该类额外提供了从request中取出参数的能力,其绑定功能依赖`BeanWrapper`,转换功能依赖`ConversionService`.
-![图片来自网络](http://res.mrdear.cn/1523722430.png?imageMogr2/thumbnail/!100p)
+![图片来自网络](http://res.mrdear.cn/1523722430.png)
 
 `ConversionService`是Spring3引进的类型转换系统,在Spring中想添加一个转换器有如下几种做法
 1. 实现`interface Converter<S, T>`接口,负责把S转换为T

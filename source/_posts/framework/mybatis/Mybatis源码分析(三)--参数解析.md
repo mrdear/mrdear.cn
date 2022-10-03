@@ -62,9 +62,9 @@ Mybatis中参数解析对于开发人员来说是至关重要的,不然很容易
   }
 ```
 那么执行完毕后对于上述例子,names里面如下图所示,由于`config.isUseActualParamName()`为true,所以#{0}这种写法这里并不支持,而且也不建议这种写法,无可读性.
-![](http://res.mrdear.cn/1504965737.png?imageMogr2/thumbnail/!120p)
+![](http://res.mrdear.cn/1504965737.png)
 接下来执行`method.convertArgsToSqlCommandParam(args)`获取到实际输入的参数,对于上面例子我获取到的是个Map集合,如下图所示,对于单一实体例如User那么获取到的就是该实体.
-![](http://res.mrdear.cn/1505017418.png?imageMogr2/thumbnail/!120p)
+![](http://res.mrdear.cn/1505017418.png)
 再看我所用的sql写法,那么这里只能获取到name的值,sql处理时就会报错.
 ```xml
 SELECT * FROM user WHERE username = #{name} AND age = #{age} AND email = #{email} 
@@ -86,7 +86,7 @@ SELECT * FROM user WHERE username = #{name} AND age = #{age} AND email = #{email
 	</select>
 ```
 按照上述流程Mybatis解析出来的输入参数如下图
-![](http://res.mrdear.cn/1505020777.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1505020777.png)
 
 接下进入`DefaultSqlSession`的处理中,在其中有如下方法会多参数进一步判断,可以看出对于单一参数为`Collection`或者`Array`时Mybatis都会给默认命名方案.(这里是在3.3.0之前的版本只会处理List)
 ```java
@@ -137,7 +137,7 @@ SELECT * FROM user WHERE username = ? AND age = ? AND email = ?
 		OR id in (  ?, ?, ?)
 ```
 此时`ContextMap`如下,其中有`_frch_item_2`这种形式的参数,这是Mybatis对foreach解析后所生成的键,便于填充数据,具体可以看`ForeachSqlNode`
-![](http://res.mrdear.cn/1505027407.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1505027407.png)
 那么接下来要做的事情就是一一设置进去这些值.
 
 #### ParameterHandler

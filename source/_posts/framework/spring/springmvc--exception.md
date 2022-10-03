@@ -66,7 +66,7 @@ protected ModelAndView processHandlerException(HttpServletRequest request, HttpS
 }
 ```
 `HandlerExceptionResolver`是组合模式+模板方法设计模式,继承结构图如下:
-![](http://res.mrdear.cn/1523791699.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523791699.png)
 
 其中用的最多的是`ExceptionHandlerExceptionResolver`,也就是使用`@ControllerAdvice`与`@ExceptionHandler`所定义的异常,比如下面定义的全局异常:
 ```java
@@ -82,10 +82,10 @@ public class ExceptionController {
 }
 ```
 转换到内存中对应的是
-![](http://res.mrdear.cn/1523792438.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523792438.png)
 
 `ExceptionHandlerExceptionResolver`拥有参数解析器,返回值解析器,以及信息转换器这些组件给其提供了强大的异常捕获能力.其处理流程为定位到具体要执行的异常处理方法,封装成`ServletInvocableHandlerMethod`,然后执行拿到对应的`returnValue`,接着使用返回值解析器解析,根据结果判断是否需要写回modelView,这里的与业务方法的调用解析流程并没有很大的区别.
-![](http://res.mrdear.cn/1523792535.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523792535.png)
 
 到此异常处理完毕,很多细节都没有仔细的研究,时间原因,精力原因,也有一方面觉得不是很有必要,了解了这个过程后遇到的问题也基本上很容易定位了.
 

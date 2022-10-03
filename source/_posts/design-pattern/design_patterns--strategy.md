@@ -17,7 +17,7 @@ updated: 2018-05-03 11:05:31
 - - - - -
 ## 标准策略模式
 策略模式: 把具体的算法从业务逻辑中分离出来,使得业务类不必膨胀,并且业务与具体算法分离,便于扩展新算法.类图如下:
-![](http://res.mrdear.cn/1521374929.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1521374929.png)
 使用策略模式往往策略上有着相似的输入参数以及输出结果,或者有一个公共的上下文,便于抽象出策略接口`Strategy`,然后对应的业务Service只需要引用`StrategyContext`填充具体的策略完成自己的需求.
 ```java
 new StrategyContext(new CouponStrategy()).sendPrize(uid, prize)

@@ -19,7 +19,7 @@ Dubbo是一款设计非常棒的框架,最近开始看其源码,并且在这个�
 聊Dubbo之前先聊一聊Java的SPI机制.关于SPI之前文章可以参考Java基础专题的相关文章,这里再提两个问题:
 **1.SPI解决的问题是什么?**
 在开发中经常有面向接口编程这一说法,接口就是协议,由调用方与实现方共同制定的契约,接口负责把调用方与实现方解耦.这其中会有一个问题实现方实现接口后怎么告知调用方?一般来说调用方维护一个Map（bean容器）,然后实现方把实现类注入进去,这种做法导致实现方每次新增一个实现类都要手动注入到调用方,这种当然是不符合开闭原则的做法,比较优雅的做法是Spring IOC,利用注解把所有实现类交给IOC管理,然后注入时根据接口就能拿到所有的实现,在运行时再根据配置自动选择,但是缺点是依赖Spring.那么SPI的做法就是类似Spring,但是其没有IOC容器,因此采用在classpath下配置方式来获取扩展点的实现类,SPI会扫描classpath下`META-INF/services`下所有实现类,然后在需要使用的时候自动实例化.
-![](http://res.mrdear.cn/1524974589.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1524974589.png)
 **2.SPI的核心思想是什么?**
 我目前理解的是`Open Close Principle(OCP)`也就是开放关闭原则的实现策略,对扩展开放对修改关闭.使用起来的直观就是只需要引入相关架包,然后`ServiceLoader`会自动加载该实例,在使用的时候会自动创建实例提供给用户.整个过程如果用户是面向接口编程则不用修改任何代码便新增了一种该接口的实现,接着只要配置上所使用的实现即可.
 对于Dubbo框架来说,其Service上有着许许多多的配置,比如下方的客户端服务配置动态代理方式选用`javaassist`,通信方式选用`netty`,这些在运行时都需要获取到具体的实现类来应用这些策略,并且用户可以自定义自己的策略,那么SPI的方式就是一种很好的插件式扩展实现.
@@ -35,7 +35,7 @@ Dubbo是一款设计非常棒的框架,最近开始看其源码,并且在这个�
 对于`Spring IOC`类加载以及实例化都是由其本身来控制,Dubbo本身的设计对Spring并不是一个强依赖,获取实例都是通过`SpringExtensionFactory`这一适配器与`ApplicationContext`建立关联,从中取出所需要的实例.因此这里不多分析.
 **2. SPI Loader**
 Dubbo的SPI加载核心类为`ExtensionLoader`,以获取适配类为例,初次加载的大概流程如下:
-![](http://res.mrdear.cn/1524981360.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1524981360.png)
 
 **步骤1: **要获取`ProxyFactory`的适配类(关于适配类是什么后面会详细说),对于Dubbo来说有`JavassistProxyFactory`与`JdkProxyFactory`以及`StubProxyFactoryWrapper`三种实现类,获取的代码如下:
 ```java
@@ -84,7 +84,7 @@ javassist=com.alibaba.dubbo.rpc.proxy.javassist.JavassistProxyFactory
 **步骤6: ** 步骤6则是创建适配类,适配类给我一种黑科技的感觉.首先说下什么是适配类?适配类是一种 **组合设计模式的思想**（关于组合设计模式可以参考我博客设计模式专题）,前面说过对于Dubbo来说一个SPI接口的Impl来源有两处`Spring IOC`与`SPI Loader`,但是对于调用方来说这些都是无关紧要的,他只关心能不能获取到实例,因此需要提供一个统一的调用入口,也就是组合适配类.
 
 `ExtensionFactory`是Dubbo中获取扩展实例的入口,其主要实现类有`SpiExtensionFactory`从SPI中获取,`SpringExtensionFactory`从Spring IOC中获取.然后提供了一个适配类来组合这两个容器,如下代码所示,Dubbo中适配类的标志是标注了`@Adaptive`注解,这样在`ExtensionLoader`加载中会自动将其标注为唯一的适配类.(**注意: Dubbo中一种SPI Class只允许有一个适配类**)
-![](http://res.mrdear.cn/1524983875.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1524983875.png)
 ```java
 @Adaptive
 public class AdaptiveExtensionFactory implements ExtensionFactory {
@@ -145,7 +145,7 @@ ProxyFactory extension = ExtensionLoader.getExtensionLoader(ProxyFactory.class).
 另外Dubbo这里实际上有两层缓存,在创建时还会存入一个全局的`ConcurrentMap<Class<?>, Object> EXTENSION_INSTANCES`中,有点**不明白为什么这样做**,感兴趣的可以详细去看看源码,如有思路还请告知.
 
 ### 内存中示意图
-![](http://res.mrdear.cn/1524985704.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1524985704.png)
 
 ## 总结
 Dubbo利用SPI机制实现了高度的灵活性设计,模块之间相互解耦,可以根据配置动态修改,提供了最大的灵活性,其核心里面微核+扩展，微核定义了主要的功能，扩展上定义了不同的实现策略，启动时按需加载不同的策略，文章笔者的理解如果有偏差还请告知,以免误人子弟.

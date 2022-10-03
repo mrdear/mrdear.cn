@@ -20,29 +20,29 @@ updated: 2018-05-01 10:05:35
 我们知道，AtomicLong已经是非常好的解决方案了，涉及并发的地方都是使用CAS操作，在硬件层次上去做 compare and set操作。效率非常高。
 因此，我决定研究下，为什么LongAdder比AtomicLong高效。
 首先，看LongAdder的继承树：
-![](http://res.mrdear.cn/1525142393.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142393.png)
 继承自Striped64，这个类包装了一些很重要的内部类和操作。稍候会看到。
 正式开始前，强调下，我们知道，**AtomicLong的实现方式是内部有个value 变量，当多线程并发自增，自减时，均通过cas 指令从机器指令级别操作保证并发的原子性。**
 再看看LongAdder的方法：
-![](http://res.mrdear.cn/1525142427.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142427.png)
 怪不得可以和AtomicLong作比较，连API都这么像。我们随便挑一个API入手分析，这个API通了，其他API都大同小异，因此，我选择了add这个方法。事实上,其他API也都依赖这个方法。
-![](http://res.mrdear.cn/1525142444.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142444.png)
 LongAdder中包含了一个Cell 数组，Cell是Striped64的一个内部类，顾名思义，Cell 代表了一个最小单元，这个单元有什么用，稍候会说道。先看定义：
-![](http://res.mrdear.cn/1525142487.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142487.png)
 Cell内部有一个非常重要的value变量，并且提供了一个cas更新其值的方法。
 回到add方法：
-![](http://res.mrdear.cn/1525142444.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142444.png)
 这里，我有个疑问，**AtomicLong已经使用CAS指令，非常高效了**（比起各种锁），LongAdder如果还是用CAS指令更新值，怎么可能比AtomicLong高效了？ 何况内部还这么多判断！！！
 这是我开始时最大的疑问，所以，我猜想，难道有比CAS指令更高效的方式出现了？ 带着这个疑问，继续。
 第一if 判断，第一次调用的时候cells数组肯定为null,因此，进入casBase方法：
-![](http://res.mrdear.cn/1525142542.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142542.png)
 原子更新base没啥好说的，如果更新成功，本地调用开始返回，否则进入分支内部。
 什么时候会更新失败？ 没错，并发的时候，好戏开始了，AtomicLong的处理方式是死循环尝试更新，直到成功才返回，而LongAdder则是进入这个分支。
 分支内部，通过一个Threadlocal变量threadHashCode 获取一个HashCode对象，该HashCode对象依然是Striped64类的内部类，看定义：
-![](http://res.mrdear.cn/1525142563.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142563.png)
 有个code变量，保存了一个非0的随机数随机值。
 回到add方法：
-![](http://res.mrdear.cn/1525142444.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142444.png)
 拿到该线程相关的HashCode对象后，获取它的code变量，as[(n-1)h] 这句话相当于对h取模，只不过比起取摸，因为是 与 的运算所以效率更高。
 计算出一个在Cells 数组中当先线程的HashCode对应的 索引位置，并将该位置的Cell 对象拿出来更新cas 更新它的value值。
 当然，如果as 为null 并且更新失败，才会进入retryUpdate方法。
@@ -153,7 +153,7 @@ final void retryUpdate(long x, HashCode hc, boolean wasUncontended) {
 我确认后，结果如下：jdk-7u51 版本上还没有  但是jdk-8u20版本上已经有了。代码基本一样 ，增加了对double类型的支持和删除了一些冗余的代码。有兴趣的同学可以去下载下JDK 1.8看看
 **2.base有没有参与汇总？**
 base在调用intValue等方法的时候是会汇总的：
-![](http://res.mrdear.cn/1525142714.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1525142714.png)
 **3.base的顺序可不可以调换?**
 左耳朵耗子,提出了这么一个问题： 在add方法中，如果cells不会为空后，casBase方法一直都没有用了？
 因此，我想可不可以调换add方法中的判断顺序，比如，先做casBase的判断，结果是 不调换可能更好，调换后每次都要CAS一下，在高并发时，失败几率非常高，并且是恶性循环，比起一次判断，后者的开销明显小很多，还没有副作用。因此，不调换可能会更好。

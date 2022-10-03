@@ -18,7 +18,7 @@ updated: 2018-07-18 09:07:42
 
 ### 关系与分类
 JDK的`ByteBuffer`继承关系图如下：
-![](http://res.mrdear.cn/1531753200.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1531753200.png)
 其中
 - **HeapByteBuffer**：缓冲区分配在JVM堆中，由Java虚拟机回收，当网络通信时需要先拷贝到直接内存，然后再由操作系统操作。
 - **DirectByteBuffer**：缓冲区分配在直接内存中，因此在网络请求时就可以避免来回内存间的拷贝，缺点是内存回收麻烦，其内部通过虚引用来控制内存，当该类被回收时（full gc），虚引用触发回收逻辑，使用`java.nio.DirectByteBuffer.Deallocator#run`主动释放该区域内存。

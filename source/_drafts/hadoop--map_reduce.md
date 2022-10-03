@@ -15,30 +15,30 @@ updated: 2018-09-23 21:48:32
 
 ## MapReduce流程
 网上找的一张MapReduce流程图，个人认为过程是很清晰的，那么理解MapReduce就要深入到每一个过程，也是文章后面分析的步骤。
-![来源自网络](http://res.mrdear.cn/1537748759.png?imageMogr2/thumbnail/!100p)
+![来源自网络](http://res.mrdear.cn/1537748759.png)
 
 ### 输入分片
 在进行MapReduce计算时会先进行文件分片，分片的目的就是利用分治思想，把大任务分解为小任务。分片并不是根据数据文件本身分片，而是根据NameNode中存储的元数据信息来分，得到的结果`split`是一个**数据长度**和**记录数据位置的数组**。分片分发这个过程中会考虑Block大小，以及该Block与Map task是否在同一台机器或者机架上，以便最大的节省网络传输消耗。
 假设HDFS的block大小为64M，如果一个文件是150M大小，那么就会产生三个block，64M，64M，22M，那么在输入分片过程中一般会分为三个`split`，对应于三个Map task。
-![](http://res.mrdear.cn/1539699187.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1539699187.png)
 
 
 ### Map阶段
 在Map阶段，每个Map任务处理接收到的split，然后去指定位置获取数据，调用Map函数处理。
 Map函数的处理是技术人员写的逻辑，以wordcount为例，Map处理后产生的是一个个单词与数量的键值对，如下图所示，存放在内存中（mapreduce.task.io.sort.mb）。
-![](http://res.mrdear.cn/1539699436.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1539699436.png)
 
 ### Combine阶段
 Combine阶段是一个可选的操作，其本质是一个Map本地的Reduce操作，目的是为了减少Map输出的文件大小，尽可能利用Map的计算能力多做一些计算。比如以求和为例，如果不使用combine，那么每个Map输出的是多个数字，然后reduce再一个一个的加在一起，使用了Combine后，每个Map输出的是当前Map任务所负责文件对应数字的总和，也就是每个Map只会输出一个结果，Reduce只需要把这些结果加在一起生成最终结果，即可。
 Combine的使用一定是队最终结果无影响才可以，上述求和是无影响的，如果是求平均值使用combine那么就是错误的了。
-![](http://res.mrdear.cn/1539699879.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1539699879.png)
 
 ### Map shuffle阶段
 首先明确shuffle阶段的目的是**解决如何高效的把Map产生的结果文件传给Reduce**。然后再分析。
 Map处理的数据量往往是非常巨大的，并且Map还会对结果排序，那么要解决的第一个问题是如何对大量结果排序输出？答案是外排序，
 在Map中产生的中间结果是存放在内存中，当内存使用率达到一定比率（mapreduce.map.sprt.spill.percent），默认是80%，会通过后台守护线程将这80%的内容写到磁盘中，这个过程叫`spill`。`spill`也是由单独的线程完成处理，另外在`spill`过程中内存满了则会造成map阻塞。在写磁盘之前，当前线程会根据Reduce的数量设置分区，然后把内存中的数据写入到对应的分区中，这个过程也会对内存中的数据进行合并以及排序，如果存在combine则会执行combine逻辑，先本地reduce尽可能的减少生成文件大小。
 当Map处理完全部输入文件后，产生的结果是一堆已经分区且有序的`spill`文件，那么针对这些有序文件会进行多路归并处理，归并完后按照每一个分区独立一个文件输出到JobTracker能够访问的本地目录中，到此Map任务才算完全执行完毕。
-![](http://res.mrdear.cn/1539701466.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1539701466.png)
 
 
 ### Reduce shuffle

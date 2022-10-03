@@ -22,11 +22,11 @@ updated: 2019-04-07 21:44:06
 
 ## 实现
 实现过程很简单，使用Alfred过程中发现一行代码也不需要写，直接自带功能就足以满足上述需求，整个workflow如下所示：
-![](http://res.mrdear.cn/1554645326.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1554645326.png)
 
 ### 输入
 该workflow的输入是准备好的不同环境的hosts文件，每一个环境对应一个文件，方便自己区分，也方便CURD操作。
-![](http://res.mrdear.cn/1554645307.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1554645307.png)
 
 ### 替换
 替换过程中要解决的问题是如何自动输入sudo的密码，这里使用`sudo -S`指令，该执行会让sudo从标准输入stdin中读取密码，因此在前面加上`echo`把密码输入到对应的标准输入中。

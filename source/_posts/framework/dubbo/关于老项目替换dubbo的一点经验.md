@@ -49,7 +49,7 @@ clone下来后使用`mvn package -DskipTests`,会打包该项目,生成主要的
 
 #### zk注册中心
 dubbo的注册如下所示:
-![](http://res.mrdear.cn/1500736706.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1500736706.png)
 实际操作下来,第三层还会有`routers`,`configurators`节点,当在dubbo-admin平台操作该service时,比如倍权,该操作会存在在这些节点中.
 
 #### 服务提供者saturn

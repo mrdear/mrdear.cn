@@ -238,7 +238,7 @@ public void put(E e) throws InterruptedException {
 
 #### SynchronousQueue
 `SynchronousQueue`是同步队列，意思是其**生产者与消费者之间直接传递数据**，取消掉了Channel这一共享缓冲区，这是一种同步的直接交付方式，为了更容易的理解，读者可以认为其是一个内部队列固定长度为1的阻塞队列实现，也因此在put操作之后该队列就已经满，因此必须有对应的take操作，否则该队列无法继续生产元素,则对应的生产线程会被休眠进入WAITING状态。在消费者执行take操作时，当队列为空则对应的消费者线程会被休眠，直到有数据时才唤醒对应的消费者线程。
-![](http://res.mrdear.cn/1528517858.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1528517858.png)
 
 
 更详细的文章 [Java并发包中的同步队列SynchronousQueue实现原理](http://ifeve.com/java-synchronousqueue/)

@@ -15,7 +15,7 @@ updated: 2020-03-21 08:06:47
 
 ## 原理
 本质原理是将v2ray伪装成web服务，然后利用CDN进行流量转发，从而隐藏真实VPS地址，请求路径如下图所示。
-![](http://res.mrdear.cn/1583580459.png?imageMogr2/thumbnail/!60p)
+![](http://res.mrdear.cn/1583580459.png)
 
 ## 准备工作
 1. 自有域名，可配置解析
@@ -26,7 +26,7 @@ updated: 2020-03-21 08:06:47
 
 ### 配置域名
 登录cloudflare后，按照提示添加对应域名信息，之后添加你的域名，假设值`abc.com`，IP记录指向对应的VPS IP，注意一点，解析选择`DNS ONLY`。
-![](http://res.mrdear.cn/1583581398.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1583581398.png)
 
 ### 配置VPS
 vps端配置主要有v2ray服务端以及caddy转发请求，得益于社区的强大能力，这些一键脚本即可完成。
@@ -66,7 +66,7 @@ sudo modprobe tcp_bbrplus
 
 ### 配置转发
 登录cloudflare，将之前配置DNS ONLY的域名改成**proxy**，即点下对应的灰云。
-![](http://res.mrdear.cn/1583581531.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1583581531.png)
 
 然后在`SSL/TLS`选项卡中，将`SSL/TLS encryption mode`改成full，就完成了配置
 

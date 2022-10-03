@@ -165,7 +165,7 @@ Found 1 deadlock.
 在分析中明确指出发现了死锁，是由于`Thread-1`与`Thread-0`锁的互斥导致的死锁。
 
 有时候文件分析不是很容易看，此时可以借助一些工具来分析，比如[http://gceasy.io/](http://gceasy.io/)，其分析整理后使得结果更加容易看到。
-![](http://res.mrdear.cn/1529113829.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1529113829.png)
 
 ### 资源死锁排查
 由于资源没释放的死锁使用jstack等手段难以排查，这种棘手的问题一般要多次dump线程快照，参考[kabutz/DeadlockLabJavaOne2012](https://github.com/kabutz/DeadlockLabJavaOne2012)给出的经验主要有以下两种方式排查：

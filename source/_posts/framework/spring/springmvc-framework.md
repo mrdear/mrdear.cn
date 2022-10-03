@@ -42,7 +42,7 @@ protected void doDispatch(HttpServletRequest request, HttpServletResponse respon
     }
 ```
 体系结构图大概如下:
-![http://www.cnblogs.com/ylhssn/p/4062757.html](http://res.mrdear.cn/1523684141.png?imageMogr2/thumbnail/!100p)
+![http://www.cnblogs.com/ylhssn/p/4062757.html](http://res.mrdear.cn/1523684141.png)
 
 总体执行流程描述如下:
 Spring MVC把执行流程完整的定义在了`DispatcherServlet`中,对于他来说第一步是根据request的url以及`HandlerMapping`来定位到要执行的`HandlerExecutionChain`,这个就是方法的执行链,包括Spring MVC的拦截器以及用户自己定义的业务方法,具体执行时会使用`HandlerAdapter`进行适配,在这个步骤中包括了具体的参数解析,类型转换,然后利用反射调用具体的方法拿到返回值,接着对返回值进行解析,如果返回值是一个页面那么将结果封装为`ModelAndView`,如果不是则世界使用`MessageConvert`进行转换写回,对于页面接下来会给视图解析器`ViewResolver`来处理,最后输出对应的结果.

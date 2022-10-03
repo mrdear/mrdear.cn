@@ -19,7 +19,7 @@ updated: 2019-06-07 23:13:08
 
 ### 观察者模式结构
 观察者模式主要结构如下:
-![](http://res.mrdear.cn/1524063218.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1524063218.png)
 - Subject: 负责事件产生后通知到具体观察者的角色,所谓的通知实际上是循环调用其所持有的观察者接口
 - Observer: 负责对事件的处理,该接口可以很好的做到任务分离,每一个不同的任务都是其一个实现子类,互相不关心对方,很好的描述了业务上的关系.
 
@@ -40,7 +40,7 @@ updated: 2019-06-07 23:13:08
 
 ### 观察者模式设计
 上述用观察模式可以设计出如下结构:
-![](http://res.mrdear.cn/1524065151.png?imageMogr2/thumbnail/!120p)
+![](http://res.mrdear.cn/1524065151.png)
 
 **OrderPaidHandlerObserver**
 其是观察者需要实现的接口,主要功能是判断是不是自己可以处理,可以处理的话就处理,其子类各司其职,比如`IntegralOrderService`是处理积分相关的观察者,`VipOrderService`则是处理会员相关的Service.
@@ -136,7 +136,7 @@ JDK自带的`Observer`就是类似的形式,其使用`Object`作为观察者参�
 ## EventBus设计
 观察者模式本质上来说是一种事件驱动编程范式，Subject调用Observer时传递参数过程即为一次事件发布，在这个过程中Subject与Observer是一种强耦合状态，Subject必须要拿到所有的Observer才能进行事件发布，为了解决这种强耦合，EventBus设计方式就出现了，本质上思想是加中间层去除耦合性，如下图所示，
 
-![](http://res.mrdear.cn/1559919617.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1559919617.png)
 
 EventBus其主要目地是管理所有的Observer，管理维度一般以事件为维度，当Subject发布到EventBus一个Event时，EventBus根据事件类型(一般为该类的Class对象)遍历出所有的Observer，然后执行，这里也可以根据需求做异步执行。
 

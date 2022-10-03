@@ -64,7 +64,7 @@ selected字段为当前哪些选项卡已经被选择，后端根据已经选择
 ### 前端统一组件
 接口统一后，对于前端来说就很容易做出一个通用组件，组件的样子大概如下，其中`SelectGroup`是一个表格的所有搜索内容，`ConfigQueryService`则是请求API的封装，其参数是selectGroup发生变化时，主动传递过来。
 为了加快响应速度，`ConfigQueryService`需要做一定的触发限流，以及key维度的缓存配置，否则每次变动都请求接口，这个耗时有点无法接受。
-![](http://res.mrdear.cn/1578149077.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1578149077.png)
 
 举个例子，以开局的图为例，当进入该页面后，`SearchGroup`会调用`ConfigQueryService`发出如下请求
 ```json
@@ -123,7 +123,7 @@ SearchResult result = req.getKeys()
             .map(x -> new Pair<>(x, CACHE_BEAN.get(x).search(req.getSelected())))
             .collect(SearchResult::new, (l, x) -> l.put(x.getKey(), x.getValue()), SearchResult::merge);
 ```
-![](http://res.mrdear.cn/1578152122.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1578152122.png)
 
 该方案最大的优势是`ConfigKeyQueryStrategy`接口被水平管理起来，每一个选项框查询逻辑自己来控制，如果是枚举类，则直接返回Enum.values()，如果需要去DB查询，则调用对应DAO，如果是不经常改变的数据，则可以加一层缓存，每一个选项框之间水平拆分，逻辑清晰简单，扩展则仅仅需要增加新的`ConfigKeyQueryStrategy`实现类。
 

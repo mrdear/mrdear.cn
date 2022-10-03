@@ -41,7 +41,7 @@ HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception;
 	}
 ```
 `HandlerMappings`继承结构如下:
-![](http://res.mrdear.cn/1523693617.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523693617.png)
 从关系图可以得到哪些信息?
 1. 这是一种模板方法设计模式,接口最上层提供对外的能力,抽象类在中间提供代码复用以及把功能拆分到具体的子类中实现,最后实现类则负责实现模板类所给自己提供的小任务的实现.
 2. `HandlerMapping`分为两种类型,一种是url到方法`AbstractHandlerMethodMapping`,这种形式比较常用,也是业务开发中主要使用到的形式,一种是url到其他处理器比如Controller,Resource的`AbstractUrlHandlerMapping`,该类属于Spring3之前常用的类.
@@ -90,7 +90,7 @@ protected HandlerMethod getHandlerInternal(HttpServletRequest request) throws Ex
 ```
 从上述流程可以看出,主要的寻找逻辑在`lookupHandlerMethod()`方法中,等下在分析该方法.在这个查找中有`MappingRegistry`,它是什么?为什么有需要读锁?
 按照该类的注释所说,该类是一个路由表,其包含着Spring MVC所管理的所有映射关系,并且运用读写锁提供并发访问能力,之所以需要并发因为`MappingRegistry`并不是一个线程安全的类,其提供了写入与获取方法,并且共享了一些线程不安全的类,比如`HashMap`,并且其属于读写比非常大的场景,因此使用读写锁实现高性能访问与并发安全在合适不过了.
-![](http://res.mrdear.cn/1523697076.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523697076.png)
 
 有了所有的映射关系接下来是匹配流程,也就是`lookupHandlerMethod`的方法执行逻辑(代码比较长,参考注释观看):
 ```java
@@ -153,7 +153,7 @@ private final Map<String, Object> handlerMap = new LinkedHashMap<String, Object>
 ```txt
 spring.mvc.static-path-pattern=/static/**
 ```
-![](http://res.mrdear.cn/1523700503.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1523700503.png)
 由于使用不多,这里就不多研究了.
 
 ## 总结

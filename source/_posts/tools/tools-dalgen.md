@@ -17,7 +17,7 @@ updated: 2018-10-27 09:44:01
 Github：[dalgen-script-intellij](https://github.com/mrdear/dalgen-script-intellij)
 
 Velocity模板信息
-![](http://res.mrdear.cn/1540564282.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540564282.png)
 
 ## 使用介绍
 
@@ -25,17 +25,17 @@ Velocity模板信息
 
 1. copy脚本到IDEA执行的位置`Scratches and Consoles -> Extensions -> Database Tools and SQL -> schema`中.
 
-![](http://res.mrdear.cn/1540563274.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540563274.png)
 
 
 2. 在database tools中选择对应的表,右键执行该脚本
 
-![](http://res.mrdear.cn/1540563321.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540563321.png)
 
 
 3. 在弹出来的文件选择框中选择目标地址(文件生成地址)即可生成.
 
-![](http://res.mrdear.cn/1540563345.png?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1540563345.png)
 
 整个流程简单又不失灵活,脚本自定义,模板自定义,根据项目的不同可以很容易的产出各种模板.
 

@@ -30,4 +30,4 @@ ArrayList的subList
 最重要的是多多练习,每次记录下模棱两可的题目,搞清楚,下次答对这就是进步.
 
 最后晒晒证书
-![](http://res.mrdear.cn/1521043214.jpg?imageMogr2/thumbnail/!100p)
+![](http://res.mrdear.cn/1521043214.jpg)
