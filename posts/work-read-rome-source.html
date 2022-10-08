@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     
-        <title>Spring MVC--返回值的解析 | 屈定's Blog</title>
+        <title>实践 -- Rome源码阅读 | 屈定's Blog</title>
     
 
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
@@ -24,7 +24,7 @@
   <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
 
 
-<link rel="canonical" href="https://mrdear.cn/posts/framework-springmvc-return.html">
+<link rel="canonical" href="https://mrdear.cn/posts/work-read-rome-source.html">
 <link rel="manifest" href="/manifest.json" />
 <link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
 
@@ -112,11 +112,11 @@
     <div class="page__content">
         <article class="page__post">
     <div class="post__cover">
-        <img src="http://res.mrdear.cn/springmvc.png" alt="Spring MVC--返回值的解析">
+        <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读">
     </div>
 
     <header class="post__info">
-        <h1 class="post__title">Spring MVC--返回值的解析</h1>
+        <h1 class="post__title">实践 -- Rome源码阅读</h1>
 
         <div class="post__mark">
             <div class="mark__block">
@@ -131,7 +131,7 @@
             <div class="mark__block">
                 <i class="mark__icon iconfont icon-time"></i>
                 <ul class="mark__list clearfix">
-                    <li class="mark__item"><span>2018-04-23</span></li>
+                    <li class="mark__item"><span>2022-10-08</span></li>
                 </ul>
             </div>
 
@@ -140,7 +140,7 @@
                 <ul class="mark__list clearfix">
                     
                         <li class="mark__item">
-                            <a href="/tags/Spring/">Spring</a>
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
                         </li>
                     
                 </ul>
@@ -151,48 +151,170 @@
     </header>
 
     <div class="post__content">
-        <p>承接上文调用<code>HandlerMethod</code>之后会获取到对应的返回值,对返回值的解析使用的是<code>HandlerMethodReturnValueHandler</code>接口,该接口的设计与参数解析器<code>HandlerMethodArgumentResolver</code>一模一样,都是组合设计模式,使用树枝节点来组合所有的解析器,下面开始分析.</p>
-<h2 id="HandlerMethodReturnValueHandler"><a href="#HandlerMethodReturnValueHandler" class="headerlink" title="HandlerMethodReturnValueHandler"></a>HandlerMethodReturnValueHandler</h2><p><code>HandlerMethodReturnValueHandler</code>中有两个方法,一个是判断是否支持,一个是处理.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">HandlerMethodReturnValueHandler</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 是否支持当前类型,一般根据类型本身或是注解来判断</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">	<span class="type">boolean</span> <span class="title function_">supportsReturnType</span><span class="params">(MethodParameter returnType)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 处理返回结果,返回结果主要存放到ModelAndViewContainer中</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">	<span class="keyword">void</span> <span class="title function_">handleReturnValue</span><span class="params">(Object returnValue, MethodParameter returnType,</span></span><br><span class="line"><span class="params">			ModelAndViewContainer mavContainer, NativeWebRequest webRequest)</span> <span class="keyword">throws</span> Exception;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>HandlerMethodReturnValueHandler</code>的继承结构大概如下,由于子类众多,所以只列出了几个:<br><img src="http://res.mrdear.cn/1523765027.png"></p>
-<p>从功能上来分大概会有两类,一种是直接写回数据不需要经过视图解析器<code>ViewResolver</code>,其表现是继承了<code>AbstractMessageConverterMethodProcessor</code>抽象模板类,一种则是封装到<code>ModelAndViewContainer</code>中,转交给视图解析器后再返回,这里的分析重点关注前者.</p>
-<h3 id="不经过ViewResolver的返回"><a href="#不经过ViewResolver的返回" class="headerlink" title="不经过ViewResolver的返回"></a>不经过ViewResolver的返回</h3><p>举个例子开发中常用<code>@ResponseBody</code>来返回json信息,其对应的处理器为<code>RequestResponseBodyMethodProcessor</code>,该处理器继承了<code>AbstractMessageConverterMethodProcessor</code>因此拥有消息转换的能力,该处理不需要经过视图解析器,因此这里是直接利用<code>MessageConverter</code>写回数据.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RequestResponseBodyMethodProcessor</span> <span class="keyword">extends</span> <span class="title class_">AbstractMessageConverterMethodProcessor</span> &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 根据返回值上的注解决定是否支持解析</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">	<span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">supportsReturnType</span><span class="params">(MethodParameter returnType)</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> (AnnotatedElementUtils.hasAnnotation(returnType.getContainingClass(), ResponseBody.class) ||</span><br><span class="line">				returnType.hasMethodAnnotation(ResponseBody.class));</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line"></span><br><span class="line">	<span class="meta">@Override</span></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">handleReturnValue</span><span class="params">(Object returnValue, MethodParameter returnType,</span></span><br><span class="line"><span class="params">			ModelAndViewContainer mavContainer, NativeWebRequest webRequest)</span></span><br><span class="line">			<span class="keyword">throws</span> IOException, HttpMediaTypeNotAcceptableException, HttpMessageNotWritableException &#123;</span><br><span class="line">    <span class="comment">// 直接写回到Response中,因此这里要设置为已处理过,保证总流程中数据解析器不再解析</span></span><br><span class="line">		mavContainer.setRequestHandled(<span class="literal">true</span>);</span><br><span class="line">		<span class="type">ServletServerHttpRequest</span> <span class="variable">inputMessage</span> <span class="operator">=</span> createInputMessage(webRequest);</span><br><span class="line">		<span class="type">ServletServerHttpResponse</span> <span class="variable">outputMessage</span> <span class="operator">=</span> createOutputMessage(webRequest);</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 使用MessageConverter写回,这个稍后分析</span></span><br><span class="line">		writeWithMessageConverters(returnValue, returnType, inputMessage, outputMessage);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>最后解析会调用模板类中的<code>writeWithMessageConverters</code>,该方法主要是选择最适合的转换器,利用<code>HttpMessageConverter</code>进行转换输出.</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> &lt;T&gt; <span class="keyword">void</span> <span class="title function_">writeWithMessageConverters</span><span class="params">(T value, MethodParameter returnType,</span></span><br><span class="line"><span class="params">			ServletServerHttpRequest inputMessage, ServletServerHttpResponse outputMessage)</span></span><br><span class="line">			<span class="keyword">throws</span> IOException, HttpMediaTypeNotAcceptableException, HttpMessageNotWritableException &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 获取到请求支持的MediaType类型,以及可以产生的MediaType类型</span></span><br><span class="line">		<span class="type">HttpServletRequest</span> <span class="variable">request</span> <span class="operator">=</span> inputMessage.getServletRequest();</span><br><span class="line">		List&lt;MediaType&gt; requestedMediaTypes = getAcceptableMediaTypes(request);</span><br><span class="line">		List&lt;MediaType&gt; producibleMediaTypes = getProducibleMediaTypes(request, valueType, declaredType);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 选出最合适的类型</span></span><br><span class="line">		Set&lt;MediaType&gt; compatibleMediaTypes = <span class="keyword">new</span> <span class="title class_">LinkedHashSet</span>&lt;MediaType&gt;();</span><br><span class="line">		<span class="keyword">for</span> (MediaType requestedType : requestedMediaTypes) &#123;</span><br><span class="line">			<span class="keyword">for</span> (MediaType producibleType : producibleMediaTypes) &#123;</span><br><span class="line">				<span class="keyword">if</span> (requestedType.isCompatibleWith(producibleType)) &#123;</span><br><span class="line">					compatibleMediaTypes.add(getMostSpecificMediaType(requestedType, producibleType));</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 排序然后循环,目的是使用最佳的类型来处理</span></span><br><span class="line">		List&lt;MediaType&gt; mediaTypes = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;MediaType&gt;(compatibleMediaTypes);</span><br><span class="line">		MediaType.sortBySpecificityAndQuality(mediaTypes);</span><br><span class="line"></span><br><span class="line">		<span class="type">MediaType</span> <span class="variable">selectedMediaType</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">		<span class="keyword">for</span> (MediaType mediaType : mediaTypes) &#123;</span><br><span class="line">			<span class="keyword">if</span> (mediaType.isConcrete()) &#123;</span><br><span class="line">				selectedMediaType = mediaType;</span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">			&#125;</span><br><span class="line">      ...</span><br><span class="line">		&#125;</span><br><span class="line">    <span class="comment">// 对HttpMessageConverter做一个循环,直到选出第一个支持的Converter为止</span></span><br><span class="line">		<span class="keyword">if</span> (selectedMediaType != <span class="literal">null</span>) &#123;</span><br><span class="line">			selectedMediaType = selectedMediaType.removeQualityValue();</span><br><span class="line">			<span class="keyword">for</span> (HttpMessageConverter&lt;?&gt; messageConverter : <span class="built_in">this</span>.messageConverters) &#123;</span><br><span class="line">				<span class="keyword">if</span> (messageConverter <span class="keyword">instanceof</span> GenericHttpMessageConverter) &#123;</span><br><span class="line">					<span class="keyword">if</span> (((GenericHttpMessageConverter) messageConverter).canWrite(</span><br><span class="line">							declaredType, valueType, selectedMediaType)) &#123;</span><br><span class="line">						outputValue = (T) getAdvice().beforeBodyWrite(outputValue, returnType, selectedMediaType,</span><br><span class="line">								(Class&lt;? <span class="keyword">extends</span> <span class="title class_">HttpMessageConverter</span>&lt;?&gt;&gt;) messageConverter.getClass(),</span><br><span class="line">								inputMessage, outputMessage);</span><br><span class="line">						<span class="keyword">if</span> (outputValue != <span class="literal">null</span>) &#123;</span><br><span class="line">							addContentDispositionHeader(inputMessage, outputMessage);</span><br><span class="line">							((GenericHttpMessageConverter) messageConverter).write(</span><br><span class="line">									outputValue, declaredType, selectedMediaType, outputMessage);</span><br><span class="line">						&#125;</span><br><span class="line">						<span class="keyword">return</span>;</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">        ...</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (outputValue != <span class="literal">null</span>) &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">HttpMediaTypeNotAcceptableException</span>(<span class="built_in">this</span>.allSupportedMediaTypes);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
-<p>这其中的转换操作使用的是<code>HttpMessageConverter</code>,该类是一个双向的操作,其既可以支持读取,也可以支持写回,因此在Spring MVC中我们可以直接使用<code>@RequestBody</code>接收json字符串格式的Bean,写回主要使用的是其所提供的<code>write()</code>功能.Spring MVC默认提供了众多解析器包括如下这些,想要自定义解析器的话可以任意参考其中一个即可.</p>
+        <p>之前写了一篇<a href="https://mrdear.cn/posts/readnote-source-mybatis.html">《读书笔记 – 通用源码阅读指南》</a>，本篇是按照指南教程尝试阅读下<a target="_blank" rel="noopener" href="https://github.com/rometools/rome">Rome</a>这个项目。之所以选择Rome，因为最近想要写一个RSS解析器，了解下面对多种格式有什么比较好的方式能够做到灵活扩展以及使用上的优雅兼存。我大概能够想象到这个工作量不在于难度，而在于多种格式的适配以及扩展性的兼顾，所以想要参考下Rome的实现策略，接下来按照之前定义的步骤开始阅读之旅。</p>
+<h2 id="1-全面了解项目"><a href="#1-全面了解项目" class="headerlink" title="1. 全面了解项目"></a>1. 全面了解项目</h2><p>Rome是一个比较有历史的RSS解析工具，主要提供了以下功能：</p>
+<ul>
+<li>读取RSS,ATOM</li>
+<li>输出RSS,ATOM</li>
+<li>聚合多个RSS或者ATOM，以统一格式输出</li>
+<li>支持扩展格式解析（module），即可以在解析或者输出过程中增加自定义转换或者标签输出<br>参考：<a target="_blank" rel="noopener" href="https://rometools.github.io/rome/HowRomeWorks/index.html">https://rometools.github.io/rome/HowRomeWorks/index.html</a></li>
+</ul>
+<p>看到这里，不自觉会产生几个问题：</p>
 <ol>
-<li>MappingJackson2HttpMessageConverter</li>
-<li>GsonHttpMessageConverter</li>
-<li>ByteArrayHttpMessageConverter</li>
-<li>ObjectToStringHttpMessageConverter</li>
-<li>ProtobufHttpMessageConverter</li>
-<li>ResourceHttpMessageConverter</li>
-<li>StringHttpMessageConverter</li>
-<li>AllEncompassingFormHttpMessageConverter</li>
+<li>如何将全部格式统一？不统一的话，每个格式之间的转换就是笛卡儿积</li>
+<li>如何判断该使用什么解析器？</li>
+<li>字段级解析以及输入输出怎么扩展支持？</li>
 </ol>
-<h3 id="经过ViewResolver的返回"><a href="#经过ViewResolver的返回" class="headerlink" title="经过ViewResolver的返回"></a>经过ViewResolver的返回</h3><p>经过视图解析器的返回处理就很简单了,主要是把视图名还有参数信息设置到<code>ModelAndViewContainer</code>容器中,便于视图解析器使用<br>以<code>ViewNameMethodReturnValueHandler</code>为例</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">handleReturnValue</span><span class="params">(Object returnValue, MethodParameter returnType,</span></span><br><span class="line"><span class="params">  ModelAndViewContainer mavContainer, NativeWebRequest webRequest)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (returnValue <span class="keyword">instanceof</span> CharSequence) &#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">viewName</span> <span class="operator">=</span> returnValue.toString();</span><br><span class="line">    <span class="comment">// 设置使用视图名</span></span><br><span class="line">    mavContainer.setViewName(viewName);</span><br><span class="line">    <span class="comment">// 判断是否是重定向请求</span></span><br><span class="line">    <span class="keyword">if</span> (isRedirectViewName(viewName)) &#123;</span><br><span class="line">      mavContainer.setRedirectModelScenario(<span class="literal">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (returnValue != <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="comment">// should not happen</span></span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UnsupportedOperationException</span>(<span class="string">&quot;Unexpected return type: &quot;</span> +</span><br><span class="line">      returnType.getParameterType().getName() + <span class="string">&quot; in method: &quot;</span> + returnType.getMethod());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>然后接着转交给视图解析器<code>ViewResolver</code>解析,主要逻辑会在<code>org.springframework.web.servlet.DispatcherServlet#render</code>中,Spring MVC会从中选择对应的视图解析器,比如thymeleaf就对应<code>ThymeleafViewResolver</code>,jsp则对应<code>JstlViewResolver</code>,具体不在深入.到此算是Spring MVC完整的流程结束.</p>
+<h2 id="2-搭建可调试环境"><a href="#2-搭建可调试环境" class="headerlink" title="2. 搭建可调试环境"></a>2. 搭建可调试环境</h2><p>该项目依赖第三方较少，git拉下来代码后，单测直接可以跑，很方便调试，这里提供一个testcase</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TestReadWriter</span> <span class="keyword">extends</span> <span class="title class_">FeedTest</span> &#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">TestReadWriter</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>(<span class="string">&quot;rss_2.0.xml&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">test</span><span class="params">()</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">Reader</span> <span class="variable">reader</span> <span class="operator">=</span> getFeedReader();</span><br><span class="line"></span><br><span class="line">        <span class="type">SyndFeedInput</span> <span class="variable">input</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SyndFeedInput</span>();</span><br><span class="line">        <span class="type">SyndFeed</span> <span class="variable">syndFeed</span> <span class="operator">=</span> input.build(reader);</span><br><span class="line"></span><br><span class="line">        <span class="type">SyndFeedOutput</span> <span class="variable">output</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SyndFeedOutput</span>();</span><br><span class="line">        <span class="type">StringWriter</span> <span class="variable">writer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringWriter</span>();</span><br><span class="line"></span><br><span class="line">        syndFeed.setFeedType(<span class="string">&quot;atom_1.0&quot;</span>);</span><br><span class="line">        output.output(syndFeed, writer);</span><br><span class="line"></span><br><span class="line">        System.out.println(writer.toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-追踪项目的骨架脉络"><a href="#3-追踪项目的骨架脉络" class="headerlink" title="3. 追踪项目的骨架脉络"></a>3. 追踪项目的骨架脉络</h2><p>该项目的核心流程：读取RSS源数据 → 解析成标准格式 → 按照指定格式输出。因此按照上述的testcase，跟踪源代码绘制即可，我的绘制结果如下：</p>
+<p><img src="https://res.mrdear.cn/blog/uPic/image-202210081813376501665224018066.png" alt="image-20221008181337650"></p>
+<ul>
+<li>依赖JDOM提供的SAXBuilder将XML解析成Document，再通过FeedParser解析成WireFeed类型，该类型为origin类型，存在RSS和ATOM以及OPML不同的实现类。</li>
+<li>接下来通过Convert将WireFeed转换为SyndFeed，SyndFeed为公共类型抽象，无论底层是rss还是atom都会到这个类型来表示。</li>
+<li>输出同理，将SyndFeed再转换为WireFeed，此时是需要输出到什么格式，就转换为具体的WireFeed实现类，最后通过WireFeedGenerator输出到XML的Document。</li>
+</ul>
+<h2 id="4-将源码的所有包从功能上进行划分"><a href="#4-将源码的所有包从功能上进行划分" class="headerlink" title="4.将源码的所有包从功能上进行划分"></a>4.将源码的所有包从功能上进行划分</h2><p>该项目包划分不是很细致，主要有以下几个包：</p>
+<ul>
+<li>util：工具类</li>
+<li>module：利用module能力扩展出来的一些功能支持</li>
+<li>opml：针对opml扩展出来的支持</li>
+<li>io：主要是xml解析以及输出实现，还包含了全局的PluginManager系统</li>
+<li>feed：rss或者atom模型的定义</li>
+</ul>
+<p>综合复杂度以及依赖关系：uitl → feed  → io → opml → module，因此源码阅读顺序就按照这个来。</p>
+<p><img src="https://res.mrdear.cn/blog/uPic/image-202210081817525141665224272777.png" alt="image-20221008181752514"></p>
+<h3 id="util包阅读"><a href="#util包阅读" class="headerlink" title="util包阅读"></a>util包阅读</h3><p>该包都是一些简单工具类方法，看了一遍后，略过。</p>
+<h3 id="feed包阅读"><a href="#feed包阅读" class="headerlink" title="feed包阅读"></a>feed包阅读</h3><p>该包主要是定义实体类模型，比如针对RSS定义了Channel类，针对ATOM定了Feed类，以及公共抽象SyndFeed也都在这个包下面。</p>
+<p><strong>impl包</strong></p>
+<p>该包是利用反射能力，包装了一套bean clone能力，其核心类有：</p>
+<ul>
+<li>CopyFromHelper：将一个bean的属性，copy到另一个bean上，要求两个类归属一致，并且存在对应的get set方法即可</li>
+<li>CloneableBean：针对一个bean实例提供深拷贝能力，也是get set调用获取以及设置值</li>
+<li>EqualsBean：对比两个bean是否一致，对比实例的每一个属性值</li>
+<li>ToStringBean：输出toString信息</li>
+</ul>
+<p>该包这些功能实际上可以单独给封装到另外的包，在feed下面我认为最主要的原因是这些功能都是给feed实体准备的，因为要将不同的格式统一到同一种结构上，那么势必会带来很多属性值copy。</p>
+<p><strong>atom &amp; rss包</strong></p>
+<ul>
+<li>WireFeed：真实结构类parent，主要定义当前类型信息，子类有如下两者。</li>
+<li>Feed：描述atom结构的类，都是相对于xml文件，这里会列出所有可能存在元素</li>
+<li>Channel：描述rss结构的类，都是相对于xml文件，这里会列出所有可能存在元素</li>
+</ul>
+<p><strong>module包</strong></p>
+<p>module在这里使用的并不多，更多的则是接口定义，至于有什么用处，暂时还看不出来，因此这部分遗留到module再处理。这里大致可以看出来，module是根据namespace做出来的扩展，对于一个namespace可以指定module解析，并将结果放入到Feed实例中。</p>
+<p><strong>synd包</strong></p>
+<ul>
+<li>SyndFeed：用来统一不同源格式的类，其他源都能够转换到这个类。<ul>
+<li>SyndContent：描述文本内容</li>
+<li>SyndLink：描述链接地址</li>
+<li>SyndImage：描述图像</li>
+<li>SyndEntry：描述每一个Item<ul>
+<li>SyndEnclosure：描述RSS中媒体元素</li>
+</ul>
+</li>
+<li>SyndPerson：描述作者</li>
+<li>Element：其他额外元素</li>
+<li>Module：扩展出来的元素</li>
+</ul>
+</li>
+<li>Converter：用于将原始WireFeed格式与SyndFeed转换的类，针对每一个格式有单独实现<ul>
+<li><code>copyInto</code>：将WireFeed转换为SyndFeed</li>
+<li><code>createRealFeed</code>：将SyndFeed转换为WireFeed</li>
+</ul>
+</li>
+</ul>
+<p>这里第一次碰到了 <code>PluginManager</code> 这个类，这个类类似于策略模式的策略管理器，Converters实现了这个类，从而有了多种Convert的管理能力，因此可以抉择最终使用哪一个Convert。PluginManager的解析，放到接下来的IO包中在看。</p>
+<p><img src="https://res.mrdear.cn/blog/uPic/image-202210081820389401665224439212.png" alt="image-20221008182038940"></p>
+<p><strong>IO包</strong></p>
+<p>该包主要定义解析规则，即XML怎么到WireFeed，以及WireFeed又怎么写回RSS，同时还有WireFeed与SyndFeed之间的转换逻辑。</p>
+<p>~ <strong>xml解析</strong></p>
+<ul>
+<li>XmlFixerReader：包装读取的inputstream</li>
+<li>SAXBuilder：读取上述的inputstream</li>
+</ul>
+<p>~ <strong>PluginManager加载</strong></p>
+<p>PluginManager是类似与Java的serviceload机制写的一套扩展策略管理系统，在配置中存在 <a target="_blank" rel="noopener" href="http://rome.properties/">rome.properties</a> 配置文件，里面会按照如下指定了涉及到的class全类名，然后PluginManager要做的就是将这些类实例化，管理起来。</p>
+<p>至于为什么这样设计？这样设计可以做到很灵活，因为用户也可以自己指定这个配置，来扩展自己想要的解析策略。于现在的做法，我更加倾向于简单点的一个静态Config类来管理这部分的配置。</p>
+<p>在OSGI多类加载器下，这样的模式有点问题，用户指定的以及系统自带的可能不是一个类加载器，因此提供了 ConfigurableClassLoader 这个接口，可以指定加载使用的类加载器信息。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Converter.classes</span>=<span class="string">com.rometools.rome.feed.synd.impl.ConverterForAtom10 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForAtom03 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS090 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS091Netscape \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS091Userland \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS092 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS093 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS094 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS10  \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS20</span></span><br></pre></td></tr></table></figure>
+
+<p>~ <strong>解析流程</strong> </p>
+<p>解析流程还是复用上述代码，主要分析build里面做了哪些事情。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Reader</span> <span class="variable">reader</span> <span class="operator">=</span> getFeedReader();</span><br><span class="line"><span class="type">SyndFeedInput</span> <span class="variable">input</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SyndFeedInput</span>();</span><br><span class="line"><span class="type">SyndFeed</span> <span class="variable">syndFeed</span> <span class="operator">=</span> input.build(reader);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>SyndFeedInput为入口类，拿到reader后，直接转交给WireFeedInput进行解析。这里是参考了Model的设计。<ul>
+<li>WireFeedInput解析后产生的是 WireFeed</li>
+<li>SyndFeedInput则是将 WireFeed 转换为 SyndFeed</li>
+</ul>
+</li>
+<li>构建XML解析器：使用的是<code>SAXBuilder</code> ，通过xml解析得到<code>Document</code>实例</li>
+<li>通过 FeedParsers 得到 WireFeedParser 实例，开始触发解析转换流程<ul>
+<li>FeedParsers继承了PluginManager，通过 WireFeedParser.classes 属性key，获取对应的FeedParser实现类。</li>
+<li>WireFeedParser中有一个 <code>boolean isMyType(final Document document)</code> 方法，该方法判断一个实例当前是否支持解析，判断依据是root元素，version，namespace等信息。<ul>
+<li>以RSS_2.0为例：root元素为 <code>rss</code>，version为<code>2.0</code>，version不存在则默认<code>2.0</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>以rss_2.0解析为例，接下来就是创建Channel，然后分别解析channel以及item，补全该实例<ul>
+<li>解析过程中，会加载module，module也是PluginManager的实现类，通过properties指定。Module分为了 root，channel类型，用于定制不同块的解析，解析后元素统一使用Module顶层类存入List中。</li>
+</ul>
+</li>
+<li>使用Converter将WireFeed转换为SyndFeed实例</li>
+</ul>
+<p>~ <strong>输出流程</strong></p>
+<p>输出指的是针对SyndFeed转换为xml结构。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">SyndFeedOutput</span> <span class="variable">output</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SyndFeedOutput</span>();</span><br><span class="line"><span class="type">StringWriter</span> <span class="variable">writer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringWriter</span>();</span><br><span class="line"></span><br><span class="line">syndFeed.setFeedType(<span class="string">&quot;atom_1.0&quot;</span>);</span><br><span class="line">output.output(syndFeed, writer);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>同样是两层结构，SyndFeedOutput 负责将 SyndFeed 转换为 WireFeed，WireFeedOutput则是负责将WireFeed转换为xml</li>
+<li>SyndFeed到WireFeed，同样是Converter负责转换，这里使用哪一个convert，取决于上述代码中第三行，将当前SyndFeed变更feedType，这个设计我个人觉得很不好，主要是改变原有的SyndFeed内容。</li>
+<li>WireFeed到Document，主要使用WireFeedGenerator，这个类也是有PluginManager管理起来的，因此根据feedType可以直接选定，选定后，按照指定格式构建xml。</li>
+</ul>
+<h3 id="opml包阅读"><a href="#opml包阅读" class="headerlink" title="opml包阅读"></a>opml包阅读</h3><p>Opml是基于上述体系扩展出来的一个格式支持，与RSS，ATOM同等级。</p>
+<ul>
+<li>feed.opml：定义了opml的属性，其中Opml类继承了WireFeed</li>
+<li>feed.synd.impl：定义了Convert，即WireFeed如何与SyndFeed转换</li>
+<li>feed.io.iml：定义了opml解析以及输出策略类</li>
+</ul>
+<h3 id="module包阅读"><a href="#module包阅读" class="headerlink" title="module包阅读"></a>module包阅读</h3><p>module的核心是ModuleParser与ModuleGenerator两个类，两者都可以在properties中配置，然后嵌入到xml解析以及输出中，用于定制相关的能力，这里就不详细看了，因为觉得这种定制方式并不是很友好。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>首先回答下最初的疑问：</p>
+<ul>
+<li>如何将全部格式统一？不统一的话，每个格式之间的转换就是笛卡儿积<ul>
+<li>其实格式并不是很多，atom和rss可以使用全集应对，使用顶层类来减少转换的笛卡儿积。</li>
+</ul>
+</li>
+<li>如何判断该使用什么解析器？<ul>
+<li>root，version，namespace</li>
+</ul>
+</li>
+<li>字段级解析以及输入输出怎么扩展支持？<ul>
+<li>没有发现字段级别定制能力，但可以通过module来扩展解析，只不过扩展都都统一存到List结构中，消费使用不方便</li>
+</ul>
+</li>
+</ul>
+<p>Rome的模型结构以及module扩展方式，我个人觉得使用上不是很友好，定制能力也不够强，比如针对时间字段的不同格式使用不同的解析，这个在rome中只能以自定义module来实现，但消费module结果又不那么方便。至于什么样子的既能符合使用上的直觉，有具备很强的定制能力，这个还没想好怎么处理。我的大致思路是将主体保留到实体类中，比如title，author，description，其他字段都以策略枚举的方式扩展出去，这样能够解决扩展性问题，但实用性上还没想好怎么处理，大概思路是定义特定类型访问接口，让策略枚举字段主动支持上述格式的解析。</p>
+<p>此外这种通用源码阅读方式，针对这种简单的小项目非常适合，这样的步骤可以轻易将小项目拆解，从而完整的了解到项目全貌。</p>
 
         
         <blockquote class="post-announce">
             <ul>
                 <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
-                <li>文章标题: <a href="https://mrdear.cn/posts/framework-springmvc-return.html">Spring MVC--返回值的解析</a> </li>
-                <li>文章链接: <a href="https://mrdear.cn/posts/framework-springmvc-return.html">https://mrdear.cn/posts/framework-springmvc-return.html</a> </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/work-read-rome-source.html">实践 -- Rome源码阅读</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/work-read-rome-source.html">https://mrdear.cn/posts/work-read-rome-source.html</a> </li>
             </ul>
         </blockquote>
         
         <div class="post__prevs">
             <div class="post__prev">
                 
-                <a href="/posts/design-patterns-observer.html" title="设计模式--观察者模式的思考"><i class="iconfont icon-prev"></i>设计模式--观察者模式的思考</a>
+                <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南"><i class="iconfont icon-prev"></i>读书笔记 -- 通用源码阅读指南</a>
                 
             </div>
             <div class="post__prev post__prev--right">
-                
-                <a href="/posts/framework-springmvc-exception.html" title="Spring MVC--异常处理">Spring MVC--异常处理<i class="iconfont icon-next"></i></a>
                 
             </div>
         </div>
@@ -235,7 +357,7 @@
         <div class="sidebar__block" id="sidebar-toc">
             <h3 class="block__title">文章目录</h3>
             <div class="post-toc">
-                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#HandlerMethodReturnValueHandler"><span class="toc-number">1.</span> <span class="toc-text">HandlerMethodReturnValueHandler</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E7%BB%8F%E8%BF%87ViewResolver%E7%9A%84%E8%BF%94%E5%9B%9E"><span class="toc-number">1.1.</span> <span class="toc-text">不经过ViewResolver的返回</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%8F%E8%BF%87ViewResolver%E7%9A%84%E8%BF%94%E5%9B%9E"><span class="toc-number">1.2.</span> <span class="toc-text">经过ViewResolver的返回</span></a></li></ol></li></ol>
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%85%A8%E9%9D%A2%E4%BA%86%E8%A7%A3%E9%A1%B9%E7%9B%AE"><span class="toc-number">1.</span> <span class="toc-text">1. 全面了解项目</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%90%AD%E5%BB%BA%E5%8F%AF%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">2. 搭建可调试环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE%E7%9A%84%E9%AA%A8%E6%9E%B6%E8%84%89%E7%BB%9C"><span class="toc-number">3.</span> <span class="toc-text">3. 追踪项目的骨架脉络</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%B0%86%E6%BA%90%E7%A0%81%E7%9A%84%E6%89%80%E6%9C%89%E5%8C%85%E4%BB%8E%E5%8A%9F%E8%83%BD%E4%B8%8A%E8%BF%9B%E8%A1%8C%E5%88%92%E5%88%86"><span class="toc-number">4.</span> <span class="toc-text">4.将源码的所有包从功能上进行划分</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#util%E5%8C%85%E9%98%85%E8%AF%BB"><span class="toc-number">4.1.</span> <span class="toc-text">util包阅读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#feed%E5%8C%85%E9%98%85%E8%AF%BB"><span class="toc-number">4.2.</span> <span class="toc-text">feed包阅读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#opml%E5%8C%85%E9%98%85%E8%AF%BB"><span class="toc-number">4.3.</span> <span class="toc-text">opml包阅读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#module%E5%8C%85%E9%98%85%E8%AF%BB"><span class="toc-number">4.4.</span> <span class="toc-text">module包阅读</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
             </div>
         </div>
     
