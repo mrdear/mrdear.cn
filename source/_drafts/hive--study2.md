@@ -165,6 +165,7 @@ Hive是基于Hadoop的上层抽象，其Map本质是使用`org.apache.hadoop.map
 4. mapreduce.input.fileinputformat.split.minsize.per.rack：同一机架数据块切片时最小值
 
 ### Reduce数量
+
 Reduce数量主要由以下三个参数控制，其逻辑在`org.apache.hadoop.hive.ql.exec.mr.MapRedTask#setNumberOfReducers`方法中。
 1. hive.exec.reducers.bytes.per.reducer (默认值: 256000000)：根据处理文件大小决定reduce数量，默认256Mb，如果是1G输入文件则对应4个Reduce任务。
 2. hive.exec.reducers.max (默认值: 1009)  ：控制最大的Reduce数量
@@ -193,6 +194,7 @@ GET /atom.xml HTTP/2.0	4842
 根据查询可以看出来，RSS订阅地址以及首页访问频率最大，不过search页面为什么访问也这么大，并且还是POST，很不合理。查询下数据`select * from dwd_mrdear_access_log where request_url='POST /search/ HTTP/1.1' limit 10;`确认是某个客户端在一直请求，状态返回都是405.
 
 ### 查询top带宽页面
+
 **清单7：top带宽页面结果**
 ```sql
 select request_url, count(request_url) as total, sum(size/1024/1024) as size from dwd_mrdear_access_log group by request_url sort by size desc limit 10;
