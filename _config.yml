@@ -5,11 +5,11 @@
 # Site
 title: 屈定's Blog
 subtitle: 屈定's Blog - change from today
-description: 记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS或者公众号.
+description: 记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.
 keywords: 屈定,技术开发,Java
 author: Qu Ding
 language: zh-cn
-timezone: ''
+timezone: ""
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://example.com/child' and root as '/child/'
@@ -38,7 +38,7 @@ titlecase: false # Transform title into titlecase
 external_link:
   enable: true # Open external links in new tab
   field: site # Apply to the whole site
-  exclude: ''
+  exclude: ""
 filename_case: 0
 render_drafts: false
 post_asset_folder: false
@@ -48,21 +48,21 @@ highlight:
   enable: true
   line_number: true
   auto_detect: false
-  tab_replace: ''
+  tab_replace: ""
   wrap: true
   hljs: false
 prismjs:
   enable: false
   preprocess: true
   line_number: true
-  tab_replace: ''
+  tab_replace: ""
 
 # Home page setting
 # path: Root path for your blogs index page. (default = '')
 # per_page: Posts displayed per page. (0 = disable pagination)
 # order_by: Posts order. (Order by date descending by default)
 index_generator:
-  path: ''
+  path: ""
   per_page: 12
   order_by: -updated
 
@@ -82,7 +82,7 @@ meta_generator: true
 date_format: YYYY-MM-DD
 time_format: HH:mm:ss
 ## updated_option supports 'mtime', 'date', 'empty'
-updated_option: 'mtime'
+updated_option: "mtime"
 
 # Pagination
 ## Set per_page to 0 to disable pagination
@@ -111,9 +111,9 @@ node_sass:
 # Autoprefixer
 autoprefixer:
   exclude:
-    - '*.min.css'
+    - "*.min.css"
   overrideBrowserslist:
-    - 'last 2 versions'
+    - "last 2 versions"
 
 # Lunr
 lunr:
@@ -151,33 +151,33 @@ busuanzi: false
 # disqus
 # disqus_shortname: mrdear
 gitTalk:
-    clientId: 33c4810e1cf354cd8d8b
-    clientSecret: de14850e06ba2ad7aa41f7de960b4a48f09edafd
-    repo: blog-comment
-    owner: mrdear
-    admin: [mrdear]
-    proxy: https://cors.mrdear.cn/https://github.com/login/oauth/access_token
+  clientId: 33c4810e1cf354cd8d8b
+  clientSecret: de14850e06ba2ad7aa41f7de960b4a48f09edafd
+  repo: blog-comment
+  owner: mrdear
+  admin: [mrdear]
+  proxy: https://cors.mrdear.cn/https://github.com/login/oauth/access_token
 
 # pwa
 offline:
   maximumFileSizeToCacheInBytes: 5242880
   staticFileGlobs:
-  - public/**/*.{js,html,css,svg,eot,ttf,woff,woff2}
+    - public/**/*.{js,html,css,svg,eot,ttf,woff,woff2}
   stripPrefix: public
   verbose: true
   runtimeCaching:
-      - urlPattern: /^https:\/\/res\.mrdear\.cn
-        handler: networkOnly
-        options:
-          origin: res.mrdear.cn
-      - urlPattern: /^https:\/\/mrdear.cn\/$/
-        handler: networkOnly
-        options:
-          origin: mrdear.cn
-      - urlPattern: /^https:\/\/**
-        handler: cacheFirst
-        options:
-          origin: mrdear.cn
+    - urlPattern: /^https:\/\/res\.mrdear\.cn
+      handler: networkOnly
+      options:
+        origin: res.mrdear.cn
+    - urlPattern: /^https:\/\/mrdear.cn\/$/
+      handler: networkOnly
+      options:
+        origin: mrdear.cn
+    - urlPattern: /^https:\/\/**
+      handler: cacheFirst
+      options:
+        origin: mrdear.cn
 
 # Feed Atom
 feed:
@@ -194,11 +194,10 @@ sitemap:
 baidusitemap:
   path: baidusitemap.xml
 
-
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repo: https://github.com/mrdear/mrdear.cn
+  repo: git@github.com:mrdear/mrdear.cn.git
   # example, https://github.com/hexojs/hexojs.github.io
   branch: gh-pages
