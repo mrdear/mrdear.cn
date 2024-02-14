@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Spring -- 定时任务调度的发展 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-spring-schedule.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/mrdearblog-springboot.png" alt="Spring -- 定时任务调度的发展">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Spring -- 定时任务调度的发展</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2019-09-22</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Spring/">Spring</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>Java领域的调度最早一般认为是<code>Timer</code>，接着由<code>Quratz</code>创造调度器（Scheduler）、任务(Job)和触发器(Trigger)三个核心概念后开始发展，接着在JDK1.5时<code>ScheduledThreadPoolExecutor</code>出现，逐渐成为主流的单机定时调度方式，Spring的定时任务底层适配了<code>Quratz</code>以及<code>ScheduledThreadPoolExecutor</code>，提供更加方便的使用形式，并没有提供新的调度器实现，再接着发展则是抽离出来<strong>任务触发部分</strong>，独立集群部署，以应对数以万计的定时任务，即以<code>Elastic-job</code>，<code>xxl-job</code>等为代表的分布式调度平台。本文主要描述单机调度与分布式调度的常见实现原理，由于平台众多，如有错误还请指出。</p>
+<h2 id="Timer调度"><a href="#Timer调度" class="headerlink" title="Timer调度"></a>Timer调度</h2><p><code>Timer</code>虽然古老，但是调度该有的东西基本都有，因此仍然值得一说。其使用如下所示，<code>TimerTask</code>为Job，提交一个job，即提交到执行队列(最小堆)中一个任务，<code>Timer</code>本身是Scheduler，也是Trigger，其内部持有一个线程，该线程会循环扫描任务优先级队列，发现可执行任务则执行，未发现或任务未到时间则等待下去。</p>
+<p><strong>清单1: Timer调度示例</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 相当于创建一个调度器</span></span><br><span class="line"><span class="type">Timer</span> <span class="variable">timer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Timer</span>();</span><br><span class="line"><span class="comment">// 提交一个job任务</span></span><br><span class="line">    timer.schedule(<span class="keyword">new</span> <span class="title class_">TimerTask</span>() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">                System.out.println(<span class="number">111</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;, <span class="number">2000L</span>);</span><br></pre></td></tr></table></figure>
+<p>至于内部优先级队列实现，以及任务循环实现与<code>ScheduledThreadPoolExecutor</code>类似，因此在下面<code>ScheduledThreadPoolExecutor</code>中详细说明。</p>
+<h2 id="ScheduledThreadPoolExecutor调度"><a href="#ScheduledThreadPoolExecutor调度" class="headerlink" title="ScheduledThreadPoolExecutor调度"></a>ScheduledThreadPoolExecutor调度</h2><p><code>Timer</code>的缺陷是单线程执行，一个任务阻塞就会导致后续任务延迟，<code>ScheduledThreadPoolExecutor</code>简单来说为多线程版的<code>Timer</code>，除此之外还提供了任务隔离，异常处理等功能。<br><code>ScheduledThreadPoolExecutor</code>为<code>ThreadPoolExecutor</code>的子类，本质上执行流程仍是线程池的那一套逻辑，核心在于<code>BlockingQueue</code>的实现类<code>DelayedWorkQueue</code>。<code>DelayedWorkQueue</code>在数据结构上和Timer保持一致，为小根堆，根节点为当前要执行的任务，每次线程去获取根节点即可拿到最近需要执行的任务。</p>
+<p><strong>清单2：小根堆示意</strong><br><img src="http://res.mrdear.cn/1568721056.png"></p>
+<p>针对固定频率任务比如每5分钟一次，如何实现循环呢？答案是当一个任务执行结束前，计算出下次执行时间，然后重新添加到队列，队列则自动根据优先级调整顺序。多线程是针对多任务并发执行，针对单个任务仍然可以看作是单线程执行，同样如果任务执行时间超过执行周期，那么也会导致任务延迟。</p>
+<p>ps：这里<code>ScheduledThreadPoolExecutor</code>针对多线程下任务抢占线程切换消耗做了leader&#x2F;follow模式优化，有兴趣可以看下源码。</p>
+<h2 id="Spring调度"><a href="#Spring调度" class="headerlink" title="Spring调度"></a>Spring调度</h2><p>在Spring中可以很容易用<code>@Scheduled</code>注解开启一个定时任务，其内部适配了<code>Quratz</code>以及<code>ScheduledThreadPoolExecutor</code>两种实现，默认为<code>ScheduledThreadPoolExecutor</code>，其中针对<code>ScheduledThreadPoolExecutor</code>额外提供了cron定时形式，实现原理与固定类似，如下图所示，在<code>ReschedulingRunnable</code>类中执行完毕后，会再次开启下一个定时任务。<br><img src="http://res.mrdear.cn/1568722409.png"></p>
+<p>PS：关于Spring如何切入到Bean注册流程，扫描出对应<code>@Scheduled</code>注解对应的方法，注册对应定时器，这一流程也值得学习，有兴趣的同学可以从<code>ScheduledAnnotationBeanPostProcessor</code>类开始看。</p>
+<h2 id="时间轮调度"><a href="#时间轮调度" class="headerlink" title="时间轮调度"></a>时间轮调度</h2><p>上述的调度实际上都是依赖于优先级队列，除此之外还有<code>time wheel</code>算法，如下图所示，原理是把时间按照bucket进行分配，比如下面一轮8个格子，假设一个格子1秒，指针从0开始走，当走到1时，发现其对应两个任务需要分别走2轮和4轮后才能执行，因此继续下去，当再次走到0时，对应所有任务轮数减1，因此针对该bucket上的任务需要 round() * 8 + N 秒才能被执行。<br><img src="http://res.mrdear.cn/1568722782.png"></p>
+<p>单时间轮会因为调度周期导致任务的<code>round()</code>变得很大，需要走很多轮才能被执行，同时一个bucket可能挂在很多个任务，导致效率降低，因此出现了变种算法层级时间轮，即多个时间轮嵌套，上级时间轮对应的<code>round()</code>变为0后，则下方到下级，直到最底层时间轮才被执行。<br><img src="http://res.mrdear.cn/1568722772.png"></p>
+<h2 id="分布式调度"><a href="#分布式调度" class="headerlink" title="分布式调度"></a>分布式调度</h2><p>在分布式环境下，单机调度有着复杂的问题，比如多台机器一起触发，需要业务上做幂等，或者使用分布式锁+重试策略，以防万一还需要提供手动触发能力。对于量比较大的计算，无法充分发挥集群优势，只能落到单台机器执行等等问题。<br>无论单机还是分布式，调度框架模型始终<code>调度器（Scheduler）、任务(Job)和触发器(Trigger)</code>三大组件，而分布式的策略是把<code>触发器(Trigger)</code>集群化，任务触发消息通过其他服务转交给对应业务系统，业务系统承担<code>调度器（Scheduler）、任务(Job)</code>，执行完毕后反馈给触发器。</p>
+<h3 id="xxl-job架构图"><a href="#xxl-job架构图" class="headerlink" title="xxl-job架构图"></a>xxl-job架构图</h3><p> <img src="http://res.mrdear.cn/1568734827.png"></p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://www.cnkirito.moe/timer/">定时器的几种实现方式</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-spring-schedule.html">Spring -- 定时任务调度的发展</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-spring-schedule.html">https://mrdear.cn/posts/framework-spring-schedule.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/developer_core_ability.html" title="程序员的核心能力(转)"><i class="iconfont icon-prev"></i>程序员的核心能力(转)</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-spring-cache.html" title="Spring -- Cache原理">Spring -- Cache原理<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Timer%E8%B0%83%E5%BA%A6"><span class="toc-number">1.</span> <span class="toc-text">Timer调度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ScheduledThreadPoolExecutor%E8%B0%83%E5%BA%A6"><span class="toc-number">2.</span> <span class="toc-text">ScheduledThreadPoolExecutor调度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Spring%E8%B0%83%E5%BA%A6"><span class="toc-number">3.</span> <span class="toc-text">Spring调度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E8%BD%AE%E8%B0%83%E5%BA%A6"><span class="toc-number">4.</span> <span class="toc-text">时间轮调度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E8%B0%83%E5%BA%A6"><span class="toc-number">5.</span> <span class="toc-text">分布式调度</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#xxl-job%E6%9E%B6%E6%9E%84%E5%9B%BE"><span class="toc-number">5.1.</span> <span class="toc-text">xxl-job架构图</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

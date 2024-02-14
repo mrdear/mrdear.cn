@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>实践 -- 前后端如何统一选择框查询？ | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/work-design-common-selected.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- 前后端如何统一选择框查询？">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">实践 -- 前后端如何统一选择框查询？</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2020-01-05</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在开发中后台系统过程中，经常会出现一个表格上面有众多选项框，如下图所示。往往每一个搜索框后端都要做一个新的接口，前端也需要为了适配后端的接口而重新开发相关组件，那么有没有某种做法能让这些重复劳动简单化呢？另外每个选项框的可选值随着业务的发展，会逐渐增多，这个过程中又如何保证前端代码不需要修改，后端业务上线后，前端能够自动适配？本文将提供一种做法，统一掉类似的查询需求。<br><img src="http://res.mrdear.cn/1578144555.png"></p>
+<h2 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h2><p>按照传统的做法，一个表单一个接口，有些复杂的表头，可能要多个接口一起返回，比如上述查询条件中，<strong>状态</strong>，<strong>来源</strong>可能来自于后端定义的业务枚举，而<strong>供货商通道</strong>，<strong>运营商</strong>可能来自于DB表，后端在实现时可能会将其放在一个接口中一起返回给前端，前端拿到后，在分别对应到对应的选项框。遇到第二个表格，则可能需要再增加一个接口应对第二个表格的表头，这个过程中接口数量增加，造成的是前端开发成本的增加，如果出现关联逻辑，则前端还要做选择框关联，会更加麻烦，那么设计的第一步就是统一接口，这种业务全局只有一个接口。</p>
+<h3 id="统一接口"><a href="#统一接口" class="headerlink" title="统一接口"></a>统一接口</h3><p>选择框对应的值可以抽象成成是一个<code>&#123;&quot;id&quot;:&quot;传值使用&quot;,&quot;name&quot;:&quot;展示描述&quot;&#125;</code>的object对象，而前端调用无非两种情况，1：给定一个选择框，告诉其该选择框下有哪些值可选。2：联动场景下，选择框1假设选择了A，然后选择框2会联动选择框1进行筛选。因此可以抽象为以下接口。</p>
+<p><strong>1. 请求接口</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;keys&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;选择框A&quot;</span><span class="punctuation">,</span><span class="string">&quot;选择框B&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;selected&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;选择框A&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;值1&quot;</span><span class="punctuation">,</span><span class="string">&quot;值2&quot;</span><span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>其中keys，是描述前端要获取哪些值，该值由后端定义，可以为后端的一个枚举类。<br>selected字段为当前哪些选项卡已经被选择，后端根据已经选择的值，直接做关联查询，筛选，前端就不需要额外的做关联逻辑。</p>
+<p><strong>2. 返回接口</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;选项框A&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项1 key&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项1 展示字段&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项2 key&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项2 展示字段&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;选项框B&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项1 key&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项1 展示字段&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项2 key&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项2 展示字段&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>由于后端已经做了关联筛选，因此接口只需要返回每一个选项的可选值集合。</p>
+<h3 id="前端统一组件"><a href="#前端统一组件" class="headerlink" title="前端统一组件"></a>前端统一组件</h3><p>接口统一后，对于前端来说就很容易做出一个通用组件，组件的样子大概如下，其中<code>SelectGroup</code>是一个表格的所有搜索内容，<code>ConfigQueryService</code>则是请求API的封装，其参数是selectGroup发生变化时，主动传递过来。<br>为了加快响应速度，<code>ConfigQueryService</code>需要做一定的触发限流，以及key维度的缓存配置，否则每次变动都请求接口，这个耗时有点无法接受。<br><img src="http://res.mrdear.cn/1578149077.png"></p>
+<p>举个例子，以开局的图为例，当进入该页面后，<code>SearchGroup</code>会调用<code>ConfigQueryService</code>发出如下请求</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;keys&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;state&quot;</span><span class="punctuation">,</span><span class="string">&quot;source&quot;</span><span class="punctuation">,</span><span class="string">&quot;channel&quot;</span><span class="punctuation">,</span><span class="string">&quot;operator&quot;</span><span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>后端收到后，则返回</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;state&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项1 key&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项1 展示字段&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项2 key&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项2 展示字段&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;source&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项1 key&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项1 展示字段&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项2 key&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;选项2 展示字段&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">    。。。</span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>如果存在关联选项框，则可以增加个属性，代表选项变化时，发出事件，重新刷新数据。例如当供应商渠道发生变化后，操作人也需要跟着变化，就可以发出如下请求，后端根据channel已经选择了A，能够自动进行过滤，返回符合的operator值选项，这样前端无需关心关联逻辑，该层逻辑完全被后端吃掉。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;keys&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;state&quot;</span><span class="punctuation">,</span><span class="string">&quot;source&quot;</span><span class="punctuation">,</span><span class="string">&quot;channel&quot;</span><span class="punctuation">,</span><span class="string">&quot;operator&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;selected&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;channel&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;A&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p><img src="http://res.mrdear.cn/1578144555.png"></p>
+<p>那么最大的问题，性能该如何解决？对于选项框，绝大多数都是无需关联的，对于这种前端可以在key维度上做个缓存，比如<strong>key上增加个shouldInitCache属性</strong>，代表可以在启动时就获取数据到内存，那么这一部分就不需要请求接口，直接命中缓存。对于关联类型的<br>选择框，除了加缓存，目前没想到特别好的处理方式。</p>
+<h3 id="后端统一组件"><a href="#后端统一组件" class="headerlink" title="后端统一组件"></a>后端统一组件</h3><p>该设计增加了后端的复杂性，因此后端需要一套良好的框架让每一个值之间水平分布，扩展新的值也只是增加一个新的实现类而已，那么该如何设计呢？</p>
+<p>首先根据以上描述，可以简单理出一个后端流程图，从流程图中可以得出，后端获取到入参后，会根据选项框key做一个并行分发逻辑，然后统一获取到结果后，再返回给前端，这个流程很简单。<br><img src="http://res.mrdear.cn/1578150378.png"></p>
+<p>为了避免贴大量代码，这里逻辑尽量用图来表示，如下图所示，后端首先使用<strong>策略模式</strong>把不同的选择框获取值逻辑进行分离，即接口<code>ConfigKeyQueryStrategy</code>，该接口入参为<code>Map&lt;ConfigKeyEnum, Set&lt;String&gt;&gt; selected</code>即已经选择的值，每一个选择框是能感知其与哪些框进行关联，因此当关联时，该选项框实现策略就能获取到所关联的值，从而进行过滤。然后在<code>ConfigKeyQueryService</code>中做路由，即该接口要感知到所有的策略，如果项目是Spring，则可以在项目启动时直接根据接口把对应的策略实现类全部获取到。另外分离之后由于逻辑没交集，所以策略之间是可以并行运行，因此路由可以按照下面逻辑来实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">SearchResult</span> <span class="variable">result</span> <span class="operator">=</span> req.getKeys()</span><br><span class="line">            .parallelStream()</span><br><span class="line">            .map(x -&gt; <span class="keyword">new</span> <span class="title class_">Pair</span>&lt;&gt;(x, CACHE_BEAN.get(x).search(req.getSelected())))</span><br><span class="line">            .collect(SearchResult::<span class="keyword">new</span>, (l, x) -&gt; l.put(x.getKey(), x.getValue()), SearchResult::merge);</span><br></pre></td></tr></table></figure>
+<p><img src="http://res.mrdear.cn/1578152122.png"></p>
+<p>该方案最大的优势是<code>ConfigKeyQueryStrategy</code>接口被水平管理起来，每一个选项框查询逻辑自己来控制，如果是枚举类，则直接返回Enum.values()，如果需要去DB查询，则调用对应DAO，如果是不经常改变的数据，则可以加一层缓存，每一个选项框之间水平拆分，逻辑清晰简单，扩展则仅仅需要增加新的<code>ConfigKeyQueryStrategy</code>实现类。</p>
+<p><strong>实现mock逻辑</strong><br>如果一个选项框值获取逻辑没定下来，则可以先mock，后端可以在<code>ConfigKeyQueryService</code>层中实现该层逻辑，实现方案有很多，举个例子，定义<code>ConfigKeyEnum</code>后，使用自定义mock注解，然后<code>ConfigKeyQueryService</code>中优先找对应的<code>ConfigKeyQueryStrategy</code>，如果未发现该实现类，则判断是否有注解修饰，存在注解，则去寻找对应mock文件，返回即可。</p>
+<h3 id="问题点"><a href="#问题点" class="headerlink" title="问题点"></a>问题点</h3><p>这套设计下，前端为统一组件逻辑，后端则每一个选项被水平管理，代码上是很灵活了。但是从用户体验角度出发，遇到关联选项时，每选择一个选项值，都需要发一次请求判断下次需要选择什么，网络耗时可能会造成用户体验的卡顿。当然从优化角度，前端加缓存，后端也需要加缓存，会尽可能的加速网络请求。针对中后台管理系统，使用这种方式需要一个权衡。</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/work-design-common-selected.html">实践 -- 前后端如何统一选择框查询？</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/work-design-common-selected.html">https://mrdear.cn/posts/work-design-common-selected.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/mysql-index-guide.html" title="MySQL -- 索引指南"><i class="iconfont icon-prev"></i>MySQL -- 索引指南</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/work-design-velocity-sql-inject.html" title="实践 -- Velocity渲染SQL如何避免注入？">实践 -- Velocity渲染SQL如何避免注入？<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1"><span class="toc-number">2.</span> <span class="toc-text">设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%9F%E4%B8%80%E6%8E%A5%E5%8F%A3"><span class="toc-number">2.1.</span> <span class="toc-text">统一接口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E7%BB%9F%E4%B8%80%E7%BB%84%E4%BB%B6"><span class="toc-number">2.2.</span> <span class="toc-text">前端统一组件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8E%E7%AB%AF%E7%BB%9F%E4%B8%80%E7%BB%84%E4%BB%B6"><span class="toc-number">2.3.</span> <span class="toc-text">后端统一组件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E7%82%B9"><span class="toc-number">2.4.</span> <span class="toc-text">问题点</span></a></li></ol></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

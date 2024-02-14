@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Spring -- Cache原理 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-spring-cache.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/mrdearblog-springboot.png" alt="Spring -- Cache原理">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Spring -- Cache原理</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2019-09-28</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Spring/">Spring</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>Spring Cache并不是一种缓存的实现方式，而是缓存使用的一种方式，其基于Annotation形式提供缓存存取，过期失效等各种能力，这样设计的理由大概是缓存和业务逻辑本身是没有关系的，不需要耦合到一起，因此使用Annotation修饰方法，使得方法中只需要关心具体的业务逻辑，并不需要去关心缓存逻辑。</p>
+<p>Spring Cache相关实现逻辑都在Spring Context的<code>org.springframework.cache</code>包中，有兴趣可以直接翻阅源代码学习。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>首先打开缓存配置，在Spring Boot中使用<code>@EnableCaching</code>注解，打开缓存，该注解的作用主要是启用<code>ProxyCachingConfiguration</code>配置，用于扫描被注解修饰的需要被缓存的方法。</p>
+<h3 id="注册缓存管理器"><a href="#注册缓存管理器" class="headerlink" title="注册缓存管理器"></a>注册缓存管理器</h3><p>Spring Cache提供的缓存管理主要分为<code>CacheManager</code>用于管理多个缓存,以及<code>Cache</code>用户具体缓存存放实现，结构如下图所示。<br><img src="http://res.mrdear.cn/1569655100.png?imageMogr2/thumbnail/!50p"></p>
+<p>关于<code>CacheManager</code>的配置主要有基于Spring Boot的自动配置类<code>CacheAutoConfiguration</code>，用户可以自定义<code>CacheManagerCustomizer</code>往缓存管理器中实例化具体缓存类，如下图所示，该配置会自动选择缓存的实现，然后在实例化前调用对应的<code>CacheManagerCustomizer</code>执行用户业务逻辑。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SimpleCacheCustomizer</span> <span class="keyword">implements</span> <span class="title class_">CacheManagerCustomizer</span>&lt;ConcurrentMapCacheManager&gt; &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">customize</span><span class="params">(ConcurrentMapCacheManager cacheManager)</span> &#123;</span><br><span class="line">        cacheManager.setCacheNames(Lists.newArrayList(<span class="string">&quot;quding&quot;</span>,<span class="string">&quot;mrdear&quot;</span>));</span><br><span class="line">    &#125;   </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>自动配置在我看来相当黑盒，实际开发中可能由于jar间接引用等问题，导致缓存初始化错误，因此比较建议手动配置。Spring有一套缓存实现推荐，基于内存的Caffeine，基于文件Ecache，分布式缓存Redis等等，可以根据自己的业务需求选择实例化对应缓存管理器类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 实例化一个基于内存的缓存管理器, 其内部有users，addresses两个Cache对象。</span></span><br><span class="line"><span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> CacheManager <span class="title function_">cacheManager</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">ConcurrentMapCacheManager</span>(<span class="string">&quot;users&quot;</span>,<span class="string">&quot;addresses&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 实例化一个基于Caffeine的缓存管理器，其内部有users Cache对象。</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> CacheManager <span class="title function_">hoursCache</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">CaffeineCacheManager</span> <span class="variable">cacheManager</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">CaffeineCacheManager</span>();</span><br><span class="line">        Caffeine&lt;Object, Object&gt; caffeine = Caffeine.newBuilder()</span><br><span class="line">            .initialCapacity(<span class="number">50</span>)</span><br><span class="line">            .maximumSize(<span class="number">100</span>)</span><br><span class="line">            .expireAfterWrite(<span class="number">1</span>, TimeUnit.HOURS);</span><br><span class="line"></span><br><span class="line">        cacheManager.setCaffeine(caffeine);</span><br><span class="line">        cacheManager.setCacheNames(Collections.singletonList(<span class="string">&quot;users&quot;</span>));</span><br><span class="line">        <span class="keyword">return</span> cacheManager;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p><code>CacheManager</code>提供的仅仅是多个同类缓存管理能力，而缓存自身特性则有自身组件来实现，比如<code>Caffeine</code>中由<code> Caffeine.newBuilder()</code>实现自身缓存初始容量，淘汰策略等特性。</p>
+<h3 id="使用缓存"><a href="#使用缓存" class="headerlink" title="使用缓存"></a>使用缓存</h3><p>Spring Cache提供了四个Annotation方便开发人员使用缓存，而不建议直接访问<code>CacheManager</code>自己做定制，具体如下表格所示：</p>
+<table>
+<thead>
+<tr>
+<th>注解</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cacheable</td>
+<td>存在则从缓存取,不存在则执行方法,结果放入到缓存</td>
+</tr>
+<tr>
+<td>CacheEvict</td>
+<td>将方法操作对象缓存删除</td>
+</tr>
+<tr>
+<td>CachePut</td>
+<td>无论方法是否存在都会将执行结果放入到缓存中</td>
+</tr>
+<tr>
+<td>Caching</td>
+<td>以上三种的组合</td>
+</tr>
+</tbody></table>
+<p>以<code>Cacheable</code>的使用为例，如下代码所示，该注解实现了缓存id大于1的所有用户实例，其背后原理是什么呢？</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 结果放入缓存users中</span></span><br><span class="line"><span class="comment"> * 使用缓存管理器为(bean名) cacheManager</span></span><br><span class="line"><span class="comment"> * 缓存key为 参数id</span></span><br><span class="line"><span class="comment"> * id小于2的不缓存</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Cacheable(cacheNames = &quot;users&quot;, cacheManager = &quot;cacheManager&quot;, key = &quot;#id&quot;, unless = &quot;#id &lt; 2&quot;)</span></span><br><span class="line"><span class="keyword">public</span> User <span class="title function_">findById</span><span class="params">(Long id)</span> &#123;</span><br><span class="line">    logger.info(<span class="string">&quot;query user=&#123;&#125; from db &quot;</span>, id);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">User</span>(id);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么到这里，Spring Cache大致工作原理可以猜测出来大概，我们可以简单的理解为下图流程，然后再深入具体分析案例加深理解。<br><img src="http://res.mrdear.cn/uPic/spring-cache-visit.png"></p>
+<h3 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h3><p>由上述流程可以得到，Spring Cache主要有CacheManager负责管理类缓存，由CacheInterceptor使用AOP方式来实现缓存，因此实现原理从这两个方面入手。</p>
+<h4 id="CacheManager"><a href="#CacheManager" class="headerlink" title="CacheManager"></a>CacheManager</h4><p><strong>CacheManager</strong>主要作用是管理缓存，其结构图如下所示，在Cache的设计上Spring使用了组合，适配器等相关模式，大体上可以分为以下几类：</p>
+<ul>
+<li>缓存实现类：比如ConcurrentMapCacheManager，CaffeineCacheManager等缓存直接实现</li>
+<li>缓存组合类：比如CompositeCacheManager，其利用组合模式组合多个缓存，比如分布式缓存再套一层本地缓存，就可以用该类实现</li>
+<li>缓存代理以及装饰类：比如TransactionAwareCacheManagerProxy，TransactionAwareCacheDecorator，其让缓存行为感知到当前事务，在事务行为之后，执行对应缓存逻辑。<br><img src="http://res.mrdear.cn/uPic/V93gDC.png"></li>
+</ul>
+<p><strong>CacheManager</strong>的结构也很好理解，所谓的Manager本质上是一个K-Cache的Map，也就是一个Manager会对应多个缓存，该多个缓存都是由同一个缓存构造器构造而来，所以也可以理解为Manager管理的是具有相同特点的一类缓存，以<code>CaffeineCacheManager</code>为例，其数据结构如下：<br><img src="http://res.mrdear.cn/uPic/spring-cache-manager.png"></p>
+<h4 id="CacheInterceptor"><a href="#CacheInterceptor" class="headerlink" title="CacheInterceptor"></a>CacheInterceptor</h4><p>Spring注册缓存管理器后，需要对指定Annotation注解方法进行拦截并执行缓存逻辑，该套实现方案依赖AOP，关于AOP可以参考我另一篇文章<a href="https://mrdear.cn/posts/framework-spring-apo-ioc.html">关于IoC与AOP的一些理解
+</a>，那么只需要找到AOP对应的<code>MethodInterceptor</code>，从该处入手即可了解整个缓存拦截流程。</p>
+<p>在使用<code>@EnableCaching</code>注解后，Spring便会注册<code>BeanFactoryCacheOperationSourceAdvisor</code>解析器，其在Bean实例化后，发现Bean使用Cache相关注解后，便自动创建代理，解析缓存相关操作，便于调用过程中直接进入AOP流程，在Spring Cache中，其<code>MethodInterceptor</code>的实现为<code>org.springframework.cache.interceptor.CacheInterceptor</code>，流程如下图所示：</p>
+<ul>
+<li>CacheInterceptor：要缓存代理类，执行拦截的入口</li>
+<li>CacheOperationSource：被缓存注解标识的方法，该类自动配置时收集了所有被Cache相关注解标注的方法</li>
+<li>CacheOperation：每一个注解针对的缓存操作，比如CachePut针对CachePutOperation类<br><img src="http://res.mrdear.cn/uPic/spring-cache-interceptor.png"></li>
+</ul>
+<p>其中<code>CacheInterceptor</code>拦截后，将调用方法进行封装，转到<code>CacheAspectSupport#execute()</code>中，该方法也是整个缓存执行到的核心逻辑。</p>
+<p><strong>清单：CacheAspectSupport#execute()</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Nullable</span></span><br><span class="line"><span class="keyword">protected</span> Object <span class="title function_">execute</span><span class="params">(CacheOperationInvoker invoker, Object target, Method method, Object[] args)</span> &#123;</span><br><span class="line">	<span class="comment">// Check whether aspect is enabled (to cope with cases where the AJ is pulled in automatically)</span></span><br><span class="line">	<span class="keyword">if</span> (<span class="built_in">this</span>.initialized) &#123;</span><br><span class="line">		Class&lt;?&gt; targetClass = getTargetClass(target);</span><br><span class="line">		<span class="comment">// 存储所有缓存操作的池子,一个注解可以理解为一次缓存操作</span></span><br><span class="line">		<span class="type">CacheOperationSource</span> <span class="variable">cacheOperationSource</span> <span class="operator">=</span> getCacheOperationSource();</span><br><span class="line">		<span class="keyword">if</span> (cacheOperationSource != <span class="literal">null</span>) &#123;</span><br><span class="line">			<span class="comment">// 根据 方法 + 类 定位对应的缓存操作</span></span><br><span class="line">			Collection&lt;CacheOperation&gt; operations = cacheOperationSource.getCacheOperations(method, targetClass);</span><br><span class="line">			<span class="keyword">if</span> (!CollectionUtils.isEmpty(operations)) &#123;</span><br><span class="line">				<span class="comment">// 下一步调用</span></span><br><span class="line">				<span class="keyword">return</span> execute(invoker, method,</span><br><span class="line">						<span class="keyword">new</span> <span class="title class_">CacheOperationContexts</span>(operations, method, args, target, targetClass));</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> invoker.invoke();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>方法调用与缓存获取主要实现逻辑如下代码所示，代码中都已经标识好了注释，其中值得关注的是<code>Cacheable</code>，<code>CachePut</code>操作的区别，<code>Cacheable</code>会优先去缓存里面获取，缓存获取到了，且当前没有对应的<code>CachePut</code>操作，则不会再次调用方法。<code>CachePut</code>则只要存在，就一定会再次调用方法处理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Nullable</span></span><br><span class="line"><span class="keyword">private</span> Object <span class="title function_">execute</span><span class="params">(<span class="keyword">final</span> CacheOperationInvoker invoker, Method method, CacheOperationContexts contexts)</span> &#123;</span><br><span class="line">	....</span><br><span class="line">	<span class="comment">// 从命令中,取出过期指令,优先处理</span></span><br><span class="line">	processCacheEvicts(contexts.get(CacheEvictOperation.class), <span class="literal">true</span>,</span><br><span class="line">			CacheOperationExpressionEvaluator.NO_RESULT);</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取对应的缓存</span></span><br><span class="line">	Cache.<span class="type">ValueWrapper</span> <span class="variable">cacheHit</span> <span class="operator">=</span> findCachedItem(contexts.get(CacheableOperation.class));</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 缓存不存在,则从context中获取 PUT命令</span></span><br><span class="line">	List&lt;CachePutRequest&gt; cachePutRequests = <span class="keyword">new</span> <span class="title class_">LinkedList</span>&lt;&gt;();</span><br><span class="line">	<span class="keyword">if</span> (cacheHit == <span class="literal">null</span>) &#123;</span><br><span class="line">		collectPutRequests(contexts.get(CacheableOperation.class),</span><br><span class="line">				CacheOperationExpressionEvaluator.NO_RESULT, cachePutRequests);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	Object cacheValue;</span><br><span class="line">	Object returnValue;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 缓存命令,且不存在PUT</span></span><br><span class="line">	<span class="keyword">if</span> (cacheHit != <span class="literal">null</span> &amp;&amp; !hasCachePut(contexts)) &#123;</span><br><span class="line">		<span class="comment">// If there are no put requests, just use the cache hit</span></span><br><span class="line">		cacheValue = cacheHit.get();</span><br><span class="line">		returnValue = wrapCacheValue(method, cacheValue);</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="comment">// Invoke the method if we don&#x27;t have a cache hit</span></span><br><span class="line">		<span class="comment">// 存在PUT指令则会执行真实调用</span></span><br><span class="line">		returnValue = invokeOperation(invoker);</span><br><span class="line">		cacheValue = unwrapReturnValue(returnValue);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 根据结果,从context中获取需要执行的put命令</span></span><br><span class="line">	collectPutRequests(contexts.get(CachePutOperation.class), cacheValue, cachePutRequests);</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 执行PUT操作</span></span><br><span class="line">	<span class="keyword">for</span> (CachePutRequest cachePutRequest : cachePutRequests) &#123;</span><br><span class="line">		cachePutRequest.apply(cacheValue);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 根据结果处理过期命令</span></span><br><span class="line">	processCacheEvicts(contexts.get(CacheEvictOperation.class), <span class="literal">false</span>, cacheValue);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> returnValue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Cacheable-sync处理"><a href="#Cacheable-sync处理" class="headerlink" title="Cacheable sync处理"></a>Cacheable sync处理</h3><p>在<code>@Cacheable</code>中有sync方法，该方法解决了多线程调用问题，对于一些缓存不想多次被调用则可以使用，比如获取微信的ACCESS_TOKEN，该方法实现原理是什么呢？我们可以想象，单机多线程下保证同步的方案的主流方案是排队，包括阻塞锁也是排队的一种实现策略，对于Spring Cache来说，只要让这一类缓存共享一个队列即可，然后每次从队列中取出最近的一个调用，如下图代码所示，这也解释了sync属性注释上提到的诸多限制，比如只能对一个缓存注解生效，不支持unless等。<br><strong>清单：同步调用</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (contexts.isSynchronized()) &#123;</span><br><span class="line">            <span class="comment">// 获取@Cacheable注解配置</span></span><br><span class="line">			<span class="type">CacheOperationContext</span> <span class="variable">context</span> <span class="operator">=</span> contexts.get(CacheableOperation.class).iterator().next();</span><br><span class="line">			<span class="keyword">if</span> (isConditionPassing(context, CacheOperationExpressionEvaluator.NO_RESULT)) &#123;</span><br><span class="line">				<span class="type">Object</span> <span class="variable">key</span> <span class="operator">=</span> generateKey(context, CacheOperationExpressionEvaluator.NO_RESULT);</span><br><span class="line">				<span class="type">Cache</span> <span class="variable">cache</span> <span class="operator">=</span> context.getCaches().iterator().next();</span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="comment">// 优先从缓存获取,获取不到则调用方法存入缓存</span></span><br><span class="line">					<span class="keyword">return</span> wrapCacheValue(method, cache.get(key, () -&gt; unwrapReturnValue(invokeOperation(invoker))));</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="keyword">catch</span> (Cache.ValueRetrievalException ex) &#123;</span><br><span class="line">					<span class="comment">// The invoker wraps any Throwable in a ThrowableWrapper instance so we</span></span><br><span class="line">					<span class="comment">// can just make sure that one bubbles up the stack.</span></span><br><span class="line">					<span class="keyword">throw</span> (CacheOperationInvoker.ThrowableWrapper) ex.getCause();</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">else</span> &#123;</span><br><span class="line">				<span class="comment">// No caching required, only call the underlying method</span></span><br><span class="line">				<span class="keyword">return</span> invokeOperation(invoker);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="缓存key生成策略"><a href="#缓存key生成策略" class="headerlink" title="缓存key生成策略"></a>缓存key生成策略</h3><p>Spring默认使用SpEL作为key生成的表达式语言，同时还额外提供了<code>org.springframework.cache.interceptor.KeyGenerator</code>接口，让用户实现自己的生成策略，可以说是非常灵活了。这里推荐使用<strong>自定义方案</strong>，否则每次都要额外创建EL上下文，然后解析，虽然是轻量操作，但该操作会很频繁。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">		 * Compute the key for the given caching operation.</span></span><br><span class="line"><span class="comment">		 */</span></span><br><span class="line">		<span class="meta">@Nullable</span></span><br><span class="line">		<span class="keyword">protected</span> Object <span class="title function_">generateKey</span><span class="params">(<span class="meta">@Nullable</span> Object result)</span> &#123;</span><br><span class="line">        <span class="comment">// 当没指定key，则使用SpEL生成该key</span></span><br><span class="line">			<span class="keyword">if</span> (StringUtils.hasText(<span class="built_in">this</span>.metadata.operation.getKey())) &#123;</span><br><span class="line">				<span class="type">EvaluationContext</span> <span class="variable">evaluationContext</span> <span class="operator">=</span> createEvaluationContext(result);</span><br><span class="line">				<span class="keyword">return</span> evaluator.key(<span class="built_in">this</span>.metadata.operation.getKey(), <span class="built_in">this</span>.metadata.methodKey, evaluationContext);</span><br><span class="line">			&#125;</span><br><span class="line">        <span class="comment">// 使用自定义key生成策略</span></span><br><span class="line">			<span class="keyword">return</span> <span class="built_in">this</span>.metadata.keyGenerator.generate(<span class="built_in">this</span>.target, <span class="built_in">this</span>.metadata.method, <span class="built_in">this</span>.args);</span><br><span class="line">		&#125;</span><br><span class="line">        </span><br><span class="line"></span><br><span class="line">    <span class="comment">// EL上下文创建，可以看到其能获取到的信息，基本是参数中所有的值了</span></span><br><span class="line">		<span class="keyword">private</span> EvaluationContext <span class="title function_">createEvaluationContext</span><span class="params">(<span class="meta">@Nullable</span> Object result)</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> evaluator.createEvaluationContext(<span class="built_in">this</span>.caches, <span class="built_in">this</span>.metadata.method, <span class="built_in">this</span>.args,</span><br><span class="line">					<span class="built_in">this</span>.target, <span class="built_in">this</span>.metadata.targetClass, <span class="built_in">this</span>.metadata.targetMethod, result, beanFactory);</span><br><span class="line">		&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Spring Cache可以说是一套在Spring中使用缓存的标准规范，其最大的优势是解耦了缓存逻辑以及业务逻辑，并提供了统一缓存管理能力。<br>其背后的原理也比较容易理解，另外在设计上给我们提供了Annotation -&gt; Operate -&gt; Context -&gt; Request的一种抽象解决问题模式，值得学习。</p>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><ul>
+<li>本文基于Spring Boot 2.2.2.RELEASE版本，后续版本可能有所变化</li>
+</ul>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-spring-cache.html">Spring -- Cache原理</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-spring-cache.html">https://mrdear.cn/posts/framework-spring-cache.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/framework-spring-schedule.html" title="Spring -- 定时任务调度的发展"><i class="iconfont icon-prev"></i>Spring -- 定时任务调度的发展</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/mysql-distributed-lock.html" title="MySQL--DB实现分布式锁思路">MySQL--DB实现分布式锁思路<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E4%BB%8B"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%A8%E5%86%8C%E7%BC%93%E5%AD%98%E7%AE%A1%E7%90%86%E5%99%A8"><span class="toc-number">2.1.</span> <span class="toc-text">注册缓存管理器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E7%BC%93%E5%AD%98"><span class="toc-number">2.2.</span> <span class="toc-text">使用缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="toc-number">2.3.</span> <span class="toc-text">实现原理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#CacheManager"><span class="toc-number">2.3.1.</span> <span class="toc-text">CacheManager</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#CacheInterceptor"><span class="toc-number">2.3.2.</span> <span class="toc-text">CacheInterceptor</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Cacheable-sync%E5%A4%84%E7%90%86"><span class="toc-number">2.4.</span> <span class="toc-text">Cacheable sync处理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98key%E7%94%9F%E6%88%90%E7%AD%96%E7%95%A5"><span class="toc-number">2.5.</span> <span class="toc-text">缓存key生成策略</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">4.</span> <span class="toc-text">其他</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

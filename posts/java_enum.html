@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Java--Enum的思考 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/java_enum.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/javastudy.png" alt="Java--Enum的思考">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Java--Enum的思考</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-03-10</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Java/">Java</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <!-- toc -->
+<hr>
+<p>枚举类是Java5引进的特性,其目的是替换<strong>int枚举模式</strong>或者<strong>String枚举模式</strong>,使得语义更加清晰,另外也解决了行为和枚举绑定的问题.</p>
+<h2 id="int枚举模式"><a href="#int枚举模式" class="headerlink" title="int枚举模式"></a>int枚举模式</h2><p>在枚举类之前该模式被广泛使用,如果是int类型常量就被成为<strong>int枚举模式</strong>,同理是字符串类型常量则是<strong>String枚举模式</strong>.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Plante</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">MERCURY</span> <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">VENUS</span> <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">EARTH</span> <span class="operator">=</span> <span class="number">3</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该模式的缺点有很多:<br><strong>1. Java作为强类型语言,该模式让其失去了强类型优势.</strong><br>举个例子,假设我又有下面一个枚举类,那么执行<code>Plante.EARTH == Fruit.APPLE</code>结果将为true,这显然是不可接受的</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Fruit</span> &#123;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">APPLE</span> <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 该条件将成功</span></span><br><span class="line">Assert.assertTrue(Plante.EARTH == Fruit.APPLE);</span><br></pre></td></tr></table></figure>
+<p><strong>2. 枚举类与其行为无法很好的绑定</strong><br>枚举类与行为绑定的操作一般使用switch-case来进行操作,这模式有缺点,比如增加了一个新的枚举常量,但是switch-case中没有增加,这是常有的事情,因为switch-case少一个分支并不会导致编译错误,这种问题很难暴露出来.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">apply</span><span class="params">(<span class="type">int</span> n)</span> &#123;</span><br><span class="line">  <span class="keyword">switch</span> (n) &#123;</span><br><span class="line">    <span class="keyword">case</span> Plante.MERCURY:</span><br><span class="line">      <span class="comment">// do something</span></span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> Plante.VENUS:</span><br><span class="line">      <span class="comment">// do something</span></span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> Plante.EARTH:</span><br><span class="line">      <span class="comment">// do something</span></span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="枚举类"><a href="#枚举类" class="headerlink" title="枚举类"></a>枚举类</h2><h3 id="enum语法糖"><a href="#enum语法糖" class="headerlink" title="enum语法糖"></a>enum语法糖</h3><p>枚举类实质上是一种语法糖,比如下面这个空枚举.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">enum</span> <span class="title class_">PlanetEnum</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>反编译(<a target="_blank" rel="noopener" href="https://github.com/mrdear/asm-bytecode-intellij">asm-bytecode-intellij</a>)后为</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">PlanetEnum</span></span><br><span class="line"><span class="keyword">extends</span> <span class="title class_">Enum</span>&lt;PlanetEnum&gt; &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="comment">/* synthetic */</span> PlanetEnum[] $VALUES;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> PlanetEnum[] values() &#123;</span><br><span class="line">        <span class="keyword">return</span> (PlanetEnum[])$VALUES.clone();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> PlanetEnum <span class="title function_">valueOf</span><span class="params">(String name)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> Enum.valueOf(PlanetEnum.class, (String)name);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">PlanetEnum</span><span class="params">(String string,<span class="type">int</span> n)</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>((String)string, (<span class="type">int</span>)n);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        <span class="comment">// 当枚举字段时在这里放入到数组</span></span><br><span class="line">        $VALUES = <span class="keyword">new</span> <span class="title class_">PlanetEnum</span>[<span class="number">0</span>];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>能够看出要点:</p>
+<ol>
+<li>枚举类默认继承<code>Enum</code>,并且<code>final</code>类,所以自定义枚举类无法继承与被继承.但是可以实现接口</li>
+<li>枚举字段是该枚举类的一个静态常量对象,且用数组存储.</li>
+<li>values实际上是调用clone方法,其会创建新数组,数组中放入所有枚举字段.</li>
+<li>构造函数前两个默认为枚举字段名称,以及所处的顺序.也就是<code>Enum</code>中的name与ordinal.</li>
+</ol>
+<h3 id="如何与行为绑定"><a href="#如何与行为绑定" class="headerlink" title="如何与行为绑定"></a>如何与行为绑定</h3><p>从反编译的代码来看枚举类是可以实现接口的,那么就可以利用接口定义行为,然后枚举类中覆盖行为.同样假设每一个枚举字段所对应的行为不同,那么直接内部覆盖掉也是很好的策略,这种情况下也叫策略枚举模式.(比如计算器实现加减乘除,都是二元操作符,那么策略枚举就很适合,可以动手试试)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">enum</span> <span class="title class_">PlanetEnum</span> <span class="keyword">implements</span> <span class="title class_">Supplier</span>&lt;String&gt;&#123;</span><br><span class="line">  MERCURY(<span class="number">1</span>) &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">get</span><span class="params">()</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="string">&quot;地球&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="type">int</span> code;</span><br><span class="line"></span><br><span class="line">  PlanetEnum(<span class="type">int</span> code) &#123;</span><br><span class="line">    <span class="built_in">this</span>.code = code;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">getCode</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> code;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> String <span class="title function_">get</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;PLANET&quot;</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="线程安全问题"><a href="#线程安全问题" class="headerlink" title="线程安全问题"></a>线程安全问题</h3><p>反编译后的代码所有枚举字段都是<code>static final</code>,Jvm的加载初始化流程保证其只被实例化一次,且实例化之后不可更改.<br>枚举类的实例化可以看做为饿汉式的单例,实际上是一个简单而又有效的模式,包括kotlin的<code>object</code>单例关键字也是使用了类似的方式.</p>
+<h3 id="序列化问题"><a href="#序列化问题" class="headerlink" title="序列化问题"></a>序列化问题</h3><p>在JDK序列化方式中,<code>ObjectInputStream</code>类中有如下注释:</p>
+<blockquote>
+ <p>Enum constants are deserialized differently than ordinary serializable or externalizable objects.  The serialized form of an enum constant consists solely of its name; field values of the constant are not transmitted.  To deserialize an enum constant,ObjectInputStream reads the constant name from the stream; the deserialized constant is then obtained by calling the static method <code>Enum.valueOf(Class, String)</code> with the enum constant's base type and the received constant name as arguments.  Like other serializable or externalizable objects, enum constants can function as the targets of back references appearing subsequently in the serialization stream.  The process by which enum constants are deserialized cannot be customized: any class-specific readObject, readObjectNoData, and readResolve methods defined by enum types are ignored during deserialization. Similarly, any serialPersistentFields or serialVersionUID field declarations are also ignored--all enum types have a fixed serialVersionUID of 0L.
+</blockquote>
+<p>大概意思是枚举类的序列化依靠的是<code>name</code>字段,序列化时转成对应的name输出,反序列化时再依靠<code>valueOf()</code>方法得到对应的枚举字段,从而保证了单例. 并且枚举类的反序列化过程不可定制,入口封住后那么就能彻底保证单例.</p>
+<p>那么为什么有很多公司禁止在二方库中返回值或者POJO使用枚举类呢?先看下<code>valueOf</code>方法也就是反序列化的实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;T <span class="keyword">extends</span> <span class="title class_">Enum</span>&lt;T&gt;&gt; T <span class="title function_">valueOf</span><span class="params">(Class&lt;T&gt; enumType,</span></span><br><span class="line"><span class="params">                                            String name)</span> &#123;</span><br><span class="line">    <span class="type">T</span> <span class="variable">result</span> <span class="operator">=</span> enumType.enumConstantDirectory().get(name);</span><br><span class="line">    <span class="keyword">if</span> (result != <span class="literal">null</span>)</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    <span class="keyword">if</span> (name == <span class="literal">null</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NullPointerException</span>(<span class="string">&quot;Name is null&quot;</span>);</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(</span><br><span class="line">        <span class="string">&quot;No enum constant &quot;</span> + enumType.getCanonicalName() + <span class="string">&quot;.&quot;</span> + name);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意<strong>当中找不到对应的枚举类时直接抛IllegalArgumentException异常</strong>,直接导致返序列化失败,那么本次调用就会失败.这种行为主要出现在对于同一个二方库新版本新增枚举类字段,服务端升级了版本,而客户端端没升级版本,那么整个流程自然会在服务端处理完成后造成失败,既浪费了服务端的计算性能,又没得到想要的结果,自然属于严重事故了.</p>
+<h2 id="使用建议"><a href="#使用建议" class="headerlink" title="使用建议"></a>使用建议</h2><p>关于使用建议,参考阿里巴巴Java开发手册中的三条建议,以及笔者的一条建议</p>
+<ol>
+<li>所有的枚举类型字段必须要有注释，说明每个数据项的用途。</li>
+<li>二方库里可以定义枚举类型，参数可以使用枚举类型，但是接口返回值不允许使用枚 举类型或者包含枚举类型的 POJO 对象。​​​​(这里返回值不可使用因为有反序列化的问题,那么为什么参数又可以使用呢?笔者不太清楚,希望大牛告知.)<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/52760637/answer/338584321?utm_source=com.tencent.tim&utm_medium=social">作者孤尽的解答</a>,实际上参数使用这个是属于客户端的责任了,不然的话枚举类的用处真的不是很大.</li>
+<li>枚举类名建议带上 Enum 后缀，枚举成员名称需要全大写，单词间用下划线隔开。​</li>
+<li>枚举类与switch-case在外部搭配时要注意,当枚举类增加字段时就带来switch-case的更新问题,这种bug编译期间无法得知,最好的办法时把行为与枚举类绑定,或者把switch-case的逻辑统一写在该枚举类的内部.</li>
+</ol>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/java_enum.html">Java--Enum的思考</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/java_enum.html">https://mrdear.cn/posts/java_enum.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/design-patterns-decorator-model.html" title="设计模式--装饰者模式思考"><i class="iconfont icon-prev"></i>设计模式--装饰者模式思考</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/alibaba_frank_code_style.html" title="(转)你写的代码,是别人的噩梦吗">(转)你写的代码,是别人的噩梦吗<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#int%E6%9E%9A%E4%B8%BE%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">int枚举模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%9A%E4%B8%BE%E7%B1%BB"><span class="toc-number">2.</span> <span class="toc-text">枚举类</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#enum%E8%AF%AD%E6%B3%95%E7%B3%96"><span class="toc-number">2.1.</span> <span class="toc-text">enum语法糖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E4%B8%8E%E8%A1%8C%E4%B8%BA%E7%BB%91%E5%AE%9A"><span class="toc-number">2.2.</span> <span class="toc-text">如何与行为绑定</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98"><span class="toc-number">2.3.</span> <span class="toc-text">线程安全问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%8F%E5%88%97%E5%8C%96%E9%97%AE%E9%A2%98"><span class="toc-number">2.4.</span> <span class="toc-text">序列化问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%BB%BA%E8%AE%AE"><span class="toc-number">3.</span> <span class="toc-text">使用建议</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

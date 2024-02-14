@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Java--CAS操作分析 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/java_cas.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/javastudy.png" alt="Java--CAS操作分析">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Java--CAS操作分析</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-04-06</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Java/">Java</a>
+                        </li>
+                    
+                        <li class="mark__item">
+                            <a href="/tags/JUC/">JUC</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <!-- toc -->
+<hr>
+<p>CAS操作在Java中的应用很广泛,比如<code>ConcurrentHashMap</code>,<code>ReentrantLock</code>等,其常被用来解决独占锁对线程阻塞而导致的性能低下问题,是高效并发必备的一种优化方法.</p>
+<h2 id="JMM"><a href="#JMM" class="headerlink" title="JMM"></a>JMM</h2><p>一般的理解Java内存模型为主内存与工作内存,如下图所示:<br><img src="http://res.mrdear.cn/1522837030.png" alt="Java内存模型"><br>工作内存是为了提高效率,在内部缓存了主内存中的变量,避免每次都要去主内存拿,但是变量被修改之后写回主内存的时机是不可控的,因此就会带来并发下变量一致性问题.对此Java提供了以下关键字:</p>
+<blockquote>
+<p> volatile: 保证多线程之间的可见性,可以理解为其操作都是直接操作主内存的变量,每次读直接从主内存读,每次修改完立即写回主内存.<br> synchronized: 提供的锁机制在进入同步块时从主内存读取变量,同步块结束时写回变量到主内存.</p>
+</blockquote>
+<h2 id="synchronized所带来的新问题"><a href="#synchronized所带来的新问题" class="headerlink" title="synchronized所带来的新问题."></a>synchronized所带来的新问题.</h2><p><strong>这里的分析是不考虑JVM一系列的优化措施,比如锁消除,锁粗化,自旋之类的处理优化.</strong><br>排除优化措施的话synchronized本质上可以理解为悲观锁思想的实现,所谓的悲观锁认为每次访问临界区都会冲突,因此每次都需要加锁,而当没有拿到锁时线程是处于阻塞状态的.从Runnable到Blocked,然后被唤醒后再从Blocked到Runnable,这些操作耗费了不少计算机资源,因此这种悲观锁机制是并发的一种实现,但不是高效并发的实现.</p>
+<h2 id="CAS实现原子性操作"><a href="#CAS实现原子性操作" class="headerlink" title="CAS实现原子性操作"></a>CAS实现原子性操作</h2><p>CAS操作大概有如下几步:</p>
+<ol>
+<li>读取旧值为一个临时变量</li>
+<li>对旧值的临时变量进行操作或者依赖旧值临时变量进行一些操作</li>
+<li>判断旧值临时变量是不是等于旧值,等于则没被修改,那么新值写入.不等于则被修改,此时放弃或者从步骤1重试.</li>
+</ol>
+<p>那么步骤三实际上就是比较并替换,这个操作需要是原子性的,不然无法保证比较操作之后还没写入之前有其他线程操作修改了旧值.那么这一步实际上就是CAS(<strong>CompareAndSwap</strong>),其是需要操作系统底层支持,对于操作系统会转换为一条指令,也就是自带原子性属性,对于Java中则是<code>sun.misc.Unsafe#compareAndSwapObject</code>这种类型的操作.另外在Java中CAS的实现需要<strong>可见性的支持</strong>,也就是修改值后必须立即同步到主内存,否则这个修改没有意义,其他线程读取到的仍然是旧值.<br>CAS相比无优化下的synchronized,最大的优势就是<strong>无阻塞</strong>,也就是没了线程阻塞与唤醒的消耗,性能自然是很高.</p>
+<h3 id="AtomicXXX与CAS"><a href="#AtomicXXX与CAS" class="headerlink" title="AtomicXXX与CAS"></a>AtomicXXX与CAS</h3><p>Java中提供了<code>AtomicXXX</code>一系列原子类,这里以<code>AtomicInteger</code>为例,大概结构如下:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">AtomicInteger</span> <span class="keyword">extends</span> <span class="title class_">Number</span> <span class="keyword">implements</span> <span class="title class_">java</span>.io.Serializable &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">Unsafe</span> <span class="variable">unsafe</span> <span class="operator">=</span> Unsafe.getUnsafe();</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">long</span> valueOffset;</span><br><span class="line">    <span class="comment">// 使用volatile修饰,解决可见性问题</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="type">int</span> value;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这些类一般内部包裹一个用<code>volatile</code>修饰的真实值,其解决的是内存可见性与指令重排序的问题.而原子性操作则是由<code>unsafe</code>提供的一系列指令来完成.以<code>java.util.concurrent.atomic.AtomicInteger#getAndIncrement</code>为例,其解决的是i++的问题,在<code>AtomicInteger</code>中对于此类操作都转到了unsafe的操作.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="type">int</span> <span class="title function_">getAndIncrement</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> unsafe.getAndAddInt(<span class="built_in">this</span>, valueOffset, <span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Unsafe中实现的策略,为了更好的理解笔者调整了一些代码顺序.正好对应上述CAS的三个步骤.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="type">int</span> <span class="title function_">getAndAddInt</span><span class="params">(Object var1, <span class="type">long</span> valueOffset, <span class="type">int</span> addValue)</span> &#123;</span><br><span class="line">   <span class="type">int</span> expect;</span><br><span class="line">   <span class="keyword">do</span> &#123;</span><br><span class="line">     <span class="comment">// 操作1 得到旧值</span></span><br><span class="line">     expect = <span class="built_in">this</span>.getIntVolatile(var1, valueOffset);</span><br><span class="line">     <span class="comment">// 操作1 计算新值</span></span><br><span class="line">     <span class="type">int</span> <span class="variable">newValue</span> <span class="operator">=</span> expect + addValue;</span><br><span class="line">     <span class="comment">// 操作3,比较,如果旧值没改变则更新其为新值,否则重试.这种实现也被成为自旋CAS</span></span><br><span class="line">   &#125; <span class="keyword">while</span>(!<span class="built_in">this</span>.compareAndSwapInt(var1, valueOffset, expect, newValue));</span><br><span class="line">   <span class="keyword">return</span> expect;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ReentrantLock与CAS"><a href="#ReentrantLock与CAS" class="headerlink" title="ReentrantLock与CAS"></a>ReentrantLock与CAS</h3><p><code>ReentrantLock</code>是Java应用层面实现的一种独占锁机制,因此比起JDK1.5之前的<code>synchronized</code>有很明显的性能提升.其加锁的代码利用的就是CAS算法.其内部利用了一个<code>state</code>字段,该字段为0时代表锁没有被获取,为1时则代表有线程已经获取到了锁,为n时则代表该锁被当前线程重入了n次.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="keyword">void</span> <span class="title function_">lock</span><span class="params">()</span> &#123;</span><br><span class="line">      <span class="comment">// 判断当前对象所处的状态,为0则锁没被获取,因此当前线程独占,并修改state为1.那么进来的其他线程加入到等待队列中.</span></span><br><span class="line">      <span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, <span class="number">1</span>))</span><br><span class="line">          <span class="comment">// 当前线程独占</span></span><br><span class="line">          setExclusiveOwnerThread(Thread.currentThread());</span><br><span class="line">      <span class="keyword">else</span></span><br><span class="line">          <span class="comment">// 其他线程排队</span></span><br><span class="line">          acquire(<span class="number">1</span>);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>那么可重入机制是怎么实现的呢?<br>在<code>acquire(1)</code>方法中会调用<code>tryAcquire(1)</code>方法再次尝试获得锁,其又会转到<code>java.util.concurrent.locks.ReentrantLock.Sync#nonfairTryAcquire</code>方法,在这个方法中重入的关键就是对<strong>state自增</strong>,state为n就代表重入了n次.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="type">boolean</span> <span class="title function_">nonfairTryAcquire</span><span class="params">(<span class="type">int</span> acquires)</span> &#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">Thread</span> <span class="variable">current</span> <span class="operator">=</span> Thread.currentThread();</span><br><span class="line">    <span class="type">int</span> <span class="variable">c</span> <span class="operator">=</span> getState();</span><br><span class="line">    <span class="comment">// c == 0 则代表锁已经被释放,因此直接获取并独占即可</span></span><br><span class="line">    <span class="keyword">if</span> (c == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (compareAndSetState(<span class="number">0</span>, acquires)) &#123;</span><br><span class="line">            setExclusiveOwnerThread(current);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 重入实现的关键点,当前线程等于已获得独占锁的线程</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (current == getExclusiveOwnerThread()) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">nextc</span> <span class="operator">=</span> c + acquires;</span><br><span class="line">        <span class="keyword">if</span> (nextc &lt; <span class="number">0</span>) <span class="comment">// overflow</span></span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">&quot;Maximum lock count exceeded&quot;</span>);</span><br><span class="line">        <span class="comment">// 设置新的state,假设state为2就代表被当前线程重入了两次.</span></span><br><span class="line">        setState(nextc);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么锁的释放实际上就是对<code>state</code>字段的递减,并且当减到0时对等待队列中的线程进行唤醒.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="type">boolean</span> <span class="title function_">release</span><span class="params">(<span class="type">int</span> arg)</span> &#123;</span><br><span class="line">    <span class="comment">// tryRelease会对state字段进行操作</span></span><br><span class="line">    <span class="keyword">if</span> (tryRelease(arg)) &#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">h</span> <span class="operator">=</span> head;</span><br><span class="line">        <span class="keyword">if</span> (h != <span class="literal">null</span> &amp;&amp; h.waitStatus != <span class="number">0</span>)</span><br><span class="line">            <span class="comment">// 唤醒其他线程</span></span><br><span class="line">            unparkSuccessor(h);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>tryRelease</code>是对state字段的递减过程.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="type">boolean</span> <span class="title function_">tryRelease</span><span class="params">(<span class="type">int</span> releases)</span> &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">c</span> <span class="operator">=</span> getState() - releases;</span><br><span class="line">    <span class="keyword">if</span> (Thread.currentThread() != getExclusiveOwnerThread())</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalMonitorStateException</span>();</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">free</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// 当减为0,代表锁已经空闲,因此要释放独占线程.</span></span><br><span class="line">    <span class="keyword">if</span> (c == <span class="number">0</span>) &#123;</span><br><span class="line">        free = <span class="literal">true</span>;</span><br><span class="line">        setExclusiveOwnerThread(<span class="literal">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 更新新的state</span></span><br><span class="line">    setState(c);</span><br><span class="line">    <span class="keyword">return</span> free;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>简单总结来说<code>ReentrantLock</code>实现独占的重入锁是通过CAS对<code>state</code>变量的改变来代表不同的状态来实现的,从而实现了获取锁与释放锁的高性能.</p>
+<h2 id="CAS总结"><a href="#CAS总结" class="headerlink" title="CAS总结"></a>CAS总结</h2><h3 id="CAS在多线程问题中起到了什么作用"><a href="#CAS在多线程问题中起到了什么作用" class="headerlink" title="CAS在多线程问题中起到了什么作用?"></a>CAS在多线程问题中起到了什么作用?</h3><p>多线程问题归根结底要解决的是<code>可见性</code>,<code>有序性</code>,<code>原子性</code>三大问题,大家都知道JVM提供的<code>volatile</code>可以保证可见性与有序性,但是无法保证原子性,换句话说 <code>volatile + CAS实现原子性操作 = 线程安全 = 高效并发</code>,那么CAS就是用来实现这个操作的原子性.</p>
+<h3 id="CAS与乐观锁是什么关系"><a href="#CAS与乐观锁是什么关系" class="headerlink" title="CAS与乐观锁是什么关系?"></a>CAS与乐观锁是什么关系?</h3><p>乐观锁是一种思想,其认为冲突很少发生,因此只在最后写操作的时候<code>加锁</code>,这里的加锁不一定是真的锁上,比如CAS一般就用来实现这一层加锁.</p>
+<h3 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h3><p>ABA问题指的是多个线程同时执行,那么开始时其获得的值都是A,当一个线程修改了A为B,第二个线程修改了B为A,那么第三个线程修改时判断A仍然是A,认为其没有修改过,因此会CAS成功.<br>ABA问题产生的影响取决于你的业务是否会因此受到影响.如果有影响那么解决思路一般是使用版本号。在变量前面追加上版本号，每次变量更新的时候把版本号加一，那么A－B－A 就会变成1A-2B－3A。<br>在JDK1.5之后提供了<code>AtomicStampedReference</code>类来解决ABA问题,解决思路是保存元素的引用,引用相当于版本号,是每一个变量的标识,因此在CAS前判断下是否是同一个引用即可.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">compareAndSet</span><span class="params">(V   expectedReference,</span></span><br><span class="line"><span class="params">                             V   newReference,</span></span><br><span class="line"><span class="params">                             <span class="type">int</span> expectedStamp,</span></span><br><span class="line"><span class="params">                             <span class="type">int</span> newStamp)</span> &#123;</span><br><span class="line">    Pair&lt;V&gt; current = pair;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">        expectedReference == current.reference &amp;&amp;</span><br><span class="line">        expectedStamp == current.stamp &amp;&amp;</span><br><span class="line">        ((newReference == current.reference &amp;&amp;</span><br><span class="line">          newStamp == current.stamp) ||</span><br><span class="line">         casPair(current, Pair.of(newReference, newStamp)));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<p>如有错误,还请指出,以免误人子弟.</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/java_cas.html">Java--CAS操作分析</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/java_cas.html">https://mrdear.cn/posts/java_cas.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/design-patterns-composite.html" title="设计模式--组合模式的思考"><i class="iconfont icon-prev"></i>设计模式--组合模式的思考</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-spring-apo-ioc.html" title="Spring -- 关于IoC与AOP的一些理解">Spring -- 关于IoC与AOP的一些理解<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#JMM"><span class="toc-number">1.</span> <span class="toc-text">JMM</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#synchronized%E6%89%80%E5%B8%A6%E6%9D%A5%E7%9A%84%E6%96%B0%E9%97%AE%E9%A2%98"><span class="toc-number">2.</span> <span class="toc-text">synchronized所带来的新问题.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CAS%E5%AE%9E%E7%8E%B0%E5%8E%9F%E5%AD%90%E6%80%A7%E6%93%8D%E4%BD%9C"><span class="toc-number">3.</span> <span class="toc-text">CAS实现原子性操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#AtomicXXX%E4%B8%8ECAS"><span class="toc-number">3.1.</span> <span class="toc-text">AtomicXXX与CAS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ReentrantLock%E4%B8%8ECAS"><span class="toc-number">3.2.</span> <span class="toc-text">ReentrantLock与CAS</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CAS%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">CAS总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#CAS%E5%9C%A8%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%97%AE%E9%A2%98%E4%B8%AD%E8%B5%B7%E5%88%B0%E4%BA%86%E4%BB%80%E4%B9%88%E4%BD%9C%E7%94%A8"><span class="toc-number">4.1.</span> <span class="toc-text">CAS在多线程问题中起到了什么作用?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CAS%E4%B8%8E%E4%B9%90%E8%A7%82%E9%94%81%E6%98%AF%E4%BB%80%E4%B9%88%E5%85%B3%E7%B3%BB"><span class="toc-number">4.2.</span> <span class="toc-text">CAS与乐观锁是什么关系?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ABA%E9%97%AE%E9%A2%98"><span class="toc-number">4.3.</span> <span class="toc-text">ABA问题</span></a></li></ol></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

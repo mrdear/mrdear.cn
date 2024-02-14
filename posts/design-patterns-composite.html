@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>设计模式--组合模式的思考 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/design-patterns-composite.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--组合模式的思考">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">设计模式--组合模式的思考</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-04-01</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <!-- toc -->
+<hr>
+<p>组合模式是一种抽象树形结构的模式,其在业务开发中也是一种很有用的设计模式，组合模式只要解决开发中的树形结构问题，比如职责关系，部门关系等，下面开始分析。</p>
+<h2 id="组合模式"><a href="#组合模式" class="headerlink" title="组合模式"></a>组合模式</h2><p>业务中有很多树形结构的表示,比如下面的目录结构</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">-- 男装</span><br><span class="line">    -- 上衣</span><br><span class="line">        -- 品牌1</span><br><span class="line">        -- 品牌2</span><br><span class="line">    -- 裤子</span><br><span class="line">        -- 品牌1</span><br><span class="line">        -- 品牌3</span><br></pre></td></tr></table></figure>
+<p>针对<code>男装</code>可以认为其是树的<strong>根节点</strong>,<code>上衣</code>,<code>裤子</code>这种下面还可以有节点的称为<strong>树枝节点</strong>,<code>品牌</code>这种下面不再有分支的称为<strong>叶子节点</strong><br>那么转换成面向对象该怎么表示呢?</p>
+<h3 id="一般做法"><a href="#一般做法" class="headerlink" title="一般做法"></a>一般做法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 根节点</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RootNode</span> &#123;</span><br><span class="line">  <span class="keyword">private</span> List&lt;CompositeNode&gt; compositeNodes;<span class="comment">// 针对节点区别对待,导致处理麻烦</span></span><br><span class="line">  <span class="keyword">private</span> List&lt;LeafNode&gt; leafNodes; <span class="comment">// 针对节点区别对待,导致处理麻烦</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 树枝节点</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">CompositeNode</span> &#123;</span><br><span class="line">  <span class="keyword">private</span> List&lt;LeafNode&gt; leafNodes; </span><br><span class="line">  <span class="keyword">private</span> List&lt;CompositeNode&gt; compositeNodes; </span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 叶子节点</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LeafNode</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种做法是面向对象的思想,但是其最大的问题是对这三种类型的节点区别对待了,那么客户端就必须明确的得知这个节点到底是根还是树枝或者是叶子,那么对于客户端来说无疑是比较辛苦的,另外从功能上来说节点之间区别并不是很大,可以说是完全一样的.那么组合模式的作用就是统一这三种类型的节点,让客户端当成一种节点来处理.下面是组合模式下的方式</p>
+<h3 id="组合设计"><a href="#组合设计" class="headerlink" title="组合设计"></a>组合设计</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 其为节点的约束,主要暴露给客户端,客户端不需要了解子类是什么.</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">Node</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 树枝节点,当然也可以是根节点</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">CompositeNode</span> <span class="keyword">extends</span> <span class="title class_">Node</span> &#123;</span><br><span class="line">    <span class="comment">// 持有Node集合,可以无限往下延伸</span></span><br><span class="line">  <span class="keyword">private</span> List&lt;Node&gt; nodes;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 叶子节点,其下面不再有其他节点</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LeafNode</span> <span class="keyword">extends</span> <span class="title class_">Node</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么相比之前的设计好在了哪里?组合体现在了哪里?</p>
+<ol>
+<li>相比之前设计,这里用了一个抽象类暴露出去给客户端,只需要把客户端需要的方法定义在抽象类中,那么大大减少了客户端的理解成本,对于客户端来说节点都是一个性质的,没必要区分根,树枝,叶子等.</li>
+<li>组合体现在<code>CompositeNode</code>节点的设计,其内部引用的是<code>Node</code>抽象类实例,也就是可以一直往下延伸.</li>
+<li>组合模式下，问题简化到节点本身，最外层只负责构建节点关系，每个节点该做什么事情由自身类型所决定，调用链则类似一个递归过程</li>
+</ol>
+<h2 id="Mybatis中的组合模式应用"><a href="#Mybatis中的组合模式应用" class="headerlink" title="Mybatis中的组合模式应用"></a>Mybatis中的组合模式应用</h2><p>开发中我们写的动态Sql,Mybatis会按照下面方式去理解这个结构,比如</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">select</span> <span class="attr">id</span>=<span class="string">&quot;findById&quot;</span> <span class="attr">resultMap</span>=<span class="string">&quot;RM-CLASSROOM&quot;</span>&gt;</span></span><br><span class="line">	SELECT <span class="tag">&lt;<span class="name">include</span> <span class="attr">refid</span>=<span class="string">&quot;RM-CLASSROOM-ALLCOLS&quot;</span>/&gt;</span></span><br><span class="line">	FROM classroom WHERE status = 0</span><br><span class="line">	<span class="tag">&lt;<span class="name">if</span> <span class="attr">test</span>=<span class="string">&quot;!ids.isEmpty()&quot;</span>&gt;</span></span><br><span class="line">		AND id in </span><br><span class="line">		<span class="tag">&lt;<span class="name">foreach</span> <span class="attr">collection</span>=<span class="string">&quot;list&quot;</span> <span class="attr">item</span>=<span class="string">&quot;item&quot;</span> <span class="attr">open</span>=<span class="string">&quot;(&quot;</span> <span class="attr">close</span>=<span class="string">&quot;)&quot;</span> <span class="attr">separator</span>=<span class="string">&quot;,&quot;</span>&gt;</span></span><br><span class="line">			#&#123;item&#125;</span><br><span class="line">		<span class="tag">&lt;/<span class="name">foreach</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;/<span class="name">if</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">select</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>Mybatis解析后大概会是下面的这种树形结构,最后在拼接成需要的Sql.</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">-- select  根节点</span><br><span class="line">    -- select  叶子节点</span><br><span class="line">    -- &lt;include refid=&quot;RM-CLASSROOM-ALLCOLS&quot;/&gt; 叶子节点</span><br><span class="line">    -- where status = 1 叶子节点</span><br><span class="line">    -- &lt;if test=&quot;!ids.isEmpty()&quot; 树枝节点</span><br><span class="line">        -- AND id IN  叶子节点</span><br><span class="line">        -- &lt;foreach item=&quot;list&quot; ..... 树枝节点</span><br><span class="line">            -- #&#123;item&#125; 叶子节点</span><br></pre></td></tr></table></figure>
+<p>那么这种情况下是很适合用组合模式,因此Mybatis抽象出<code>SqlNode</code>接口暴露给客户端</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">SqlNode</span> &#123;</span><br><span class="line">  <span class="type">boolean</span> <span class="title function_">apply</span><span class="params">(DynamicContext context)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其有如下子类(子类太多,省略了一些),按照这些子类再翻译下上面的sql<br><img src="http://res.mrdear.cn/1522562685.png"></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">-- select  MixedSqlNode</span><br><span class="line">    -- select  StaticTextSqlNode</span><br><span class="line">    -- &lt;include refid=&quot;RM-CLASSROOM-ALLCOLS&quot;/&gt; StaticTextSqlNode</span><br><span class="line">    -- where status = 1 StaticTextSqlNode</span><br><span class="line">    -- &lt;if test=&quot;!ids.isEmpty()&quot; IfSqlNode 内部的contents为MixedSqlNode</span><br><span class="line">        -- AND id IN  StaticTextSqlNode</span><br><span class="line">        -- &lt;foreach item=&quot;list&quot; ..... ForEachSqlNode 内部的contents为MixedSqlNode</span><br><span class="line">            -- #&#123;item&#125; StaticTextSqlNode</span><br></pre></td></tr></table></figure>
+<p><img src="http://res.mrdear.cn/1522563076.png"></p>
+<p>从结构上来说,非叶子节点,例如<code>IfSqlNode</code>,<code>ForEachSqlNode</code>是可以一直嵌套的,所实现的关键就是<code>SqlNode</code>接口与<code>MixedSqlNode</code>实现类.<br>从客户端角度来说里面的节点这些都是不关心的,其只需要拿到<code>SqlNode rootSqlNode</code>实例,然后调用下<code>rootSqlNode.apply(context)</code>即可获取到自己想要的sql原型.<br>这两个也是组合模式要解决的问题.</p>
+<h2 id="SpringMVC中的组合模式"><a href="#SpringMVC中的组合模式" class="headerlink" title="SpringMVC中的组合模式"></a>SpringMVC中的组合模式</h2><p>SpringMVC中对参数的解析使用的是<code>HandlerMethodArgumentResolver</code>接口,该类有一个实现类为<code>HandlerMethodArgumentResolverComposite</code>,该类为一个组合类,其结构如下:<br><img src="http://res.mrdear.cn/1524061073.png"><br>其本身实现了<code>HandlerMethodArgumentResolver</code>接口,又持有其他<code>HandlerMethodArgumentResolver</code>对象,那么这种设计就是组合模式设计.,在它的实现方法中是对其他组合模式中的节点进行循环处理,从而选择最适合的一个.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> HandlerMethodArgumentResolver <span class="title function_">getArgumentResolver</span><span class="params">(MethodParameter parameter)</span> &#123;</span><br><span class="line">  <span class="type">HandlerMethodArgumentResolver</span> <span class="variable">result</span> <span class="operator">=</span> <span class="built_in">this</span>.argumentResolverCache.get(parameter);</span><br><span class="line">  <span class="keyword">if</span> (result == <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 对其所拥有的对象循环,找到最适合处理的一个</span></span><br><span class="line">    <span class="keyword">for</span> (HandlerMethodArgumentResolver methodArgumentResolver : <span class="built_in">this</span>.argumentResolvers) &#123;</span><br><span class="line">      <span class="keyword">if</span> (methodArgumentResolver.supportsParameter(parameter)) &#123;</span><br><span class="line">        result = methodArgumentResolver;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于<code>HandlerMethodArgumentResolver</code>来说,其虽然拥有众多子类,但是对于调用方来说却只关心参数所解析的结果,它并不知道该使用哪一个具体的子类,它所希望的是能以整体的形式去访问这些子类,从而选择最适合自己的一个参数解析器.那么<code>HandlerMethodArgumentResolverComposite</code>在这里扮演的就是一个整体的角色,对客户端来说调用的是这个整体.</p>
+<h2 id="Netty中的组合模式"><a href="#Netty中的组合模式" class="headerlink" title="Netty中的组合模式"></a>Netty中的组合模式</h2><p>Netty中的<code>CompositeByteBuf</code>使用了组合设计模式，但是其有点特殊，Netty所描述的零拷贝是应用层面上不做任意的数据复制，而是使用组合的方式拷贝，比如有两个Buf，<code>headByteBuf</code>与<code>tailByteBuf</code>，那么现在的需求是把两个合在一起，很自然的想到先创建一个新的buf，然后把<code>headByteBuf</code>复制进去，再把<code>tailByteBuf</code>复制进去，这个过程中涉及到两次应用层面的拷贝，自然不是高效的做法，那么<code>CompositeByteBuf</code>的实现是什么样子的呢？</p>
+<p><code>CompositeByteBuf</code>的意思是组合，他所采取的方式是把<code>headByteBuf</code>与<code>tailByteBuf</code>组合起来，对外相当于一个新的Buf，这样的方式不会产生任何应用层面的数据拷贝，原理如下示意图所示：<br><img src="http://res.mrdear.cn/1531922378.png"></p>
+<p>那么这也是一种组合设计模式的思想，更可以说是一种妙用。</p>
+<h2 id="安全性与透明性"><a href="#安全性与透明性" class="headerlink" title="安全性与透明性"></a>安全性与透明性</h2><p><strong>透明性</strong><br>所谓的透明性是客户在使用组合模式对象时不需要关心这个节点到底是根还是树枝或者是叶子,对于自己来说都是组件对象,只需要获取一个起始点就能拿到自己想要的东西,所谓的透明性表现在接口中暴露出了所有节点的公共方法,比如添加子节点,移除子节点等,那么就必然会存在叶子节点的添加子节点功能不支持的情况,此时调用应该抛出<code>UnsupportedOperationException</code>.<br>举个反例Mybatis中客户只需要拿到<code>SqlNode rootSqlNode</code>就可以获取到想要的sql,对于客户端唯一的入口就是这个<code>rootSqlNode.apply(context)</code>获取到对应的sql,客户端本身无法修改这个节点.那么这种行为是非透明的.</p>
+<p><strong>安全性</strong><br>非透明性实现一般就是安全性的实现,所谓的安全性保证就是一旦节点构建完毕,客户端就无法更改,只需要获取到自己想要的东西就好.<code>SqlNode</code>就是一种安全性的实现,所谓的安全性表现在<code>SqlNode</code>接口中没有暴露修改的方法,节点是在构造阶段就组装完毕的.</p>
+<p>具体选择哪种,需要根据业务来定夺,如果是类似Mybatis这种先准备好所有数据再执行的模式,那么安全性实现则是最好的选择.如果是业务处理模式下边处理边构造,则透明性最佳.</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
+<li>组合模式在于结构上的统一,对外接口的一致,给客户端提供更加统一或者只提供必要的操作.</li>
+<li>组合模式是面向接口编程的思想体现,通过接口实现客户端的操作便捷与约束,同时实现更加灵活的自由组合.</li>
+</ol>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/design-patterns-composite.html">设计模式--组合模式的思考</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/design-patterns-composite.html">https://mrdear.cn/posts/design-patterns-composite.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/work-design-jwt.html" title="实践 -- JWT实战总结"><i class="iconfont icon-prev"></i>实践 -- JWT实战总结</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/java_cas.html" title="Java--CAS操作分析">Java--CAS操作分析<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">组合模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E8%88%AC%E5%81%9A%E6%B3%95"><span class="toc-number">1.1.</span> <span class="toc-text">一般做法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%84%E5%90%88%E8%AE%BE%E8%AE%A1"><span class="toc-number">1.2.</span> <span class="toc-text">组合设计</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mybatis%E4%B8%AD%E7%9A%84%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8"><span class="toc-number">2.</span> <span class="toc-text">Mybatis中的组合模式应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SpringMVC%E4%B8%AD%E7%9A%84%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.</span> <span class="toc-text">SpringMVC中的组合模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Netty%E4%B8%AD%E7%9A%84%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F"><span class="toc-number">4.</span> <span class="toc-text">Netty中的组合模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E6%80%A7%E4%B8%8E%E9%80%8F%E6%98%8E%E6%80%A7"><span class="toc-number">5.</span> <span class="toc-text">安全性与透明性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>并行设计模式--生产者消费者 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/design-patterns-producer-consumer.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/designpattern.png" alt="并行设计模式--生产者消费者">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">并行设计模式--生产者消费者</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-06-09</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p><code>Producer-Consumer</code>与其说是模式，更不如说是一种思想，这种思想在很多模式中都有相应的体现，比如线程池，对象池，MQ等等。<br><code>Producer-Consumer</code>的本质是在生产者与消费者之间引入一个通道（Channel暂且理解为一个队列）,该通道主要用于<strong>控制生产者与消费者的相对速率</strong>，尽可能的保证生产的Product尽快被消费，另一方面对<strong>二者进行解耦</strong>：生产者将生产的数据放入通道，消费者从相应的通道取出数据进行消费，生产者与消费者在各自的线程中，从而使双方的处理互相不影响。</p>
+<h2 id="Producer-Consumer中的角色"><a href="#Producer-Consumer中的角色" class="headerlink" title="Producer-Consumer中的角色"></a>Producer-Consumer中的角色</h2><ol>
+<li>Product：即生产者线程锁需要提供的产品。</li>
+<li>Producer：生产者，负责产生对应的产品，其把产生的产品放入到队列Channel中</li>
+<li>Consumer：从队列Channel中获取对应的产品，获取之后对其进行业务处理。</li>
+<li>Channel：在<code>Producer-Consumer</code>中最重要的就是这个Channel，Channel是两者共享的区域，Channel有着调控生产者与消费者相对速率的功能，比如<strong>当生产者速度大于消费者</strong>，就会造成Channel中任务积压，那么此时生产者就要放缓速度，反映到代码就是Channel让Producer线程休眠。反之<strong>当消费者速度大于生产者</strong>，就会造成Channel为空，此时消费者就要暂时停下来，反映到代码就是Channel让Consumer线程休眠。那么可以看出在设计模式中<code>Channel</code>的作用就是<strong>解耦生产者与消费者，并调节相关的速率</strong>，利用<code>Channel</code>的堆积能力进而提高系统的吞吐量。</li>
+</ol>
+<h2 id="Channel的实现方案"><a href="#Channel的实现方案" class="headerlink" title="Channel的实现方案"></a>Channel的实现方案</h2><h3 id="BlockingQueue"><a href="#BlockingQueue" class="headerlink" title="BlockingQueue"></a>BlockingQueue</h3><p>阻塞队列<code>BlockingQueue</code>是一种常见的Channel实现方案，在JDK中提供了多种<code>BlockingQueue</code>的数据结构，本文将着重对这些数据结构分析。</p>
+<p><strong>BlockingQueue接口总览</strong></p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th align="center">抛出异常</th>
+<th align="center">返回特殊值</th>
+<th align="center">一直阻塞</th>
+<th align="center">超时退出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>入队方法</td>
+<td align="center">add(e)</td>
+<td align="center">offer(e)</td>
+<td align="center">put(e)</td>
+<td align="center">offer(e,time,unit)</td>
+</tr>
+<tr>
+<td>出队方法</td>
+<td align="center">remove()</td>
+<td align="center">poll()</td>
+<td align="center">take()</td>
+<td align="center">poll(time,unit)</td>
+</tr>
+<tr>
+<td>检查方法</td>
+<td align="center">element()</td>
+<td align="center">peek()</td>
+<td align="center">不可用</td>
+<td align="center">不可用</td>
+</tr>
+</tbody></table>
+<p>下面对其实现类进行分析。</p>
+<h4 id="ArrayBlockingQueue"><a href="#ArrayBlockingQueue" class="headerlink" title="ArrayBlockingQueue"></a>ArrayBlockingQueue</h4><p><code>ArrayBlockingQueue</code>是使用数组实现的队列，提供头指针与尾指针用于控制对应的入队出队操作，并且使用单个重入锁与两个<code>Condition</code>进行并发控制。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 队列本身</span></span><br><span class="line"><span class="keyword">final</span> Object[] items;</span><br><span class="line"><span class="comment">// 头指针</span></span><br><span class="line"><span class="type">int</span> takeIndex;</span><br><span class="line"><span class="comment">// 位指针</span></span><br><span class="line"><span class="type">int</span> putIndex;</span><br><span class="line"><span class="comment">// 队列内元素数量,也因此此队列有界,虽然int最大有21亿多.</span></span><br><span class="line"><span class="type">int</span> count;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 重入锁</span></span><br><span class="line"><span class="keyword">final</span> ReentrantLock lock;</span><br><span class="line"><span class="comment">// 用于控制消费者线程的条件</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Condition notEmpty;</span><br><span class="line"><span class="comment">// 用于控制生产者线程的条件</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Condition notFull;</span><br></pre></td></tr></table></figure>
+
+<p><strong>take操作</strong><br>take是属于消费者的操作，那么对于消费者来说要有以下几个步骤：</p>
+<ol>
+<li>获取到独占锁</li>
+<li>队列如果为空，为空则主动await。</li>
+<li>队列不为空，则出队，出队后队列中一定有空位（该数据结构为数组，因此一定会有一个格子是空的），因此唤醒生产者生产。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> E <span class="title function_">take</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">ReentrantLock</span> <span class="variable">lock</span> <span class="operator">=</span> <span class="built_in">this</span>.lock;</span><br><span class="line">    <span class="comment">// 操作1： 获取独占锁</span></span><br><span class="line">    lock.lockInterruptibly();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 操作2：队列为空则主动await</span></span><br><span class="line">        <span class="keyword">while</span> (count == <span class="number">0</span>)</span><br><span class="line">            notEmpty.await();</span><br><span class="line">        <span class="comment">// 操作3：出队，见下面的代码详情</span></span><br><span class="line">        <span class="keyword">return</span> dequeue();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        lock.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对应的出队操作之后则需要唤醒对应的生产者线程</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> E <span class="title function_">dequeue</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="comment">// 操作3：出队操作实际上是把数组中对应元素返回，然后数组置为NULL</span></span><br><span class="line">    <span class="keyword">final</span> Object[] items = <span class="built_in">this</span>.items;</span><br><span class="line">    <span class="meta">@SuppressWarnings(&quot;unchecked&quot;)</span></span><br><span class="line">    <span class="type">E</span> <span class="variable">x</span> <span class="operator">=</span> (E) items[takeIndex];</span><br><span class="line">    items[takeIndex] = <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">if</span> (++takeIndex == items.length)</span><br><span class="line">        takeIndex = <span class="number">0</span>;</span><br><span class="line">    count--;</span><br><span class="line">    <span class="keyword">if</span> (itrs != <span class="literal">null</span>)</span><br><span class="line">        itrs.elementDequeued();</span><br><span class="line">    <span class="comment">// 操作3：唤醒生产者线程</span></span><br><span class="line">    notFull.signal();</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>put操作</strong><br>put是属于生产者的操作，那么对于生产者来说要有以下几个步骤：</p>
+<ol>
+<li>获取独占锁，拿到操作队列的权限</li>
+<li>如果队列已满（ArrayBlockingQueue为有界队列），则主动await。</li>
+<li>如果队列未满，则入队操作，入队后队列肯定有元素，所以还需要唤醒消费者来消费。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">put</span><span class="params">(E e)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">    checkNotNull(e);</span><br><span class="line">    <span class="keyword">final</span> <span class="type">ReentrantLock</span> <span class="variable">lock</span> <span class="operator">=</span> <span class="built_in">this</span>.lock;</span><br><span class="line">    <span class="comment">// 操作1：获取独占锁</span></span><br><span class="line">    lock.lockInterruptibly();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">//操作2：队列已满主动休眠</span></span><br><span class="line">        <span class="keyword">while</span> (count == items.length)</span><br><span class="line">            notFull.await();</span><br><span class="line">        <span class="comment">// 操作3：入队操作，见下方详细分析</span></span><br><span class="line">        enqueue(e);</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        lock.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对应的入队操作之后则需要主动唤醒消费者线程。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">enqueue</span><span class="params">(E x)</span> &#123;</span><br><span class="line">    <span class="comment">// 操作3：入队实际上是往数组中添加一个元素，因为是固定容量数组，扩容之类的都不需要考虑</span></span><br><span class="line">    <span class="keyword">final</span> Object[] items = <span class="built_in">this</span>.items;</span><br><span class="line">    items[putIndex] = x;</span><br><span class="line">    <span class="keyword">if</span> (++putIndex == items.length)</span><br><span class="line">        putIndex = <span class="number">0</span>;</span><br><span class="line">    count++;</span><br><span class="line">    <span class="comment">// 操作3：唤醒消费者线程</span></span><br><span class="line">    notEmpty.signal();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>ArrayBlockingQueue</code>的实现比较简单，其本质是依赖独占锁<code>ReentrantLock</code>保证出入队的线程安全，然后把独占锁上等待的线程利用<code>Condition</code>分为生产者线程与消费者线程，入队生产操作则唤醒消费者来消费，出队消费操作则唤醒生产者来生产，构成一个环形链路。</p>
+<h4 id="LinkedBlockingQueue"><a href="#LinkedBlockingQueue" class="headerlink" title="LinkedBlockingQueue"></a>LinkedBlockingQueue</h4><p><code>LinkedBlockingQueue</code>的队列实现是基于<strong>单链表</strong>，其容量默认为<code>Integer.MAX_VALUE</code>，一般认为其是无界队列，其多线程并发控制使用了两把重入锁，读操作与写操作使用不同的重入锁管理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">// 该单链表最大长度</span></span><br><span class="line"> <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">int</span> capacity;</span><br><span class="line"> <span class="comment">// 该单链表实际长度,不同于数组可以根据下标计算,因此这里需要额外记录</span></span><br><span class="line"> <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">AtomicInteger</span> <span class="variable">count</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">AtomicInteger</span>();</span><br><span class="line"> <span class="comment">// 头指针,其item为null</span></span><br><span class="line"><span class="keyword">transient</span> Node&lt;E&gt; head;</span><br><span class="line"> <span class="comment">// 尾指针，其next为null</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> Node&lt;E&gt; last;</span><br><span class="line"> <span class="comment">// 读操作锁</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="type">ReentrantLock</span> <span class="variable">takeLock</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ReentrantLock</span>();</span><br><span class="line"> <span class="comment">// 用于消费者线程操作</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="type">Condition</span> <span class="variable">notEmpty</span> <span class="operator">=</span> takeLock.newCondition();</span><br><span class="line"> <span class="comment">// 写操作锁</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="type">ReentrantLock</span> <span class="variable">putLock</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ReentrantLock</span>();</span><br><span class="line"> <span class="comment">// 用于生产者线程操作</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="type">Condition</span> <span class="variable">notFull</span> <span class="operator">=</span> putLock.newCondition();</span><br></pre></td></tr></table></figure>
+<p><strong>take操作</strong><br>相比<code>ArrayBlockingQueue</code>，其唤醒策略更加复杂，笔者将其简化为以下几个步骤：</p>
+<ol>
+<li>获取到独占锁</li>
+<li>队列中无元素，则主动await</li>
+<li>队列中有元素，则出队操作</li>
+<li>出队后队列中还有剩余元素，则唤醒其他<strong>消费者线程</strong>进行消费。</li>
+<li>附加操作：当队列满时所有生产者线程可能都已await，因此需要对这种情况下出队之后唤醒生产者线程</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> E <span class="title function_">take</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">    E x;</span><br><span class="line">    <span class="type">int</span> <span class="variable">c</span> <span class="operator">=</span> -<span class="number">1</span>; <span class="comment">// 本次操作标识</span></span><br><span class="line">    <span class="keyword">final</span> <span class="type">AtomicInteger</span> <span class="variable">count</span> <span class="operator">=</span> <span class="built_in">this</span>.count;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">ReentrantLock</span> <span class="variable">takeLock</span> <span class="operator">=</span> <span class="built_in">this</span>.takeLock;</span><br><span class="line">    <span class="comment">// 操作1：获取独占锁</span></span><br><span class="line">    takeLock.lockInterruptibly();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 操作2：队列中无元素，主动休眠</span></span><br><span class="line">        <span class="keyword">while</span> (count.get() == <span class="number">0</span>) &#123;</span><br><span class="line">            notEmpty.await();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 操作3：出队，出队是链表节点的指针引用切换，就不贴代码了</span></span><br><span class="line">        x = dequeue();</span><br><span class="line">        </span><br><span class="line">        c = count.getAndDecrement();</span><br><span class="line">        <span class="comment">// 操作4：队列中还有元素则唤醒其他消费者再次消费</span></span><br><span class="line">        <span class="keyword">if</span> (c &gt; <span class="number">1</span>)</span><br><span class="line">            notEmpty.signal();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        takeLock.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 附加操作：c为出队前的队列长度，当c等于队列容量说明之前队列是满的状态，那么所有的生产者都可能休眠中，因此这里需要唤醒。</span></span><br><span class="line">    <span class="keyword">if</span> (c == capacity)</span><br><span class="line">        signalNotFull();</span><br><span class="line">    <span class="keyword">return</span> x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>put操作</strong><br>put操作可以简化为以下几个步骤：</p>
+<ol>
+<li>获取独占锁</li>
+<li>当队列已满则当前线程需要主动await</li>
+<li>队列未满则执行入队操作</li>
+<li>入队后如果队列还有容量，则继续唤醒生产者生产</li>
+<li>附加操作：当c为0时，也就是入队之前队列为0，此时消费者有可能都在await状态，因此入队之后需要唤醒对应的消费者进行消费。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">put</span><span class="params">(E e)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">    <span class="keyword">if</span> (e == <span class="literal">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NullPointerException</span>();</span><br><span class="line">    <span class="type">int</span> <span class="variable">c</span> <span class="operator">=</span> -<span class="number">1</span>;</span><br><span class="line">    Node&lt;E&gt; node = <span class="keyword">new</span> <span class="title class_">Node</span>&lt;E&gt;(e);</span><br><span class="line">    <span class="keyword">final</span> <span class="type">ReentrantLock</span> <span class="variable">putLock</span> <span class="operator">=</span> <span class="built_in">this</span>.putLock;</span><br><span class="line">    <span class="keyword">final</span> <span class="type">AtomicInteger</span> <span class="variable">count</span> <span class="operator">=</span> <span class="built_in">this</span>.count;</span><br><span class="line">    <span class="comment">// 操作1： 获取独占锁</span></span><br><span class="line">    putLock.lockInterruptibly();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="comment">// 操作2：当队列已满，则生产者主动await</span></span><br><span class="line">        <span class="keyword">while</span> (count.get() == capacity) &#123;</span><br><span class="line">            notFull.await();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 操作3：出队操作</span></span><br><span class="line">        enqueue(node);</span><br><span class="line"></span><br><span class="line">        c = count.getAndIncrement();</span><br><span class="line">        <span class="comment">// 操作4：出队后队列仍有容量，则唤醒其他生产者进行生产</span></span><br><span class="line">        <span class="keyword">if</span> (c + <span class="number">1</span> &lt; capacity)</span><br><span class="line">            notFull.signal();</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        putLock.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 附加操作：当c为0时，也就是入队之前队列为0，此时消费者有可能都在await状态，因此入队之后需要唤醒对应的消费者进行消费。</span></span><br><span class="line">    <span class="keyword">if</span> (c == <span class="number">0</span>)</span><br><span class="line">        signalNotEmpty();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在<code>ArrayBlockingQueue</code>中，速率的调控是通过生产者唤醒消费者，消费者唤醒生产者互相作用来实现的调控。<br>在<code>LinkedBlockingQueue</code>中，则是生产者在队列未满的情况下唤醒生产者，也就是finally之前的<code> if (c + 1 &lt; capacity) notFull.signal();</code>，消费者在队列不为空的时候唤醒消费者，对应的是<code>if (c &gt; 1) notEmpty.signal();</code><br>但是存在两种特殊情况： </p>
+<ol>
+<li>假设队列满了，生产者可能全部处于await状态，那么此时就需要消费者出队后唤醒生产者。也就是take操作return之前的<code>signalNotFull()</code></li>
+<li>假设队列为空，消费者可能全部处于await状态，那么此时就需要生产者生产之后唤醒消费者，也就是put操作return之前的<code>signalNotEmpty()</code></li>
+</ol>
+<h4 id="SynchronousQueue"><a href="#SynchronousQueue" class="headerlink" title="SynchronousQueue"></a>SynchronousQueue</h4><p><code>SynchronousQueue</code>是同步队列，意思是其<strong>生产者与消费者之间直接传递数据</strong>，取消掉了Channel这一共享缓冲区，这是一种同步的直接交付方式，为了更容易的理解，读者可以认为其是一个内部队列固定长度为1的阻塞队列实现，也因此在put操作之后该队列就已经满，因此必须有对应的take操作，否则该队列无法继续生产元素,则对应的生产线程会被休眠进入WAITING状态。在消费者执行take操作时，当队列为空则对应的消费者线程会被休眠，直到有数据时才唤醒对应的消费者线程。<br><img src="http://res.mrdear.cn/1528517858.png"></p>
+<p>更详细的文章 <a target="_blank" rel="noopener" href="http://ifeve.com/java-synchronousqueue/">Java并发包中的同步队列SynchronousQueue实现原理</a></p>
+<h2 id="Producer-Consumer的应用实例"><a href="#Producer-Consumer的应用实例" class="headerlink" title="Producer-Consumer的应用实例"></a>Producer-Consumer的应用实例</h2><p>生产者消费者模型属于基础模式，其之上的应用非常多，这里举几个常见的例子，方便读者理解。</p>
+<h3 id="线程池"><a href="#线程池" class="headerlink" title="线程池"></a>线程池</h3><p>对于JDK所提供的线程池，本质是<strong>管理消费者的工厂</strong>，其角色对应关系如下：<br>Product：Runnable任务<br>Producer：使用线程池的客户端<br>Consumer：ThreadPool中维护的线程<br>Channel：基于<code>BlockingQueue</code>实现的队列。<br>这样来看的话，线程池就很好理解了吧，至于Java中多种线程池，本质上只是<code>BlockingQueue</code>的不同而产生消费效果不同。</p>
+<h3 id="连接池（对象池）"><a href="#连接池（对象池）" class="headerlink" title="连接池（对象池）"></a>连接池（对象池）</h3><p>关于对象池在之前的文章有过详细的介绍<a href="https://mrdear.cn/2018/05/20/experience/parallel_design_patterns--thread_specific_storge/">并行设计模式–Thread Specific Storge模式</a>。<br>对象池本质是<strong>管理生产者，并支持可回收的工厂</strong>，其角色对应关系如下：<br>Product：池中的对象<br>Producer：该对象池中创建对象的工厂<br>Consumer：向该对象池借对象的客户端<br>Channel：基于<code>BlockingQueue</code>实现的队列。</p>
+<p>针对的主体不同，是线程池与对象池根本的区别。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>关于生产者消费者模式一个实战的案例<br><a target="_blank" rel="noopener" href="http://www.infoq.com/cn/articles/producers-and-consumers-mode">聊聊并发——生产者消费者模式</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/design-patterns-producer-consumer.html">并行设计模式--生产者消费者</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/design-patterns-producer-consumer.html">https://mrdear.cn/posts/design-patterns-producer-consumer.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/framework-double-extension.html" title="Dubbo -- 扩展机制实现原理"><i class="iconfont icon-prev"></i>Dubbo -- 扩展机制实现原理</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/java_deadlock.html" title="Java--死锁以及死锁的排查">Java--死锁以及死锁的排查<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Producer-Consumer%E4%B8%AD%E7%9A%84%E8%A7%92%E8%89%B2"><span class="toc-number">1.</span> <span class="toc-text">Producer-Consumer中的角色</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Channel%E7%9A%84%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88"><span class="toc-number">2.</span> <span class="toc-text">Channel的实现方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#BlockingQueue"><span class="toc-number">2.1.</span> <span class="toc-text">BlockingQueue</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#ArrayBlockingQueue"><span class="toc-number">2.1.1.</span> <span class="toc-text">ArrayBlockingQueue</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#LinkedBlockingQueue"><span class="toc-number">2.1.2.</span> <span class="toc-text">LinkedBlockingQueue</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SynchronousQueue"><span class="toc-number">2.1.3.</span> <span class="toc-text">SynchronousQueue</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Producer-Consumer%E7%9A%84%E5%BA%94%E7%94%A8%E5%AE%9E%E4%BE%8B"><span class="toc-number">3.</span> <span class="toc-text">Producer-Consumer的应用实例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0"><span class="toc-number">3.1.</span> <span class="toc-text">线程池</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%9E%E6%8E%A5%E6%B1%A0%EF%BC%88%E5%AF%B9%E8%B1%A1%E6%B1%A0%EF%BC%89"><span class="toc-number">3.2.</span> <span class="toc-text">连接池（对象池）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

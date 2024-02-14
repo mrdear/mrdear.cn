@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>并行设计模式--Future、Callback、Promise | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/design-patterns-future-callback.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/designpattern.png" alt="并行设计模式--Future、Callback、Promise">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">并行设计模式--Future、Callback、Promise</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-08-11</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>在异步处理过程中需要大量使用<code>Future</code>，<code>Callback</code>，<code>Promise</code>，深入学习分析这几种异步编程的原理。</p>
+<h2 id="Java中的线程"><a href="#Java中的线程" class="headerlink" title="Java中的线程"></a>Java中的线程</h2><p>经常有面试题问Java中创建线程有哪些方式，大多数回答是<code>Thread，Runnable，Callable</code>，然而这是错误的回答。Java代码提供给用户创建线程的方式只有<code>Thread</code>，而<code>Runnable</code>只是提交给线程执行的任务，线程<code>Thread</code>也只会执行其对应的run方法，最后<code>Callable</code>是一个辅助接口，线程并不会执行其对应的call方法，所以<code>Callable</code>通常情况下需要与<code>Runnable</code>一起使用，然后在对应的run()方法中调用call()的方法。<br>理解这一点对接下来的内容很有帮助。</p>
+<h2 id="Future模式"><a href="#Future模式" class="headerlink" title="Future模式"></a>Future模式</h2><p> <strong>Future模式</strong>是并发当中经常用到的一种设计模式，它的核心思想是<strong>异步执行，同步返回</strong>。把耗时操作放到异步线程中执行，然后再获取结果时判断是否执行完，执行完则直接返回结果，没执行完则阻塞等到返回，这是future模式的一般做法，目的是<strong>充分利用等待时间</strong></p>
+<h3 id="JDK-Future模式的使用"><a href="#JDK-Future模式的使用" class="headerlink" title="JDK Future模式的使用"></a>JDK Future模式的使用</h3><p>以JDK中的<code>Future</code>接口为例，可以发现<code>Future</code>是一个read-only 的结构，一旦任务被提交除了取消任务外就不可以改变任务，这一点也是Future模式与其他模式的重要区别。</p>
+<p><strong>清单1：JDK中的Future接口</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">Future</span>&lt;V&gt; &#123;</span><br><span class="line"></span><br><span class="line">  <span class="type">boolean</span> <span class="title function_">cancel</span><span class="params">(<span class="type">boolean</span> mayInterruptIfRunning)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">boolean</span> <span class="title function_">isCancelled</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">boolean</span> <span class="title function_">isDone</span><span class="params">()</span>;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 获取结果</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  V <span class="title function_">get</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException, ExecutionException;</span><br><span class="line"></span><br><span class="line">  V <span class="title function_">get</span><span class="params">(<span class="type">long</span> timeout， TimeUnit unit)</span></span><br><span class="line">      <span class="keyword">throws</span> InterruptedException， ExecutionException， TimeoutException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Future模式在JDK中一般如下方式使用，主要步骤是创建对应的异步任务，然后需要结果时主动调用get方法。<br><strong>清单2：FutureTask简单使用</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="type">ExecutorService</span> <span class="variable">executorService</span> <span class="operator">=</span> Executors.newCachedThreadPool();</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException, TimeoutException, ExecutionException &#123;</span><br><span class="line">  <span class="comment">// 把耗时任务放到异步线程中执行</span></span><br><span class="line">  Future&lt;String&gt; task = <span class="keyword">new</span> <span class="title class_">FutureTask</span>&lt;&gt;(() -&gt; &#123;</span><br><span class="line">    Thread.sleep(<span class="number">1000L</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;quding&quot;</span>;</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="comment">// 提交任务</span></span><br><span class="line">  executorService.submit((Runnable) task);</span><br><span class="line">  <span class="comment">// 模拟耗时操作</span></span><br><span class="line">  Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">  <span class="comment">// 获取结果</span></span><br><span class="line">  <span class="type">String</span> <span class="variable">result</span> <span class="operator">=</span> task.get(<span class="number">1000</span>,TimeUnit.MILLISECONDS);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不考虑其他因素，上面代码主线程中逻辑需要1000毫秒，同时任务执行也需要1000毫秒，两者利用<code>FutureTask</code>并行执行，因此总耗时也是1000毫秒，这是<code>FutureTask</code>带来的最直观的效果：<strong>增加系统的并发性，减少不必要的等待</strong>。</p>
+<h3 id="JDK-Future模式的原理"><a href="#JDK-Future模式的原理" class="headerlink" title="JDK Future模式的原理"></a>JDK Future模式的原理</h3><p>从代码角度上来分析，一个<code>FutureTask</code>会经历以下几个过程:</p>
+<p><strong>1. 接收任务</strong><br>从代码角度上看，<code>FutureTask</code>首先会接收一个<code>Callable</code>任务的任务，并将自身状态设置为<code>NEW</code>(关于状态在该类中有详细注释描述)</p>
+<p><strong>清单3：FutureTask的创建</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">FutureTask</span><span class="params">(Callable&lt;V&gt; callable)</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (callable == <span class="literal">null</span>)</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NullPointerException</span>();</span><br><span class="line">  <span class="built_in">this</span>.callable = callable;</span><br><span class="line">  <span class="built_in">this</span>.state = NEW;       <span class="comment">// ensure visibility of callable</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 即使提交的是runnable也会适配成对应的callable</span></span><br><span class="line"><span class="keyword">public</span> <span class="title function_">FutureTask</span><span class="params">(Runnable runnable， V result)</span> &#123;</span><br><span class="line">  <span class="built_in">this</span>.callable = Executors.callable(runnable， result);</span><br><span class="line">  <span class="built_in">this</span>.state = NEW;       <span class="comment">// ensure visibility of callable</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>2. 执行任务</strong><br>当线程启动时会调用其<code>run</code>方法，该方法会调用<code>callable</code>任务，然后把返回结果调用<code>set</code>进行更新。</p>
+<p><strong>清单4：FutureTask的执行</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">run</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="comment">// CAS更新把当前对象与线程绑定起来</span></span><br><span class="line">  <span class="keyword">if</span> (state != NEW ||</span><br><span class="line">      !UNSAFE.compareAndSwapObject(<span class="built_in">this</span>， runnerOffset，</span><br><span class="line">                                   <span class="literal">null</span>， Thread.currentThread()))</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">      Callable&lt;V&gt; c = callable;</span><br><span class="line">      <span class="keyword">if</span> (c != <span class="literal">null</span> &amp;&amp; state == NEW) &#123;</span><br><span class="line">          V result;</span><br><span class="line">          <span class="type">boolean</span> ran;</span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 执行call方法</span></span><br><span class="line">              result = c.call();</span><br><span class="line">              ran = <span class="literal">true</span>;</span><br><span class="line">          &#125; <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">              result = <span class="literal">null</span>;</span><br><span class="line">              ran = <span class="literal">false</span>;</span><br><span class="line">            <span class="comment">// 对任务执行异常的封装</span></span><br><span class="line">              setException(ex);</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">if</span> (ran)</span><br><span class="line">              <span class="comment">// 更新对应的结果值。</span></span><br><span class="line">              set(result);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  。。。</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>3. 设置结果</strong><br><code>set</code>方法中会把对应的结果赋值给属性变量<code>Object outcome</code>，那么<code>FutureTask</code>原理就就是利用了<strong>属性变量内存共享来实现的返回值获取</strong>。</p>
+<p><strong>清单5：FutureTask的结果设置</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">set</span><span class="params">(V v)</span> &#123;</span><br><span class="line">  <span class="comment">// CAS更新当前状态为已完成</span></span><br><span class="line">  <span class="keyword">if</span> (UNSAFE.compareAndSwapInt(<span class="built_in">this</span>， stateOffset， NEW， COMPLETING)) &#123;</span><br><span class="line">      outcome = v;</span><br><span class="line">      <span class="comment">// 状态调回，该方法会可以防止重排序带来的影响</span></span><br><span class="line">      UNSAFE.putOrderedInt(<span class="built_in">this</span>， stateOffset， NORMAL); <span class="comment">// final state</span></span><br><span class="line">      <span class="comment">// 完成通知，唤醒等待结果的线程</span></span><br><span class="line">      finishCompletion();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>4. 获取结果</strong><br>结果是共享的，因此获取时根据当前task所处于的状态，如果是未完成的话则直接进入等待线程队列中，当结果被设置时会主动唤醒这些等待线程。</p>
+<p><strong>清单5：FutureTask获取结果</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> V <span class="title function_">get</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException， ExecutionException &#123;</span><br><span class="line">  <span class="type">int</span> <span class="variable">s</span> <span class="operator">=</span> state;</span><br><span class="line">  <span class="keyword">if</span> (s &lt;= COMPLETING)</span><br><span class="line">      <span class="comment">// 未完成则进入等待线程队列中</span></span><br><span class="line">      s = awaitDone(<span class="literal">false</span>， <span class="number">0L</span>);</span><br><span class="line">  <span class="comment">// 获取返回值</span></span><br><span class="line">  <span class="keyword">return</span> report(s);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>以上是Future模式的实现原理，个人认为Future模式本质上是利用了内存共享来进行跨线程通信，因此在操作共享字段时时要使用原子性操作来保证多线程下的可见性。</p>
+<h2 id="Callback（回调式Future）"><a href="#Callback（回调式Future）" class="headerlink" title="Callback（回调式Future）"></a>Callback（回调式Future）</h2><p>对于Future模式，最麻烦的地方是需要手动获取对应的值，这个过程并且是阻塞操作，有时候的业务并不怎么关心值什么时候被计算出来，只关心计算出来后后续要做哪些操作，因此一种改进策略就是利用回调方式(Callback)实现后续逻辑。<br>以guava中<code>FutureCallback</code>为例，其接口定义如下：</p>
+<p><strong>清单6：guava中FutureCallback接口</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">FutureCallback</span>&lt;V&gt; &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">void</span> <span class="title function_">onSuccess</span><span class="params">(<span class="meta">@NullableDecl</span> V result)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">void</span> <span class="title function_">onFailure</span><span class="params">(Throwable t)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该接口本身是一个业务处理，可以使用<code>Futures#addCallback</code>添加到Future当中。Callback的实现原理可以的想到在对应的<code>Future</code>中维护一个<code>Callback</code>链表，当任务执行完成后依次执行对应的回调，类似于<a href="https://mrdear.cn/2018/04/20/experience/design_patterns--observer/">观察者模式</a>的<code>Subject</code>依次调用<code>Observer</code>。<br><code>Callback</code>很好的解决了<code>Future</code>手动调用get所带来的阻塞与不便。因为在值算出来时自动调用后续处理因此不存在阻塞操作。但是在业务后续操作很多时，其存在一个嵌套的问题，俗称回调地狱，<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/29783901">这一点在JS中经常遇到</a>：</p>
+<p><strong>清单7：Callback带来的回调地狱写法</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">api.getItem(<span class="number">1</span>)</span><br><span class="line">  .then(item =&gt; &#123;</span><br><span class="line">    item.amount++;</span><br><span class="line">    api.updateItem(<span class="number">1</span>, item)</span><br><span class="line">      .then(update =&gt; &#123;</span><br><span class="line">        api.deleteItem(<span class="number">1</span>)</span><br><span class="line">          .then(deletion =&gt; &#123;</span><br><span class="line">            console.log(<span class="string">&#x27;done!&#x27;</span>);</span><br><span class="line">          &#125;)</span><br><span class="line">      &#125;)</span><br><span class="line">  &#125;)</span><br></pre></td></tr></table></figure>
+<p>回调嵌套过多在服务端倒不是很常见，但是嵌套会使得逻辑变得很难梳理，因此诞生了Promise模式，也是目前使用最多的一种模式。</p>
+<h2 id="Promise（可变的Future）"><a href="#Promise（可变的Future）" class="headerlink" title="Promise（可变的Future）"></a>Promise（可变的Future）</h2><p><code>Promise</code>结合了Future与Callback两种形式，对于Future，Promise在其基础上提供结果写入的接口，也就是可以主动完成这个Future，对于Callback，Promise所作的是把调用形式由嵌套打平，避免了循环嵌套，其使用方式大概如下JS代码所示：</p>
+<p><strong>清单8：Promise使用形式</strong></p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">api.<span class="title function_">getItem</span>(<span class="number">1</span>)</span><br><span class="line">  .<span class="title function_">then</span>(<span class="function"><span class="params">item</span> =&gt;</span> &#123;</span><br><span class="line">    item.<span class="property">amount</span>++;</span><br><span class="line">    <span class="keyword">return</span> api.<span class="title function_">updateItem</span>(<span class="number">1</span>, item);</span><br><span class="line">  &#125;)</span><br><span class="line">  .<span class="title function_">then</span>(<span class="function"><span class="params">update</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> api.<span class="title function_">deleteItem</span>(<span class="number">1</span>);</span><br><span class="line">  &#125;)</span><br><span class="line">  .<span class="title function_">then</span>(<span class="function"><span class="params">deletion</span> =&gt;</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;done!&#x27;</span>);</span><br><span class="line">  &#125;)</span><br></pre></td></tr></table></figure>
+<p><code>Promise</code>对于Future的改进原理是提供主动完成的方法入口，并且完成任务时会主动触发所有的Callback，</p>
+<p>在JDK中提供了<code>CompletableFuture</code>类，用于实现Promise模式编程，<strong>清单9</strong>展示了其可以主动完成任务的能力，即使异步任务会导致异步线程无限休眠，但是仍然可以通过主动设置值的方式完成该任务。这一特性可以很好的在两个线程中交换数据使用，举个例子在一些RPC框架中客户端在对应的Handler中发出来<code>RPCRequest</code>后创建一个Promise放入到全局Map中，然后阻塞获取响应结果，在<code>RPCResponse</code>异步返回的线程中从Map中取出Promise，然后主动把结果设置进去，那么对于使用方来说就像是同步完成了一次调用。</p>
+<p><strong>清单9：Promise主动完成任务能力</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">CompletableFuture&lt;String&gt; promise = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">     <span class="comment">// 无限休眠</span></span><br><span class="line">     sleep(Long.MAX_VALUE);</span><br><span class="line">     <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">   &#125;);</span><br><span class="line"></span><br><span class="line">   <span class="comment">// 调用主动完成</span></span><br><span class="line">   promise.complete(<span class="string">&quot;quding2&quot;</span>);</span><br><span class="line"></span><br><span class="line">   System.out.println(promise.get()); <span class="comment">// 输出quding2</span></span><br></pre></td></tr></table></figure>
+
+<p><code>Promise</code>对于Callback的改进是把每一个Callback封装成一个<code>Stage</code>阶段，所有的<code>Stage</code>之间使用单链表关联，因此当完成时启动整个链表链路即可。这是一种常用的打散嵌套调用的一种做法，比如Java8的Stream也是类似的做法，详细的可以参考之前写的Stream分析文章。<a href="https://mrdear.cn/tags/java8/">Java8知识点</a></p>
+<p><strong>清单10：Promise对于Callback的优化</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">CountDownLatch</span> <span class="variable">latch</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">CountDownLatch</span>(<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">   CompletableFuture&lt;String&gt; promise = CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">     sleep(<span class="number">2000L</span>);</span><br><span class="line">     <span class="keyword">return</span> <span class="string">&quot;quding&quot;</span>;</span><br><span class="line">   &#125;);</span><br><span class="line">   <span class="comment">// 将一系列的Callback打平</span></span><br><span class="line">   promise.thenApply(String::toUpperCase)</span><br><span class="line">       .thenApply(t -&gt; t + <span class="string">&quot;: 屈定&quot;</span>)</span><br><span class="line">       .whenComplete((t, ex) -&gt; &#123;</span><br><span class="line">         <span class="keyword">if</span> (ex != <span class="literal">null</span>) &#123;</span><br><span class="line">           ex.printStackTrace();</span><br><span class="line">         &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">           System.out.println(<span class="string">&quot;result: &quot;</span> + t); <span class="comment">// 输出 result: QUDING: 屈定</span></span><br><span class="line">         &#125;</span><br><span class="line">         latch.countDown();</span><br><span class="line">       &#125;);</span><br><span class="line"></span><br><span class="line">   latch.await();</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>由于篇幅过长，因此原本打算加入的Netty相关内容被去掉了，后续会分析Netty相关的实现机制。另外三种模式中，<code>Future</code>是核心也是最基础的一种模式，<code>Callback</code>，<code>Promise</code>都是一种优化手段，一般业务上使用<code>Promise</code>就可以了，其包含了前两者的全部功能。</p>
+<p>最后：<br>我的博客即将搬运同步至腾讯云+社区，邀请大家一同入驻：<a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/support-plan?invite_code=19savafaiw6zn">https://cloud.tencent.com/developer/support-plan?invite_code&#x3D;19savafaiw6zn</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/design-patterns-future-callback.html">并行设计模式--Future、Callback、Promise</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/design-patterns-future-callback.html">https://mrdear.cn/posts/design-patterns-future-callback.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/framework-netty-reactor-model.html" title="Netty -- Reactor模型的应用"><i class="iconfont icon-prev"></i>Netty -- Reactor模型的应用</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/work_how_design_user_login.html" title="实践--用户登录注册相关设计">实践--用户登录注册相关设计<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Java%E4%B8%AD%E7%9A%84%E7%BA%BF%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">Java中的线程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Future%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.</span> <span class="toc-text">Future模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#JDK-Future%E6%A8%A1%E5%BC%8F%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-number">2.1.</span> <span class="toc-text">JDK Future模式的使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JDK-Future%E6%A8%A1%E5%BC%8F%E7%9A%84%E5%8E%9F%E7%90%86"><span class="toc-number">2.2.</span> <span class="toc-text">JDK Future模式的原理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Callback%EF%BC%88%E5%9B%9E%E8%B0%83%E5%BC%8FFuture%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">Callback（回调式Future）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Promise%EF%BC%88%E5%8F%AF%E5%8F%98%E7%9A%84Future%EF%BC%89"><span class="toc-number">4.</span> <span class="toc-text">Promise（可变的Future）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

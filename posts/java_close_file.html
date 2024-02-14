@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Java--为什么需要主动关闭文件？ | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/java_close_file.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/javastudy.png" alt="Java--为什么需要主动关闭文件？">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Java--为什么需要主动关闭文件？</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-08-04</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Java/">Java</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>在Java编程中，对于一些文件的使用往往需要主动释放，比如<code>InputStream</code>，<code>OutputStream</code>，<code>SocketChannel</code>等等，那么有没有想过为什么要主动释放这些资源？难道GC回收时不会释放吗？本文主要是对这一系列问题分析解答。（本文所使用的环境默认为Linux）</p>
+<h2 id="应用是如何操作文件的？"><a href="#应用是如何操作文件的？" class="headerlink" title="应用是如何操作文件的？"></a>应用是如何操作文件的？</h2><p>在Linux系统中有一种一切皆文件的说法，无论是真实的文件，还是网络的Socket连接，或者是挂载的磁盘等等，操作系统所规定只要内核才有权限操作这些文件，应用的文件操作则必须委托操作系统内核来执行，这也是常说的内核态与用户态。那么在内核与应用之间就需要有一个关联关系，来标识用户所要操作的文件，在Linux下就是文件描述符。换句话说文件描述符的存在是为应用程序与基础操作系统之间的交互提供了通用接口。<br>引用<a target="_blank" rel="noopener" href="https://blog.csdn.net/cywosp/article/details/38965239">网上一张图片</a><br><img src="http://res.mrdear.cn/1533374536.png"><br>那么由图可知以下特性：</p>
+<ul>
+<li>每一个进程有自己的文件描述符表</li>
+<li>不同的描述符可能指向同一个文件，文件描述符这个数字只是针对当前进程有意义。</li>
+</ul>
+<h2 id="Java是如何操作文件的？"><a href="#Java是如何操作文件的？" class="headerlink" title="Java是如何操作文件的？"></a>Java是如何操作文件的？</h2><p>在Java中对文件的操作都是通过<code>FileDescriptor</code>，然后JNI调用对应的C代码，在调用系统函数来进行操作，下面会详细分析下具体实现方式。</p>
+<h3 id="FileInputStream的创建"><a href="#FileInputStream的创建" class="headerlink" title="FileInputStream的创建"></a>FileInputStream的创建</h3><p>在Java中打开一个文件一般使用<code>FileInputStream</code>，其主要属性字段如下：</p>
+<p><strong>清单1：FileInputStream的属性字段</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">  <span class="comment">// 文件描述符</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> FileDescriptor fd;</span><br><span class="line"><span class="comment">// 文件路径</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> String path;</span><br><span class="line"><span class="comment">// 文件Channel,后面再说</span></span><br><span class="line"><span class="keyword">private</span> <span class="type">FileChannel</span> <span class="variable">channel</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line"><span class="comment">// 文件关闭锁</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="type">Object</span> <span class="variable">closeLock</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Object</span>();</span><br><span class="line"><span class="comment">// 文件关闭标识</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">volatile</span> <span class="type">boolean</span> <span class="variable">closed</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br></pre></td></tr></table></figure>
+<p>其中<code>FileDescriptor</code>文件描述符就是Java与操作系统之间关于文件的连接，那么<code>FileDescriptor fd;</code>是在什么时候赋值的呢？<a target="_blank" rel="noopener" href="http://yukai.space/2017/07/07/java%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/">这里取自YuKai’s blog相关内容</a></p>
+<p><strong>清单2：FileInputStream打开一个文件</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">FileInputStream</span><span class="params">(File file)</span> <span class="keyword">throws</span> FileNotFoundException &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">name</span> <span class="operator">=</span> (file != <span class="literal">null</span> ? file.getPath() : <span class="literal">null</span>);</span><br><span class="line">        <span class="type">SecurityManager</span> <span class="variable">security</span> <span class="operator">=</span> System.getSecurityManager();</span><br><span class="line">        <span class="keyword">if</span> (security != <span class="literal">null</span>) &#123;</span><br><span class="line">            security.checkRead(name);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (name == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">NullPointerException</span>();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (file.isInvalid()) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">FileNotFoundException</span>(<span class="string">&quot;Invalid file path&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        fd = <span class="keyword">new</span> <span class="title class_">FileDescriptor</span>();</span><br><span class="line">        fd.incrementAndGetUseCount();</span><br><span class="line">        <span class="built_in">this</span>.path = name;</span><br><span class="line">        open(name);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">static</span> &#123;</span><br><span class="line">    initIDs();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意到<code>initIDs()</code>这个静态方法：</p>
+<p><strong>清单3：FileInputStream initIDs方法</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">jfieldID fis_fd; <span class="comment">/* id for jobject &#x27;fd&#x27; in java.io.FileInputStream */</span></span><br><span class="line">JNIEXPORT <span class="keyword">void</span> JNICALL</span><br><span class="line"><span class="title function_">Java_java_io_FileInputStream_initIDs</span><span class="params">(JNIEnv *env, jclass fdClass)</span> &#123;</span><br><span class="line">    fis_fd = (*env)-&gt;GetFieldID(env, fdClass, <span class="string">&quot;fd&quot;</span>, <span class="string">&quot;Ljava/io/FileDescriptor;&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在<code>FileInputStream</code>类加载阶段，<code>fis_fd</code>就被初始化了，<code>fid_fd</code>相当于是<code>FileInputStream.fd</code>字段的一个内存偏移量，便于在必要时操作内存给它赋值。<br>看一下<code>FileDescriptor</code>的实例化过程：</p>
+<p><strong>清单4：FileDescriptor实例化过程</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="comment">/**/ FileDescriptor() &#123;</span></span><br><span class="line"><span class="comment">        fd = -1;</span></span><br><span class="line"><span class="comment">        handle = -1;</span></span><br><span class="line"><span class="comment">        useCount = new AtomicInteger();</span></span><br><span class="line"><span class="comment">&#125;</span></span><br><span class="line"><span class="comment">static &#123;</span></span><br><span class="line"><span class="comment">    initIDs();</span></span><br><span class="line"><span class="comment">&#125;</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment">// initIDs()方法对应C代码</span></span><br><span class="line"><span class="comment">/* field id for jint &#x27;fd&#x27; in java.io.FileDescriptor */</span></span><br><span class="line">jfieldID IO_fd_fdID;</span><br><span class="line"><span class="comment">/**************************************************************</span></span><br><span class="line"><span class="comment"> * static methods to store field ID&#x27;s in initializers</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line">JNIEXPORT <span class="keyword">void</span> JNICALL</span><br><span class="line"><span class="title function_">Java_java_io_FileDescriptor_initIDs</span><span class="params">(JNIEnv *env, jclass fdClass)</span> &#123;</span><br><span class="line">    IO_fd_fdID = (*env)-&gt;GetFieldID(env, fdClass, <span class="string">&quot;fd&quot;</span>, <span class="string">&quot;I&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>FileDescriptor</code>也有一个<code>initIDs</code>，他和<code>FileInputStream.initIDs</code>的方法类似，把设置<code>IO_fd_fdID</code>为<code>FileDescriptor.fd</code>字段的内存偏移量。<br>接下来再看<code>FileInputStream</code>构造函数中的<code>open(name)</code>方法，字面上看，这个方法打开了一个文件，他也是一个本地方法，open方法直接调用了fileOpen方法，fileOpen方法如下:</p>
+<p><strong>清单5：FileInputStream打开文件C代码</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> <span class="title function_">fileOpen</span><span class="params">(JNIEnv *env, jobject <span class="built_in">this</span>, jstring path, jfieldID fid, <span class="type">int</span> flags)</span></span><br><span class="line">&#123;</span><br><span class="line">    WITH_PLATFORM_STRING(env, path, ps) &#123;</span><br><span class="line">        FD fd;</span><br><span class="line">#<span class="keyword">if</span> <span class="title function_">defined</span><span class="params">(__linux__)</span> || defined(_ALLBSD_SOURCE)</span><br><span class="line">        <span class="comment">/* Remove trailing slashes, since the kernel won&#x27;t */</span></span><br><span class="line">        <span class="type">char</span> *p = (<span class="type">char</span> *)ps + strlen(ps) - <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> ((p &gt; ps) &amp;&amp; (*p == <span class="string">&#x27;/&#x27;</span>))</span><br><span class="line">            *p-- = <span class="string">&#x27;\0&#x27;</span>;</span><br><span class="line">#endif</span><br><span class="line">        <span class="comment">// 打开一个文件并获取到文件描述符</span></span><br><span class="line">        fd = handleOpen(ps, flags, <span class="number">0666</span>);</span><br><span class="line">        <span class="keyword">if</span> (fd != -<span class="number">1</span>) &#123;</span><br><span class="line">            <span class="comment">// 设置文件描述符</span></span><br><span class="line">            SET_FD(<span class="built_in">this</span>, fd, fid);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            throwFileNotFoundException(env, path);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; END_PLATFORM_STRING(env, ps);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 因为initIDs方法拿到了对应字段的引用，因此这里直接设置文件描述符</span></span><br><span class="line">#define <span class="title function_">SET_FD</span><span class="params">(<span class="built_in">this</span>, fd, fid)</span> \</span><br><span class="line">    <span class="keyword">if</span> ((*env)-&gt;GetObjectField(env, (<span class="built_in">this</span>), (fid)) != NULL) \</span><br><span class="line">        (*env)-&gt;SetIntField(env, (*env)-&gt;GetObjectField(env, (<span class="built_in">this</span>), (fid)),IO_fd_fdID, (fd))</span><br></pre></td></tr></table></figure>
+<p>打开一个文件本质上是调用操作系统指令，然后获取一个<strong>文件操作符整数，再设置到对应的Java变量上</strong>，那么接下来的读取写入关闭等等都是通过文件描述符来调用系统命令处理。</p>
+<h3 id="FileChannel创建"><a href="#FileChannel创建" class="headerlink" title="FileChannel创建"></a>FileChannel创建</h3><p><code>FileChannel</code>的创建依赖于<code>FileDescriptor</code>，其本质仍然是对文件操作符的处理，不过在处理方式上使用零拷贝等技术加速对文件的操作</p>
+<p><strong>清单6：FileChannel的创建</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> FileChannel <span class="title function_">getChannel</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="built_in">this</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (channel == <span class="literal">null</span>) &#123;</span><br><span class="line">            channel = FileChannelImpl.open(fd, path, <span class="literal">true</span>, <span class="literal">false</span>, <span class="built_in">this</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> channel;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Socket的创建"><a href="#Socket的创建" class="headerlink" title="Socket的创建"></a>Socket的创建</h3><p>在<code>SocketChannelImpl</code>中，socket的建立最终返回的也是<code>FileDescriptor</code>，然后应用程序的操作都会通过<code>FileDescriptor</code>映射到对应的socket上。</p>
+<p><strong>清单7：SocketChannel的创建</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">SocketChannelImpl(SelectorProvider var1) <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">   <span class="built_in">super</span>(var1);</span><br><span class="line">   <span class="built_in">this</span>.fd = Net.socket(<span class="literal">true</span>);</span><br><span class="line">   <span class="built_in">this</span>.fdVal = IOUtil.fdVal(<span class="built_in">this</span>.fd);</span><br><span class="line">   <span class="built_in">this</span>.state = <span class="number">0</span>;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="没有主动关闭文件的后果"><a href="#没有主动关闭文件的后果" class="headerlink" title="没有主动关闭文件的后果"></a>没有主动关闭文件的后果</h2><p>由上面的分析可以得出，Java中对文件的操作本质都是获取文件操作符在调用系统命令处理，关闭文件本质上也是调用C提供的<code>close(fd)</code>方法，如下代码所示：</p>
+<p><strong>清单8：JDK关闭一个文件</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span></span><br><span class="line"><span class="title function_">fileClose</span><span class="params">(JNIEnv *env, jobject <span class="built_in">this</span>, jfieldID fid)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">FD</span> <span class="variable">fd</span> <span class="operator">=</span> GET_FD(<span class="built_in">this</span>, fid);</span><br><span class="line">    <span class="keyword">if</span> (fd == -<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 设置Java对象的fd为-1</span></span><br><span class="line">    SET_FD(<span class="built_in">this</span>, -<span class="number">1</span>, fid);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 对于标准输入，输出，错误不关闭，指向/dev/null</span></span><br><span class="line">    <span class="keyword">if</span> (fd &gt;= STDIN_FILENO &amp;&amp; fd &lt;= STDERR_FILENO) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">devnull</span> <span class="operator">=</span> open(<span class="string">&quot;/dev/null&quot;</span>, O_WRONLY);</span><br><span class="line">        <span class="keyword">if</span> (devnull &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            SET_FD(<span class="built_in">this</span>, fd, fid); <span class="comment">// restore fd</span></span><br><span class="line">            JNU_ThrowIOExceptionWithLastError(env, <span class="string">&quot;open /dev/null failed&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            dup2(devnull, fd);</span><br><span class="line">            close(devnull);</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="comment">// 调用close(fd)方法关闭</span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (close(fd) == -<span class="number">1</span>) &#123;</span><br><span class="line">        JNU_ThrowIOExceptionWithLastError(env, <span class="string">&quot;close failed&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么不关闭有什么后果呢？</p>
+<ul>
+<li>不关闭就造成文件描述符无法释放，属于一种系统文件的浪费</li>
+<li>不关闭可能造成对文件的写入丢失，写入有可能存在缓存区，没有关闭并且没有主动flush到具体的文件上，则可能造成丢失。</li>
+<li>如果该文件被文件锁独占，那么就会造成其他线程无法操作该文件。</li>
+<li>Too many open files错误，操作系统针对一个进程分配的文件描述符表是有限大小的，因此打开不释放可能造成该表溢出。</li>
+</ul>
+<h2 id="对象被GC后文件会被关闭吗？"><a href="#对象被GC后文件会被关闭吗？" class="headerlink" title="对象被GC后文件会被关闭吗？"></a>对象被GC后文件会被关闭吗？</h2><p>答案是不确定，GC理论上管理的是内存中的对象，并不会理会文件文件，并且GC具有不确定性。在Java中对象被释放之前会调用<code>finalize()</code>方法，因此JDK的一些实现会在该方法中加入关闭操作，比如<code>FileInputStream</code>，这是JDK对程序员可能犯不关闭文件的一种补偿操作。</p>
+<p><strong>清单9：FileInputStream的finalize实现</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">finalize</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        <span class="keyword">if</span> ((fd != <span class="literal">null</span>) &amp;&amp;  (fd != FileDescriptor.in)) &#123;</span><br><span class="line">            <span class="comment">/* if fd is shared, the references in FileDescriptor</span></span><br><span class="line"><span class="comment">             * will ensure that finalizer is only called when</span></span><br><span class="line"><span class="comment">             * safe to do so. All references using the fd have</span></span><br><span class="line"><span class="comment">             * become unreachable. We can call close()</span></span><br><span class="line"><span class="comment">             */</span></span><br><span class="line">            close();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>因此最好的做法是养成用完文件就关闭的好习惯，对于Java来说自然是放在<code>finally</code>块中关闭最为可靠，依赖GC去关闭是相当不可靠的做法。</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/java_close_file.html">Java--为什么需要主动关闭文件？</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/java_close_file.html">https://mrdear.cn/posts/java_close_file.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/framework-netty-bytebuf.html" title="Netty -- Bytebuf的深入分析"><i class="iconfont icon-prev"></i>Netty -- Bytebuf的深入分析</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-netty-reactor-model.html" title="Netty -- Reactor模型的应用">Netty -- Reactor模型的应用<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E6%98%AF%E5%A6%82%E4%BD%95%E6%93%8D%E4%BD%9C%E6%96%87%E4%BB%B6%E7%9A%84%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">应用是如何操作文件的？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java%E6%98%AF%E5%A6%82%E4%BD%95%E6%93%8D%E4%BD%9C%E6%96%87%E4%BB%B6%E7%9A%84%EF%BC%9F"><span class="toc-number">2.</span> <span class="toc-text">Java是如何操作文件的？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#FileInputStream%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="toc-number">2.1.</span> <span class="toc-text">FileInputStream的创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FileChannel%E5%88%9B%E5%BB%BA"><span class="toc-number">2.2.</span> <span class="toc-text">FileChannel创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Socket%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="toc-number">2.3.</span> <span class="toc-text">Socket的创建</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B2%A1%E6%9C%89%E4%B8%BB%E5%8A%A8%E5%85%B3%E9%97%AD%E6%96%87%E4%BB%B6%E7%9A%84%E5%90%8E%E6%9E%9C"><span class="toc-number">3.</span> <span class="toc-text">没有主动关闭文件的后果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E8%A2%ABGC%E5%90%8E%E6%96%87%E4%BB%B6%E4%BC%9A%E8%A2%AB%E5%85%B3%E9%97%AD%E5%90%97%EF%BC%9F"><span class="toc-number">4.</span> <span class="toc-text">对象被GC后文件会被关闭吗？</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

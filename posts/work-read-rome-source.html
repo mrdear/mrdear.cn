@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>实践 -- Rome源码阅读 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/work-read-rome-source.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">实践 -- Rome源码阅读</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2022-10-08</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>之前写了一篇<a href="https://mrdear.cn/posts/readnote-source-mybatis.html">《读书笔记 – 通用源码阅读指南》</a>，本篇是按照指南教程尝试阅读下<a target="_blank" rel="noopener" href="https://github.com/rometools/rome">Rome</a>这个项目。之所以选择Rome，因为最近想要写一个RSS解析器，了解下面对多种格式有什么比较好的方式能够做到灵活扩展以及使用上的优雅兼存。我大概能够想象到这个工作量不在于难度，而在于多种格式的适配以及扩展性的兼顾，所以想要参考下Rome的实现策略，接下来按照之前定义的步骤开始阅读之旅。</p>
+<h2 id="1-全面了解项目"><a href="#1-全面了解项目" class="headerlink" title="1. 全面了解项目"></a>1. 全面了解项目</h2><p>Rome是一个比较有历史的RSS解析工具，主要提供了以下功能：</p>
+<ul>
+<li>读取RSS,ATOM</li>
+<li>输出RSS,ATOM</li>
+<li>聚合多个RSS或者ATOM，以统一格式输出</li>
+<li>支持扩展格式解析（module），即可以在解析或者输出过程中增加自定义转换或者标签输出<br>参考：<a target="_blank" rel="noopener" href="https://rometools.github.io/rome/HowRomeWorks/index.html">https://rometools.github.io/rome/HowRomeWorks/index.html</a></li>
+</ul>
+<p>看到这里，不自觉会产生几个问题：</p>
+<ol>
+<li>如何将全部格式统一？不统一的话，每个格式之间的转换就是笛卡儿积</li>
+<li>如何判断该使用什么解析器？</li>
+<li>字段级解析以及输入输出怎么扩展支持？</li>
+</ol>
+<h2 id="2-搭建可调试环境"><a href="#2-搭建可调试环境" class="headerlink" title="2. 搭建可调试环境"></a>2. 搭建可调试环境</h2><p>该项目依赖第三方较少，git拉下来代码后，单测直接可以跑，很方便调试，这里提供一个testcase</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TestReadWriter</span> <span class="keyword">extends</span> <span class="title class_">FeedTest</span> &#123;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">TestReadWriter</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="built_in">super</span>(<span class="string">&quot;rss_2.0.xml&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">test</span><span class="params">()</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">Reader</span> <span class="variable">reader</span> <span class="operator">=</span> getFeedReader();</span><br><span class="line"></span><br><span class="line">        <span class="type">SyndFeedInput</span> <span class="variable">input</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SyndFeedInput</span>();</span><br><span class="line">        <span class="type">SyndFeed</span> <span class="variable">syndFeed</span> <span class="operator">=</span> input.build(reader);</span><br><span class="line"></span><br><span class="line">        <span class="type">SyndFeedOutput</span> <span class="variable">output</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SyndFeedOutput</span>();</span><br><span class="line">        <span class="type">StringWriter</span> <span class="variable">writer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringWriter</span>();</span><br><span class="line"></span><br><span class="line">        syndFeed.setFeedType(<span class="string">&quot;atom_1.0&quot;</span>);</span><br><span class="line">        output.output(syndFeed, writer);</span><br><span class="line"></span><br><span class="line">        System.out.println(writer.toString());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-追踪项目的骨架脉络"><a href="#3-追踪项目的骨架脉络" class="headerlink" title="3. 追踪项目的骨架脉络"></a>3. 追踪项目的骨架脉络</h2><p>该项目的核心流程：读取RSS源数据 → 解析成标准格式 → 按照指定格式输出。因此按照上述的testcase，跟踪源代码绘制即可，我的绘制结果如下：</p>
+<p><img src="https://res.mrdear.cn/blog/uPic/image-202210081813376501665224018066.png" alt="image-20221008181337650"></p>
+<ul>
+<li>依赖JDOM提供的SAXBuilder将XML解析成Document，再通过FeedParser解析成WireFeed类型，该类型为origin类型，存在RSS和ATOM以及OPML不同的实现类。</li>
+<li>接下来通过Convert将WireFeed转换为SyndFeed，SyndFeed为公共类型抽象，无论底层是rss还是atom都会到这个类型来表示。</li>
+<li>输出同理，将SyndFeed再转换为WireFeed，此时是需要输出到什么格式，就转换为具体的WireFeed实现类，最后通过WireFeedGenerator输出到XML的Document。</li>
+</ul>
+<h2 id="4-将源码的所有包从功能上进行划分"><a href="#4-将源码的所有包从功能上进行划分" class="headerlink" title="4.将源码的所有包从功能上进行划分"></a>4.将源码的所有包从功能上进行划分</h2><p>该项目包划分不是很细致，主要有以下几个包：</p>
+<ul>
+<li>util：工具类</li>
+<li>module：利用module能力扩展出来的一些功能支持</li>
+<li>opml：针对opml扩展出来的支持</li>
+<li>io：主要是xml解析以及输出实现，还包含了全局的PluginManager系统</li>
+<li>feed：rss或者atom模型的定义</li>
+</ul>
+<p>综合复杂度以及依赖关系：uitl → feed  → io → opml → module，因此源码阅读顺序就按照这个来。</p>
+<p><img src="https://res.mrdear.cn/blog/uPic/image-202210081817525141665224272777.png" alt="image-20221008181752514"></p>
+<h3 id="util包阅读"><a href="#util包阅读" class="headerlink" title="util包阅读"></a>util包阅读</h3><p>该包都是一些简单工具类方法，看了一遍后，略过。</p>
+<h3 id="feed包阅读"><a href="#feed包阅读" class="headerlink" title="feed包阅读"></a>feed包阅读</h3><p>该包主要是定义实体类模型，比如针对RSS定义了Channel类，针对ATOM定了Feed类，以及公共抽象SyndFeed也都在这个包下面。</p>
+<p><strong>impl包</strong></p>
+<p>该包是利用反射能力，包装了一套bean clone能力，其核心类有：</p>
+<ul>
+<li>CopyFromHelper：将一个bean的属性，copy到另一个bean上，要求两个类归属一致，并且存在对应的get set方法即可</li>
+<li>CloneableBean：针对一个bean实例提供深拷贝能力，也是get set调用获取以及设置值</li>
+<li>EqualsBean：对比两个bean是否一致，对比实例的每一个属性值</li>
+<li>ToStringBean：输出toString信息</li>
+</ul>
+<p>该包这些功能实际上可以单独给封装到另外的包，在feed下面我认为最主要的原因是这些功能都是给feed实体准备的，因为要将不同的格式统一到同一种结构上，那么势必会带来很多属性值copy。</p>
+<p><strong>atom &amp; rss包</strong></p>
+<ul>
+<li>WireFeed：真实结构类parent，主要定义当前类型信息，子类有如下两者。</li>
+<li>Feed：描述atom结构的类，都是相对于xml文件，这里会列出所有可能存在元素</li>
+<li>Channel：描述rss结构的类，都是相对于xml文件，这里会列出所有可能存在元素</li>
+</ul>
+<p><strong>module包</strong></p>
+<p>module在这里使用的并不多，更多的则是接口定义，至于有什么用处，暂时还看不出来，因此这部分遗留到module再处理。这里大致可以看出来，module是根据namespace做出来的扩展，对于一个namespace可以指定module解析，并将结果放入到Feed实例中。</p>
+<p><strong>synd包</strong></p>
+<ul>
+<li>SyndFeed：用来统一不同源格式的类，其他源都能够转换到这个类。<ul>
+<li>SyndContent：描述文本内容</li>
+<li>SyndLink：描述链接地址</li>
+<li>SyndImage：描述图像</li>
+<li>SyndEntry：描述每一个Item<ul>
+<li>SyndEnclosure：描述RSS中媒体元素</li>
+</ul>
+</li>
+<li>SyndPerson：描述作者</li>
+<li>Element：其他额外元素</li>
+<li>Module：扩展出来的元素</li>
+</ul>
+</li>
+<li>Converter：用于将原始WireFeed格式与SyndFeed转换的类，针对每一个格式有单独实现<ul>
+<li><code>copyInto</code>：将WireFeed转换为SyndFeed</li>
+<li><code>createRealFeed</code>：将SyndFeed转换为WireFeed</li>
+</ul>
+</li>
+</ul>
+<p>这里第一次碰到了 <code>PluginManager</code> 这个类，这个类类似于策略模式的策略管理器，Converters实现了这个类，从而有了多种Convert的管理能力，因此可以抉择最终使用哪一个Convert。PluginManager的解析，放到接下来的IO包中在看。</p>
+<p><img src="https://res.mrdear.cn/blog/uPic/image-202210081820389401665224439212.png" alt="image-20221008182038940"></p>
+<p><strong>IO包</strong></p>
+<p>该包主要定义解析规则，即XML怎么到WireFeed，以及WireFeed又怎么写回RSS，同时还有WireFeed与SyndFeed之间的转换逻辑。</p>
+<p>~ <strong>xml解析</strong></p>
+<ul>
+<li>XmlFixerReader：包装读取的inputstream</li>
+<li>SAXBuilder：读取上述的inputstream</li>
+</ul>
+<p>~ <strong>PluginManager加载</strong></p>
+<p>PluginManager是类似与Java的serviceload机制写的一套扩展策略管理系统，在配置中存在 <a target="_blank" rel="noopener" href="http://rome.properties/">rome.properties</a> 配置文件，里面会按照如下指定了涉及到的class全类名，然后PluginManager要做的就是将这些类实例化，管理起来。</p>
+<p>至于为什么这样设计？这样设计可以做到很灵活，因为用户也可以自己指定这个配置，来扩展自己想要的解析策略。于现在的做法，我更加倾向于简单点的一个静态Config类来管理这部分的配置。</p>
+<p>在OSGI多类加载器下，这样的模式有点问题，用户指定的以及系统自带的可能不是一个类加载器，因此提供了 ConfigurableClassLoader 这个接口，可以指定加载使用的类加载器信息。</p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Converter.classes</span>=<span class="string">com.rometools.rome.feed.synd.impl.ConverterForAtom10 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForAtom03 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS090 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS091Netscape \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS091Userland \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS092 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS093 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS094 \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS10  \</span></span><br><span class="line"><span class="string">                  com.rometools.rome.feed.synd.impl.ConverterForRSS20</span></span><br></pre></td></tr></table></figure>
+
+<p>~ <strong>解析流程</strong> </p>
+<p>解析流程还是复用上述代码，主要分析build里面做了哪些事情。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Reader</span> <span class="variable">reader</span> <span class="operator">=</span> getFeedReader();</span><br><span class="line"><span class="type">SyndFeedInput</span> <span class="variable">input</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SyndFeedInput</span>();</span><br><span class="line"><span class="type">SyndFeed</span> <span class="variable">syndFeed</span> <span class="operator">=</span> input.build(reader);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>SyndFeedInput为入口类，拿到reader后，直接转交给WireFeedInput进行解析。这里是参考了Model的设计。<ul>
+<li>WireFeedInput解析后产生的是 WireFeed</li>
+<li>SyndFeedInput则是将 WireFeed 转换为 SyndFeed</li>
+</ul>
+</li>
+<li>构建XML解析器：使用的是<code>SAXBuilder</code> ，通过xml解析得到<code>Document</code>实例</li>
+<li>通过 FeedParsers 得到 WireFeedParser 实例，开始触发解析转换流程<ul>
+<li>FeedParsers继承了PluginManager，通过 WireFeedParser.classes 属性key，获取对应的FeedParser实现类。</li>
+<li>WireFeedParser中有一个 <code>boolean isMyType(final Document document)</code> 方法，该方法判断一个实例当前是否支持解析，判断依据是root元素，version，namespace等信息。<ul>
+<li>以RSS_2.0为例：root元素为 <code>rss</code>，version为<code>2.0</code>，version不存在则默认<code>2.0</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>以rss_2.0解析为例，接下来就是创建Channel，然后分别解析channel以及item，补全该实例<ul>
+<li>解析过程中，会加载module，module也是PluginManager的实现类，通过properties指定。Module分为了 root，channel类型，用于定制不同块的解析，解析后元素统一使用Module顶层类存入List中。</li>
+</ul>
+</li>
+<li>使用Converter将WireFeed转换为SyndFeed实例</li>
+</ul>
+<p>~ <strong>输出流程</strong></p>
+<p>输出指的是针对SyndFeed转换为xml结构。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">SyndFeedOutput</span> <span class="variable">output</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SyndFeedOutput</span>();</span><br><span class="line"><span class="type">StringWriter</span> <span class="variable">writer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringWriter</span>();</span><br><span class="line"></span><br><span class="line">syndFeed.setFeedType(<span class="string">&quot;atom_1.0&quot;</span>);</span><br><span class="line">output.output(syndFeed, writer);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>同样是两层结构，SyndFeedOutput 负责将 SyndFeed 转换为 WireFeed，WireFeedOutput则是负责将WireFeed转换为xml</li>
+<li>SyndFeed到WireFeed，同样是Converter负责转换，这里使用哪一个convert，取决于上述代码中第三行，将当前SyndFeed变更feedType，这个设计我个人觉得很不好，主要是改变原有的SyndFeed内容。</li>
+<li>WireFeed到Document，主要使用WireFeedGenerator，这个类也是有PluginManager管理起来的，因此根据feedType可以直接选定，选定后，按照指定格式构建xml。</li>
+</ul>
+<h3 id="opml包阅读"><a href="#opml包阅读" class="headerlink" title="opml包阅读"></a>opml包阅读</h3><p>Opml是基于上述体系扩展出来的一个格式支持，与RSS，ATOM同等级。</p>
+<ul>
+<li>feed.opml：定义了opml的属性，其中Opml类继承了WireFeed</li>
+<li>feed.synd.impl：定义了Convert，即WireFeed如何与SyndFeed转换</li>
+<li>feed.io.iml：定义了opml解析以及输出策略类</li>
+</ul>
+<h3 id="module包阅读"><a href="#module包阅读" class="headerlink" title="module包阅读"></a>module包阅读</h3><p>module的核心是ModuleParser与ModuleGenerator两个类，两者都可以在properties中配置，然后嵌入到xml解析以及输出中，用于定制相关的能力，这里就不详细看了，因为觉得这种定制方式并不是很友好。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>首先回答下最初的疑问：</p>
+<ul>
+<li>如何将全部格式统一？不统一的话，每个格式之间的转换就是笛卡儿积<ul>
+<li>其实格式并不是很多，atom和rss可以使用全集应对，使用顶层类来减少转换的笛卡儿积。</li>
+</ul>
+</li>
+<li>如何判断该使用什么解析器？<ul>
+<li>root，version，namespace</li>
+</ul>
+</li>
+<li>字段级解析以及输入输出怎么扩展支持？<ul>
+<li>没有发现字段级别定制能力，但可以通过module来扩展解析，只不过扩展都都统一存到List结构中，消费使用不方便</li>
+</ul>
+</li>
+</ul>
+<p>Rome的模型结构以及module扩展方式，我个人觉得使用上不是很友好，定制能力也不够强，比如针对时间字段的不同格式使用不同的解析，这个在rome中只能以自定义module来实现，但消费module结果又不那么方便。至于什么样子的既能符合使用上的直觉，有具备很强的定制能力，这个还没想好怎么处理。我的大致思路是将主体保留到实体类中，比如title，author，description，其他字段都以策略枚举的方式扩展出去，这样能够解决扩展性问题，但实用性上还没想好怎么处理，大概思路是定义特定类型访问接口，让策略枚举字段主动支持上述格式的解析。</p>
+<p>此外这种通用源码阅读方式，针对这种简单的小项目非常适合，这样的步骤可以轻易将小项目拆解，从而完整的了解到项目全貌。</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/work-read-rome-source.html">实践 -- Rome源码阅读</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/work-read-rome-source.html">https://mrdear.cn/posts/work-read-rome-source.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南"><i class="iconfont icon-prev"></i>读书笔记 -- 通用源码阅读指南</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E5%85%A8%E9%9D%A2%E4%BA%86%E8%A7%A3%E9%A1%B9%E7%9B%AE"><span class="toc-number">1.</span> <span class="toc-text">1. 全面了解项目</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E6%90%AD%E5%BB%BA%E5%8F%AF%E8%B0%83%E8%AF%95%E7%8E%AF%E5%A2%83"><span class="toc-number">2.</span> <span class="toc-text">2. 搭建可调试环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E8%BF%BD%E8%B8%AA%E9%A1%B9%E7%9B%AE%E7%9A%84%E9%AA%A8%E6%9E%B6%E8%84%89%E7%BB%9C"><span class="toc-number">3.</span> <span class="toc-text">3. 追踪项目的骨架脉络</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%B0%86%E6%BA%90%E7%A0%81%E7%9A%84%E6%89%80%E6%9C%89%E5%8C%85%E4%BB%8E%E5%8A%9F%E8%83%BD%E4%B8%8A%E8%BF%9B%E8%A1%8C%E5%88%92%E5%88%86"><span class="toc-number">4.</span> <span class="toc-text">4.将源码的所有包从功能上进行划分</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#util%E5%8C%85%E9%98%85%E8%AF%BB"><span class="toc-number">4.1.</span> <span class="toc-text">util包阅读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#feed%E5%8C%85%E9%98%85%E8%AF%BB"><span class="toc-number">4.2.</span> <span class="toc-text">feed包阅读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#opml%E5%8C%85%E9%98%85%E8%AF%BB"><span class="toc-number">4.3.</span> <span class="toc-text">opml包阅读</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#module%E5%8C%85%E9%98%85%E8%AF%BB"><span class="toc-number">4.4.</span> <span class="toc-text">module包阅读</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

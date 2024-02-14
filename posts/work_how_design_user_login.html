@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>实践--用户登录注册相关设计 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/work_how_design_user_login.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践--用户登录注册相关设计">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">实践--用户登录注册相关设计</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-08-18</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>最近做一个网站，网站需要用户登录注册，自然也就需要一套高扩展性的用户模块设计，该篇文章记录笔者遇到问题的解决方案，希望对你有帮助。</p>
+<hr>
+<h2 id="用户表设计"><a href="#用户表设计" class="headerlink" title="用户表设计"></a>用户表设计</h2><p>登录包含邮箱密码登录以及第三方登录，且第三方登录存在不确定性，可能随时增加或者减少某个渠道。<br>因此在设计上考虑把用户基本信息与登录信息分开，如下所示</p>
+<p><strong>清单1：用户表结构</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">`<span class="keyword">user</span>` (</span><br><span class="line">  `id`</span><br><span class="line">  `username` </span><br><span class="line">  `email` </span><br><span class="line">  `avatar` </span><br><span class="line">  `status` </span><br></pre></td></tr></table></figure>
+<p>用户表保存了用户的基本信息，供站内的一些其他服务查询使用。</p>
+<p><strong>清单2：用户登录表</strong></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">`user_auth` (</span><br><span class="line">  `id` </span><br><span class="line">  `uid`  <span class="string">&#x27;用户id&#x27;</span>,</span><br><span class="line">  `identity_type` <span class="string">&#x27;授权类型&#x27;</span>,</span><br><span class="line">  `identifier`  <span class="string">&#x27;授权标识id&#x27;</span>,</span><br><span class="line">  `credential`  <span class="string">&#x27;授权秘钥或token&#x27;</span>,</span><br><span class="line">  `credential_expire` </span><br><span class="line">  `status` </span><br></pre></td></tr></table></figure>
+<p>用户登录表主要保存着用户的授权信息，这张表是一张基本表，在该授权处可以根据具体登录业务增加一些额外的字段来满足需求。存储时举个例子：</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>uid</th>
+<th>identify_type</th>
+<th>identitfier</th>
+<th>credential</th>
+<th>credential_expire</th>
+<th>status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>张三的id</td>
+<td>站内密码登录</td>
+<td>张三的id</td>
+<td>hash(张三的密码)</td>
+<td>密码过期时间</td>
+<td>状态</td>
+</tr>
+<tr>
+<td>2</td>
+<td>张三的id</td>
+<td>微信登录</td>
+<td>微信 openId</td>
+<td>微信accessToken</td>
+<td>token过期时间</td>
+<td>状态</td>
+</tr>
+<tr>
+<td>3</td>
+<td>张三的id</td>
+<td>Github登录</td>
+<td>Github openId</td>
+<td>Github accessToken</td>
+<td>token过期时间</td>
+<td>状态</td>
+</tr>
+</tbody></table>
+<p>这种设计的好处是用户登录相关的信息与用户本身的信息是分离的，可以很轻松的扩展或者关闭某一登录方式，另外由于每一种第三方登录都是一条记录，所以还可以得知用户某一渠道的最后使用登录时间，供后续分析用户行为。</p>
+<h3 id="注册流程"><a href="#注册流程" class="headerlink" title="注册流程"></a>注册流程</h3><p>此时注册流程就相对简单了，注册只针对邮箱手机号等站内方式，站外第三方注册则放到登录流程里面做。那么只需要接收用户输入的信息，创建一条<code>user</code>表数据，再创建一条<code>user_auth</code>表站内密码登录的记录，这里就不多分析了。</p>
+<h3 id="登录流程"><a href="#登录流程" class="headerlink" title="登录流程"></a>登录流程</h3><p>登录流程是相对比较复杂的，这里使用流程图来描述这一过程：<br><img src="http://res.mrdear.cn/1534420580.png"><br>大体流程分两种，一种是站内密码登录，这种方式比较简单，就是传统的密码判断是否正确，然后写回登录信息。另一种是第三方登录，该种登录需要考虑用户是否只是绑定第三方账号，是否已经注册等问题，为了让第三方登录与注册流畅进行，当用户未注册时还需要主动帮其注册账号，主动注册就会涉及到一些用户表中的必要信息生成，比如邮箱可以生成<code>xx-uid@weixin.com</code>等系统默认邮箱。</p>
+<h3 id="一些其他问题"><a href="#一些其他问题" class="headerlink" title="一些其他问题"></a>一些其他问题</h3><p><strong>1. 站内登录有必要再细分吗？比如邮箱登录和手机号登录</strong><br>个人认为没必要细分，站内登录无论是邮箱还是手机号都是用户的基本信息，因此是可以放入到<code>user</code>表中，而<code>user_auth</code>表只保存一条对应用户密码设置的记录就好。<br>如果细分，则对应<code>user_auth</code>表中有邮箱登录与手机号登录两个记录，那么当修改密码时就要同时修改，无疑是增加了复杂度。</p>
+<h2 id="密码如何处理才安全？"><a href="#密码如何处理才安全？" class="headerlink" title="密码如何处理才安全？"></a>密码如何处理才安全？</h2><p>登录中用户密码如何存储是一个大问题，密码一般不存储明文而是存储对应的hash值，hash本身是单向流程，那么破解只能暴力枚举法或者查表法（事先计算好一批hash值，然后通过数据库等搜索查找），而后端所需要做的防护是提高这两种破解方式的成本，好在业内已经有了比较靠谱的解决方案：<code>慢哈希 + 加盐</code>处理。<br><code>慢哈希</code>是应对暴力枚举法的一种方式，暴力枚举法理论上来说最终一定会找到符合条件的密码，高端的硬件每秒可进行数十亿次hash计算，因此<code>慢哈希</code>的思路是使hash计算变得缓慢，一般使用多次迭代计算hash方式，那么即使使用高端硬件，破解速度也是令人无法接受。<br><code>加盐</code>是应对查表法的一种思路，加盐的本质是让用户的密码更加复杂，盐本身是一个随机值，使用一定算法混淆在用户的密码中，因此即使同样的密码在加盐后也会得到不同的Hash值，那么就可以保证查表得到明文后，由于不了解加盐算法，所以也无法得到用户的实际密码。</p>
+<p>在Java中处理形式如下（此代码参考自<a target="_blank" rel="noopener" href="http://blog.jobbole.com/61872/">加盐密码哈希：如何正确使用</a>）：</p>
+<p><strong>清单3：Java中密码加盐处理</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">createHash</span><span class="params">(<span class="type">char</span>[] password)</span></span><br><span class="line">     <span class="keyword">throws</span> NoSuchAlgorithmException, InvalidKeySpecException &#123;</span><br><span class="line">   <span class="comment">// Generate a random salt</span></span><br><span class="line">   <span class="type">SecureRandom</span> <span class="variable">random</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">SecureRandom</span>();</span><br><span class="line">   <span class="type">byte</span>[] salt = <span class="keyword">new</span> <span class="title class_">byte</span>[SALT_BYTE_SIZE];</span><br><span class="line">   random.nextBytes(salt);</span><br><span class="line"></span><br><span class="line">   <span class="comment">// Hash the password</span></span><br><span class="line">   <span class="type">byte</span>[] hash = pbkdf2(password, salt, PBKDF2_ITERATIONS, HASH_BYTE_SIZE);</span><br><span class="line">   <span class="comment">// format iterations:salt:hash</span></span><br><span class="line">   <span class="keyword">return</span> PBKDF2_ITERATIONS + <span class="string">&quot;:&quot;</span> + toHex(salt) + <span class="string">&quot;:&quot;</span> +  toHex(hash);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>大概流程是使用<code>SecureRandom</code>产生伪随机数作为盐，然后使用<code>pbkdf2</code>算法迭代一定次数得到密码所对应的最终hash值，存储到数据库的时候形式为<code>慢哈希迭代次数：盐：密码最终hash值</code>。<br>然后验证方式如清单4所示：</p>
+<p><strong>清单4：Java中密码加盐验证</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">validatePassword</span><span class="params">(<span class="type">char</span>[] password, String correctHash)</span></span><br><span class="line">    <span class="keyword">throws</span> NoSuchAlgorithmException, InvalidKeySpecException</span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// Decode the hash into its parameters</span></span><br><span class="line">  String[] params = correctHash.split(<span class="string">&quot;:&quot;</span>);</span><br><span class="line">  <span class="type">int</span> <span class="variable">iterations</span> <span class="operator">=</span> Integer.parseInt(params[ITERATION_INDEX]);</span><br><span class="line">  <span class="type">byte</span>[] salt = fromHex(params[SALT_INDEX]);</span><br><span class="line">  <span class="type">byte</span>[] hash = fromHex(params[PBKDF2_INDEX]);</span><br><span class="line">  <span class="comment">// Compute the hash of the provided password, using the same salt,</span></span><br><span class="line">  <span class="comment">// iteration count, and hash length</span></span><br><span class="line">  <span class="type">byte</span>[] testHash = pbkdf2(password, salt, iterations, hash.length);</span><br><span class="line">  <span class="comment">// Compare the hashes in constant time. The password is correct if</span></span><br><span class="line">  <span class="comment">// both hashes match.</span></span><br><span class="line">  <span class="keyword">return</span> slowEquals(hash, testHash);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中<code>password</code>是用户输入的密码，<code>correctHash</code>是加盐处理得到的结果字符串<code>慢哈希迭代次数：盐：密码最终hash值</code>。那么必要参数都拿到了，就可以对用户输入的密码进行正向操作，然后把得到的最终hash结果与数据库中的对比，就能判断是否输入正确。</p>
+<h3 id="慢哈希性能问题"><a href="#慢哈希性能问题" class="headerlink" title="慢哈希性能问题"></a>慢哈希性能问题</h3><p><code>慢哈希</code>虽然提高了破解成本，但同样的也带来了性能问题，服务端计算一次hash值往往需要几百毫秒，那么在大型系统上这里是很可能成为性能瓶颈。解决方案一般有两种：</p>
+<ol>
+<li>适当的降低慢hash迭代次数。迭代次数低了那么速度自然就快了，这个要取决于自身的业务是否对安全性有极高的敏感。</li>
+<li>两次慢hash，客户端拿到密码后，使用用户的邮箱等固定信息作为盐，进行慢哈希迭代。服务端拿到客户端迭代结果后再次生成盐进行慢哈希迭代，服务端迭代次数可以小很多。那么在不改变慢hash目的的情况下把压力分布到客户端来降低服务端开销。</li>
+</ol>
+<h3 id="错误信息提示"><a href="#错误信息提示" class="headerlink" title="错误信息提示"></a>错误信息提示</h3><p>谨记一个原则：永远不要告诉用户是用户名不对还是密码不对，要统一的给出<code>用户名或者密码不正确</code>。提高暴力枚举的成本。</p>
+<h2 id="邮箱验证功能"><a href="#邮箱验证功能" class="headerlink" title="邮箱验证功能"></a>邮箱验证功能</h2><p>邮箱验证功能逻辑是比较简单的，总体来说后端产生一个100%可靠的链接发到用户邮箱，用户从该链接点击后可以进行验证。那么问题就简化成如何产生一个100%可靠的链接。<br>这里比较通用的做法是利用token，token具有时效性，并且与用户id，所对应的业务相关联，比较常用的做法是使用JWT Token，JWT本身把时效性，用户id等都存储在Token当中，并且Token具有签名防止伪造或者篡改，关于JWT的更多详情可以参考我之前写的<a href="https://mrdear.cn/search/?search=JWT">相关文章</a>。</p>
+<p>有了Token之后，当用户点击链接，请求到后端，后端再根据Token中的信息进行下一步的判断。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>用户模块是网站的基础，与业务的关系同样也非常耦合，因此别人的方案大多数只是用来参考，了解一些关键点的处理做法，比如密码加盐，邮箱验证，具体的设计还需要结合自身业务，切记生搬硬套。<br>以上大概是我这次做的一个站点中所注意到的事情，希望对你有帮助。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="http://blog.jobbole.com/61872/">加盐密码哈希：如何正确使用</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/work_how_design_user_login.html">实践--用户登录注册相关设计</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/work_how_design_user_login.html">https://mrdear.cn/posts/work_how_design_user_login.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/design-patterns-future-callback.html" title="并行设计模式--Future、Callback、Promise"><i class="iconfont icon-prev"></i>并行设计模式--Future、Callback、Promise</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/job_interview_2018.html" title="谈谈这次跳槽经历">谈谈这次跳槽经历<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E8%A1%A8%E8%AE%BE%E8%AE%A1"><span class="toc-number">1.</span> <span class="toc-text">用户表设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%A8%E5%86%8C%E6%B5%81%E7%A8%8B"><span class="toc-number">1.1.</span> <span class="toc-text">注册流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%99%BB%E5%BD%95%E6%B5%81%E7%A8%8B"><span class="toc-number">1.2.</span> <span class="toc-text">登录流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E5%85%B6%E4%BB%96%E9%97%AE%E9%A2%98"><span class="toc-number">1.3.</span> <span class="toc-text">一些其他问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%86%E7%A0%81%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86%E6%89%8D%E5%AE%89%E5%85%A8%EF%BC%9F"><span class="toc-number">2.</span> <span class="toc-text">密码如何处理才安全？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%85%A2%E5%93%88%E5%B8%8C%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98"><span class="toc-number">2.1.</span> <span class="toc-text">慢哈希性能问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%94%99%E8%AF%AF%E4%BF%A1%E6%81%AF%E6%8F%90%E7%A4%BA"><span class="toc-number">2.2.</span> <span class="toc-text">错误信息提示</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%82%AE%E7%AE%B1%E9%AA%8C%E8%AF%81%E5%8A%9F%E8%83%BD"><span class="toc-number">3.</span> <span class="toc-text">邮箱验证功能</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

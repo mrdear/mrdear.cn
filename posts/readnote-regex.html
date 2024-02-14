@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>读书笔记 -- 正则闯关记录 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/readnote-regex.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/mrdearblog-regex.png" alt="读书笔记 -- 正则闯关记录">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">读书笔记 -- 正则闯关记录</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-11-03</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>最近看完了正则指引，这是一本工具书，可以很系统的了解正则，恰巧又发现了<code>RegexGolf</code>网站，跟着做了一些题目，巩固下正则相关的基础知识，当然大部分都是参考他人的解决方案。</p>
+<h2 id="资料地址"><a href="#资料地址" class="headerlink" title="资料地址"></a>资料地址</h2><p><a target="_blank" rel="noopener" href="https://alf.nu/RegexGolf">https://alf.nu/RegexGolf</a><br><a target="_blank" rel="noopener" href="https://item.jd.com/12456376.html">正则指引</a></p>
+<h2 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h2><h3 id="Warmup"><a href="#Warmup" class="headerlink" title="Warmup"></a>Warmup</h3><p>热身题，直接匹配单词含有foo的即可。<br><code>\w*foo\w*</code></p>
+<h3 id="Anchors"><a href="#Anchors" class="headerlink" title="Anchors"></a>Anchors</h3><p>热身题，匹配以ick结尾的单词<br><code>\w+ick$</code></p>
+<h3 id="It-never-ends"><a href="#It-never-ends" class="headerlink" title="It never ends"></a>It never ends</h3><p>以fu结尾的词，但是不能使用<code>$</code>，因此表达XX不能是XX，就想到了<strong>环视</strong>。<br><code>\w*fu(?!\w)</code></p>
+<h3 id="Ranges"><a href="#Ranges" class="headerlink" title="Ranges"></a>Ranges</h3><p>范围匹配，匹配组的字符都是a-f之间的构成<br><code>^[a-f]+$</code></p>
+<h3 id="Backrefs"><a href="#Backrefs" class="headerlink" title="Backrefs"></a>Backrefs</h3><p>提示很明显，使用反向引用。<br><code>^(\w&#123;3&#125;)\w*\1\w*</code></p>
+<h3 id="Abba"><a href="#Abba" class="headerlink" title="Abba"></a>Abba</h3><p>匹配非ABBA形式单词，因此直接使用否定环视，环视中为可以匹配ABBA形式的单词。<br><code>^(?!\w*(\w)(\w)\2\1)</code></p>
+<h3 id="A-man-a-plan"><a href="#A-man-a-plan" class="headerlink" title="A man, a plan"></a>A man, a plan</h3><p>匹配词中含有 abxxxba形式的词，因此使用反向引用匹配<code>(\w)(\w).?\2\1</code>，但是右侧中单词<code>psorosperm</code>也能匹配进去，该题提示可以作弊，因此把p再排除掉，最终形式如下：<br><code>(\w)(\w).?\2\1(?!p)</code></p>
+<h3 id="Prime"><a href="#Prime" class="headerlink" title="Prime"></a>Prime</h3><p>匹配素数个x，该题是反向思路，匹配是素数的，然后使用否定环视排除。素数的定义是只有1和他本身两个因子，因此<code>(xx+?)</code>的意思是从2开始匹配，如果含有因子2那么必然 素数&#x3D;2*N，那么<code>\1</code>自然会匹配剩下的值。如果2没有匹配则尝试3.<br>以8为例，当<code>xxxxxxxx</code>,引擎首先匹配前两个<code>xx</code>，然后剩下<code>xxxxxx</code>由<code>\1</code>匹配，正好匹配成功，所以8不是素数。<br>以11为例，当<code>xxxxxxxxxxx</code>,引擎首先尝试前两个<code>xx</code>，然后剩下9个<code>x</code>由<code>\1</code>匹配，无法匹配，接着尝试先匹配<code>xxx</code>，剩下8个<code>x</code>由<code>\x</code>匹配，无法匹配继续尝试。。。一直到最后都没法匹配，所以11是素数。<br><code>^(?!^(xx+?)\1+$)</code></p>
+<h3 id="Four"><a href="#Four" class="headerlink" title="Four"></a>Four</h3><p>从匹配单词来看形式如<code>akaraka</code>，<code>asagara</code>，<code>degenere</code>等abcbebde形式。<br><code>\w*(.)(.\1)&#123;3&#125;\w*</code></p>
+<h3 id="Order"><a href="#Order" class="headerlink" title="Order"></a>Order</h3><p>该题单词都按照一定字母顺序，因此可以<code>^a*b*c*d*e*f*g*h*i*j*k*l*m*n*o*p*q*r*s*t*u*v*w*x*y*z*$ </code>这样的做法，或者作弊下使用<br><code>(?!^o)^\w&#123;5,6&#125;$</code>匹配不以o开头的5-6个长度的单词。</p>
+<h3 id="Triples"><a href="#Triples" class="headerlink" title="Triples"></a>Triples</h3><p>匹配3的倍数，毫无思路。。。<br><code>^([0369]|[147][0369]*[258]|([258]|[147][0369]*[147])([0369]|[258][0369]*[147])*([147]|[258][0369]*[258]))+$</code></p>
+<p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/24824487">知乎–正则表达式如何匹配 3 的倍数？</a></p>
+<h3 id="Glob"><a href="#Glob" class="headerlink" title="Glob"></a>Glob</h3><p><code>^(.*)(\*?)(.*)(\*?)(.*)(\*?)(.*) .* \1((?!\2).+|\2)\3((?!\4).+|\4)\5((?!\6).+|\6)\7$</code></p>
+<h3 id="Balance"><a href="#Balance" class="headerlink" title="Balance"></a>Balance</h3><p>该题要求括号成双成对出现，因此必然是包裹结构，因此一直写包裹就好了。<br><code>^(&lt;(&lt;(&lt;(&lt;(&lt;(&lt;&lt;&gt;&gt;)*&gt;)*&gt;)*&gt;)*&gt;)*&gt;)*$</code></p>
+<h3 id="Powers"><a href="#Powers" class="headerlink" title="Powers"></a>Powers</h3><p>该题直接根据规则写，标识符合的2的次幂x数量。<br><code>^(x|((xx)&#123;1,8&#125;)|x&#123;32&#125;|((x&#123;64&#125;)+))$</code></p>
+<h3 id="Long-count"><a href="#Long-count" class="headerlink" title="Long count"></a>Long count</h3><p>该题拆分为<code> 00  01  10  11</code>四个元数据，然后根据这四个规则来匹配<br><code>^(00)\1 \1(01) \1(10) \1(11) \2\1 \2\2 \2\3 \2\4 \3\1 \3\2 \3\3 \3\4</code></p>
+<h3 id="Alphabetical"><a href="#Alphabetical" class="headerlink" title="Alphabetical"></a>Alphabetical</h3><p>看不懂，网上搜的结果。。。<br><code>( .+[ts]..)\1|(tat|r). r|a t|e .r</code></p>
+<h3 id="Powers-2"><a href="#Powers-2" class="headerlink" title="Powers 2"></a>Powers 2</h3><p>和<code>Long count</code>所采取的方式一致。<br><code>^(x|(x&#123;3&#125;)&#123;1,729&#125;|(x&#123;6561&#125;)+)$</code></p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://coolshell.cn/articles/2704.html">检查素数的正则表达式</a><br><a target="_blank" rel="noopener" href="http://wcp1231.logdown.com/posts/169433-regex-golf-barrier-records">Regex Golf闯关记录</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/readnote-regex.html">读书笔记 -- 正则闯关记录</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/readnote-regex.html">https://mrdear.cn/posts/readnote-regex.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/tools-dalgen.html" title="造轮子--Dalgen-Script-IntelliJ"><i class="iconfont icon-prev"></i>造轮子--Dalgen-Script-IntelliJ</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-spring-autoconfig.html" title="Spring Boot -- 自动配置原理">Spring Boot -- 自动配置原理<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B5%84%E6%96%99%E5%9C%B0%E5%9D%80"><span class="toc-number">1.</span> <span class="toc-text">资料地址</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%9D%E8%B7%AF"><span class="toc-number">2.</span> <span class="toc-text">思路</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Warmup"><span class="toc-number">2.1.</span> <span class="toc-text">Warmup</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Anchors"><span class="toc-number">2.2.</span> <span class="toc-text">Anchors</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#It-never-ends"><span class="toc-number">2.3.</span> <span class="toc-text">It never ends</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ranges"><span class="toc-number">2.4.</span> <span class="toc-text">Ranges</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Backrefs"><span class="toc-number">2.5.</span> <span class="toc-text">Backrefs</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Abba"><span class="toc-number">2.6.</span> <span class="toc-text">Abba</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#A-man-a-plan"><span class="toc-number">2.7.</span> <span class="toc-text">A man, a plan</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Prime"><span class="toc-number">2.8.</span> <span class="toc-text">Prime</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Four"><span class="toc-number">2.9.</span> <span class="toc-text">Four</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Order"><span class="toc-number">2.10.</span> <span class="toc-text">Order</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Triples"><span class="toc-number">2.11.</span> <span class="toc-text">Triples</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Glob"><span class="toc-number">2.12.</span> <span class="toc-text">Glob</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Balance"><span class="toc-number">2.13.</span> <span class="toc-text">Balance</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Powers"><span class="toc-number">2.14.</span> <span class="toc-text">Powers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Long-count"><span class="toc-number">2.15.</span> <span class="toc-text">Long count</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Alphabetical"><span class="toc-number">2.16.</span> <span class="toc-text">Alphabetical</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Powers-2"><span class="toc-number">2.17.</span> <span class="toc-text">Powers 2</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">3.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

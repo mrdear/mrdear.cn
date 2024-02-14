@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>设计模式--责任链模式的思考 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/design-patterns-chain-of-responsibility.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--责任链模式的思考">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">设计模式--责任链模式的思考</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-03-20</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <!-- toc -->
+<hr>
+<h2 id="标准责任链模式"><a href="#标准责任链模式" class="headerlink" title="标准责任链模式"></a>标准责任链模式</h2><p>责任链模式: 客户端发出的请求，客户端本身并不知道被哪一个对象处理，而直接扔给对象链，该请求在对象链中共享，由对象本身决定是否处理. <strong>当请求被处理后该链终止</strong>.本质目的是把客户端请求与接收者解耦，但是解耦的太彻底了，只能让接收者一个个来看看是不是自己该处理的请求.<br>标准的责任链模式<strong>一个请求只被一个对象处理</strong>，一旦处理成功后则链终止，请求不再被继续传递.标准的责任链模式并不是很通用，这种一对一模式大多场景可以用策略模式来代替，只有在客户端并不清楚具体的执行者是哪个对象的时候，责任链才比较适合.<br>举个例子:你想在天朝办理一个证，但是你不知道去哪比较好，因此你的选择就是一条链路，先去A局，A局让你去B局，B局让你去C局等等，直到解决你的问题，当然也存在白跑一趟的结果.这也是标准责任链的缺点，产生了太多没必要的调用.标准的责任链实际上应用场景并不是很多，而常使用的是升级版的功能链.</p>
+<h2 id="功能链"><a href="#功能链" class="headerlink" title="功能链"></a>功能链</h2><p>功能链是责任链的演变，结构上并没有实质的变化，只是每一个节点都可以处理请求，处理完转向下一个，也就是每一个请求都经历全部的链.这种应用场景就比较多了，比如我要办一件事，先去A再去B最后去C，这个例子还有点说明ABC三者的关系，取决于构造链时的顺序，另外每一步没处理好可以自由的选择退出链.<br>文字说的不是很理解，下面举几个实际中的代码实例.</p>
+<h3 id="Java中Filter链"><a href="#Java中Filter链" class="headerlink" title="Java中Filter链"></a>Java中Filter链</h3><p>对于Filter，其是由<code>FilterChain</code>来进行链的组合调用，请求的request与返回response实际上是共享的上下文信息，每一个处理的Filter都可以查看与修改.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">FilterChain</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">doFilter</span><span class="params">(ServletRequest request， ServletResponse response)</span></span><br><span class="line">            <span class="keyword">throws</span> IOException， ServletException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在Tomcat中实现类为<code>org.apache.catalina.core.ApplicationFilterChain</code>，其结构如下图:<br><img src="https://res.mrdear.cn/1521466345.png"><br>其中数组filters就是所谓的filter链，利用pos(当前执行到的位置)与n(filter链长度)来进行链的调用.<br>那么怎么让链节点选择继续执行还是停止执行呢?答案的<code>Filter</code>的<code>doFilter</code>方法，该方法把责任链作为参数<code>FilterChain</code>一直传递下去，继续就调用chain的<code>doFilter</code>方法，不继续则不调用.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> <span class="title function_">doFilter</span><span class="params">(ServletRequest request， ServletResponse response，</span></span><br><span class="line"><span class="params">           FilterChain chain)</span> <span class="keyword">throws</span> IOException， ServletException;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Spring-Security中拦截链"><a href="#Spring-Security中拦截链" class="headerlink" title="Spring Security中拦截链"></a>Spring Security中拦截链</h3><p>Spring Security中的链实际上是由<code>SecurityFilterChain</code>接口所定义，其很简单的就是暴露出一个list的链.其中<code>matches</code>判断请求是否是这条链来处理.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">SecurityFilterChain</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">matches</span><span class="params">(HttpServletRequest request)</span>;</span><br><span class="line"></span><br><span class="line">    List&lt;Filter&gt; <span class="title function_">getFilters</span><span class="params">()</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在其入口处类<code>org.springframework.security.web.FilterChainProxy</code>中包含着多条链.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> List&lt;SecurityFilterChain&gt; filterChains;</span><br></pre></td></tr></table></figure>
+<p>每一个链处理的是一类请求.Spring Security使用简单的for循环判断定位到具体执行的链.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> List&lt;Filter&gt; <span class="title function_">getFilters</span><span class="params">(HttpServletRequest request)</span>  &#123;</span><br><span class="line">      <span class="keyword">for</span> (SecurityFilterChain chain : filterChains) &#123;</span><br><span class="line">          <span class="keyword">if</span> (chain.matches(request)) &#123;</span><br><span class="line">              <span class="keyword">return</span> chain.getFilters();</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>那么这个结构因为这个设计模式就很清晰了(这也是熟悉了设计模式之后的优势，看源码可以有一种全局把控感)<br><img src="http://res.mrdear.cn/1521468002.png"></p>
+<p>还有一个问题，链是如何自由执行的?<br>这一点与Java Filter一模一样，Spring Security实现了一个<code>org.springframework.security.web.FilterChainProxy.VirtualFilterChain</code>类，该类同样实现了<code>FilterChain</code>接口，里面的调用逻辑也与tomcat方式一致.具体就不讨论了.</p>
+<p>另外Spring Security也提供了一种数据共享的方式，利用<code>ThreadLocal</code>保证线程安全，达到共享数据的目的.另外这里的<code>SecurityContextHolderStrategy</code>是策略模式的一种应用，值得一看.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">ThreadLocalSecurityContextHolderStrategy</span> <span class="keyword">implements</span></span><br><span class="line">		<span class="title class_">SecurityContextHolderStrategy</span> &#123;</span><br><span class="line">    		</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ThreadLocal&lt;SecurityContext&gt; contextHolder = <span class="keyword">new</span> <span class="title class_">ThreadLocal</span>&lt;SecurityContext&gt;();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">clearContext</span><span class="params">()</span> &#123;</span><br><span class="line">		contextHolder.remove();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> SecurityContext <span class="title function_">getContext</span><span class="params">()</span> &#123;</span><br><span class="line">		<span class="type">SecurityContext</span> <span class="variable">ctx</span> <span class="operator">=</span> contextHolder.get();</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (ctx == <span class="literal">null</span>) &#123;</span><br><span class="line">			ctx = createEmptyContext();</span><br><span class="line">			contextHolder.set(ctx);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> ctx;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setContext</span><span class="params">(SecurityContext context)</span> &#123;</span><br><span class="line">		Assert.notNull(context， <span class="string">&quot;Only non-null SecurityContext instances are permitted&quot;</span>);</span><br><span class="line">		contextHolder.set(context);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> SecurityContext <span class="title function_">createEmptyContext</span><span class="params">()</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">SecurityContextImpl</span>();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="Mybatis中插件链"><a href="#Mybatis中插件链" class="headerlink" title="Mybatis中插件链"></a>Mybatis中插件链</h3><p>Mybatis中插件使用的是类似责任链的一种模式，当然也可以称之为责任链模式，毕竟思想都是类似的.其中插件是通过<code>Interceptor</code>接口实现的，其中<code>plugin</code>方法就是为目标对象套上该链的一个节点.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">Interceptor</span> &#123;</span><br><span class="line"></span><br><span class="line">  Object <span class="title function_">intercept</span><span class="params">(Invocation invocation)</span> <span class="keyword">throws</span> Throwable;</span><br><span class="line"></span><br><span class="line">  Object <span class="title function_">plugin</span><span class="params">(Object target)</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">void</span> <span class="title function_">setProperties</span><span class="params">(Properties properties)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么如何构造这个链?在<code>InterceptorChain</code>中有如下方法，<code>InterceptorChain</code>是在构造配置时组装好的，燃后对目标使用<code>pluginAll</code>方法，构造完整链.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">InterceptorChain</span> &#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> List&lt;Interceptor&gt; interceptors = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;Interceptor&gt;();</span><br><span class="line">  <span class="keyword">public</span> Object <span class="title function_">pluginAll</span><span class="params">(Object target)</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (Interceptor interceptor : interceptors) &#123;</span><br><span class="line">      target = interceptor.plugin(target);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> target;</span><br><span class="line">  &#125;</span><br><span class="line">...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中<code>plugin</code>官方推荐<code>Plugin.wrap(target， this)</code>方法，该方法本质上是用代理模式嵌套住目标类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> Object <span class="title function_">wrap</span><span class="params">(Object target， Interceptor interceptor)</span> &#123;</span><br><span class="line">  Map&lt;Class&lt;?&gt;， Set&lt;Method&gt;&gt; signatureMap = getSignatureMap(interceptor);</span><br><span class="line">  Class&lt;?&gt; type = target.getClass();</span><br><span class="line">  Class&lt;?&gt;[] interfaces = getAllInterfaces(type， signatureMap);</span><br><span class="line">  <span class="keyword">if</span> (interfaces.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> Proxy.newProxyInstance(</span><br><span class="line">        type.getClassLoader()，</span><br><span class="line">        interfaces，</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">Plugin</span>(target， interceptor， signatureMap));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> target;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么这种构造出的链大概如下面这种嵌套结构，这种链可以说是彻底的功能链，其一旦组装好就无法变化了.当然这种也适合Mybatis这种从配置中就定死了执行链.<br><img src="http://res.mrdear.cn/1521471003.png"></p>
+<h3 id="业务开发中可以常用到的链"><a href="#业务开发中可以常用到的链" class="headerlink" title="业务开发中可以常用到的链"></a>业务开发中可以常用到的链</h3><p>在业务开发中常常能遇到这类需求，比如退款操作，退款后可以恢复商品库存，恢复活动库存，退掉用户的优惠券，退掉用户的活动资格等等，该一系列的操作就是一条线性链，那么就可以利用责任链的思想来完成在这样的需求.<br>先提取出一个公共接口，链节点实现该接口，完成具体的退款操作</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">RegainAfterRefundOrder</span> &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 退回操作</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param</span> bo 该订单，可能是子订单，也可能是主订单，自行判断</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param</span> operator 操作人</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@return</span> true成功</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="type">boolean</span> <span class="title function_">regain</span><span class="params">(BizOrderDO bo， Long operator)</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来是链的统一管理，也就是需要<code>Chain</code>这个类来管理，可以按照下面的实现，其调用链只是简单的在<code>applyAllPlugin</code>循环调用，该过程可以按照Spring Security等方式实现更加灵活的调用.<br>可以根据需求设计为一旦创建就不可改变的类，包括类中的<code>interceptors</code>，这样使得代码更加健壮.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RefundOrderAndRegainChain</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> List&lt;RegainAfterRefundOrder&gt; interceptors = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">applyAllPlugin</span><span class="params">(BizOrderDO bo， Long operator)</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (RegainAfterRefundOrder interceptor : interceptors) &#123;</span><br><span class="line">      interceptor.regain(bo， operator);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">addInterceptor</span><span class="params">(RegainAfterRefundOrder interceptor)</span> &#123;</span><br><span class="line">    interceptors.add(interceptor);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> List&lt;RegainAfterRefundOrder&gt; <span class="title function_">getInterceptors</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> Collections.unmodifiableList(interceptors);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>最后是借助IOC实现链的组装，假设有<code>RegainCoupon</code>，<code>RegainInventoryCount</code>，<code>RegainInvitationCodeWithDraw</code>等RegainAfterRefundOrder的实现类，依次在Spring的Configuration类中实现注入，并构造出需要的<code>RefundOrderAndRegainChain</code>.最后再业务需要的地方直接注入该Chain即可.对于这种逻辑实现了解耦与灵活的组合.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">RefundOrderAndRegainConfig</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> RefundOrderAndRegainChain <span class="title function_">paidToRefund</span><span class="params">(</span></span><br><span class="line"><span class="params">      RegainInventoryCount regainInventoryCount，</span></span><br><span class="line"><span class="params">      RegainCoupon regainCoupon，</span></span><br><span class="line"><span class="params">      RegainPromotionRegistered regainPromotionRegistered，</span></span><br><span class="line"><span class="params">      RegainInvitationCodeWithDraw regainInvitationCode)</span> &#123;</span><br><span class="line">    <span class="type">RefundOrderAndRegainChain</span> <span class="variable">chain</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">RefundOrderAndRegainChain</span>();</span><br><span class="line">    chain.addInterceptor(regainInventoryCount);</span><br><span class="line">    chain.addInterceptor(regainPromotionRegistered);</span><br><span class="line">    chain.addInterceptor(regainCoupon);</span><br><span class="line">    chain.addInterceptor(regainInvitationCode);</span><br><span class="line">    <span class="keyword">return</span> chain;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="责任链处理的副作用"><a href="#责任链处理的副作用" class="headerlink" title="责任链处理的副作用"></a>责任链处理的副作用</h2><p>上面几个小案例可以看出链式处理方式能够将一段复杂逻辑拆分开来，然后使用链的方式组合，那么这种方式有什么副作用？</p>
+<p><strong>1. 假如入参是可变更对象</strong></p>
+<p>由于接口契约的限制，每一个链中的节点，所接收到的都是同一个参数，此时如果参数是可变更对象，一旦其中一个节点修改了入参，那么会导致下一个节点接收到的对象与其他节点不一致。从开发角度并没有限制这种做法，但从实际开发角度来说，一旦出现了问题，这种做法会导致排查难度上升到另一个量级，针对可变更对象作为入参，更适合的应该是状态机，而不是责任链。</p>
+<p><strong>2. 假如节点之间存在依赖关系</strong></p>
+<p>节点之间存在依赖关系，是链式设计过程中经常遇到的问题。首先博主认为该问题不可避免，因此应该说说如何更好的处理这一类问题。节点之间存在依赖关系，首先要考虑的点是这个链的组合编排要固定，不能每次启动后不一致，比较简单的做法就是在Spring bean注册时，就将这部分顺序逻辑固定死的注册好。之后需要考虑依赖的节点失败了会怎么样，比如上述的退款业务链的设计，假设优惠券退成功了，但后续的库存退失败了，这个失败异常很可能到链的外层，从而引起整条链的重试，那么就需要考虑节点的幂等性设计是否合理。</p>
+<h2 id="责任链模式的本质"><a href="#责任链模式的本质" class="headerlink" title="责任链模式的本质"></a>责任链模式的本质</h2><ol>
+<li>让请求者不关心具体接收者是谁，只需要得到自己的具体结果 </li>
+<li>在一个请求对应多个接收者情况下(Spring Security这种)，接收者之间可以自由组合，灵活性很高</li>
+<li>新增接收者处理也只需要增加链中的一个节点，不需要改动太多.</li>
+</ol>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/design-patterns-chain-of-responsibility.html">设计模式--责任链模式的思考</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/design-patterns-chain-of-responsibility.html">https://mrdear.cn/posts/design-patterns-chain-of-responsibility.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/design-patterns-strategy.html" title="设计模式--策略模式的思考"><i class="iconfont icon-prev"></i>设计模式--策略模式的思考</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/design-patterns-template-method.html" title="设计模式--模板方法模式的思考">设计模式--模板方法模式的思考<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%87%E5%87%86%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">标准责任链模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%9F%E8%83%BD%E9%93%BE"><span class="toc-number">2.</span> <span class="toc-text">功能链</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Java%E4%B8%ADFilter%E9%93%BE"><span class="toc-number">2.1.</span> <span class="toc-text">Java中Filter链</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring-Security%E4%B8%AD%E6%8B%A6%E6%88%AA%E9%93%BE"><span class="toc-number">2.2.</span> <span class="toc-text">Spring Security中拦截链</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Mybatis%E4%B8%AD%E6%8F%92%E4%BB%B6%E9%93%BE"><span class="toc-number">2.3.</span> <span class="toc-text">Mybatis中插件链</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%9A%E5%8A%A1%E5%BC%80%E5%8F%91%E4%B8%AD%E5%8F%AF%E4%BB%A5%E5%B8%B8%E7%94%A8%E5%88%B0%E7%9A%84%E9%93%BE"><span class="toc-number">2.4.</span> <span class="toc-text">业务开发中可以常用到的链</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%A3%E4%BB%BB%E9%93%BE%E5%A4%84%E7%90%86%E7%9A%84%E5%89%AF%E4%BD%9C%E7%94%A8"><span class="toc-number">3.</span> <span class="toc-text">责任链处理的副作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%A3%E4%BB%BB%E9%93%BE%E6%A8%A1%E5%BC%8F%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="toc-number">4.</span> <span class="toc-text">责任链模式的本质</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

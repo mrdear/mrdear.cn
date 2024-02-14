@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Spring MVC--参数解析与方法执行 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-spring-mvc-params.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/springmvc.png" alt="Spring MVC--参数解析与方法执行">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Spring MVC--参数解析与方法执行</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-04-18</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Spring/">Spring</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>承接上文,Spring MVC通过<code>HandlerMapping</code>定位到了具体的<code>HandlerExecutionChain</code>,也就是具体要执行的方法.本篇详细阐述Spring MVC执行具体方法的流程.</p>
+<h2 id="HandlerAdapter"><a href="#HandlerAdapter" class="headerlink" title="HandlerAdapter"></a>HandlerAdapter</h2><p><code>HandlerAdapter</code>用来适配<code>HandlerExecutionChain</code>的一个接口,从名称来看这里是<strong>适配器模式</strong>,适配器模式的本质在于<strong>包装转换</strong>,对于<code>HandlerExecutionChain</code>中不同的Handler提供适配功能,并且提供统一的调用方法,该接口主要有以下方法:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">HandlerAdapter</span> &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 判断是否支持当前的handler适配</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">	<span class="type">boolean</span> <span class="title function_">supports</span><span class="params">(Object handler)</span>;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 具体的处理适配</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">	ModelAndView <span class="title function_">handle</span><span class="params">(HttpServletRequest request, HttpServletResponse response, Object handler)</span> <span class="keyword">throws</span> Exception;</span><br><span class="line">    .....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在<code>DispatcherServlet</code>中定位到具体的<code>HandlerAdapter</code>是类似<code>HandlerMappings</code>的处理,直接循环,判断是否支持处理,支持则返回,这类似一种标准责任链模式,查找出链中能够处理该事件的第一个节点类.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> HandlerAdapter <span class="title function_">getHandlerAdapter</span><span class="params">(Object handler)</span> <span class="keyword">throws</span> ServletException &#123;</span><br><span class="line">  <span class="keyword">for</span> (HandlerAdapter ha : <span class="built_in">this</span>.handlerAdapters) &#123;</span><br><span class="line">    <span class="comment">// 判断是否支持,支持则返回</span></span><br><span class="line">    <span class="keyword">if</span> (ha.supports(handler)) &#123;</span><br><span class="line">      <span class="keyword">return</span> ha;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">ServletException</span>(<span class="string">&quot;No adapter for handler [&quot;</span> + handler +</span><br><span class="line">      <span class="string">&quot;]: The DispatcherServlet configuration needs to include a HandlerAdapter that supports this handler&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>HandlerAdapter</code>的继承体系如下所示:<br><img src="http://res.mrdear.cn/1523704257.png"></p>
+<ol>
+<li><code>SimpleControllerHandlerAdapter</code>处理实现了<code>Controller</code>接口的handler.</li>
+<li><code>SimpleServletHandlerAdapter</code>处理实现了<code>Servlet</code>接口的handler.</li>
+<li><code>HttpRequestHandlerAdapter</code>处理实现了<code>HttpRequestHandler</code>接口的handler.静态资源映射就是使用该Adapter进行处理.</li>
+<li><code>AbstractHandlerMethodAdapter</code>处理<code>HandlerMethod</code>的子类,也就是我们的业务方法,也是本次分析的重点.</li>
+</ol>
+<h3 id="模板类AbstractHandlerMethodAdapter"><a href="#模板类AbstractHandlerMethodAdapter" class="headerlink" title="模板类AbstractHandlerMethodAdapter"></a>模板类AbstractHandlerMethodAdapter</h3><p>该模板类比较简单,主要声明了所支持处理的类型,然后把请求转到<code>handleInternal</code>方法中.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="type">boolean</span> <span class="title function_">supports</span><span class="params">(Object handler)</span> &#123;</span><br><span class="line">	<span class="keyword">return</span> (handler <span class="keyword">instanceof</span> HandlerMethod &amp;&amp; supportsInternal((HandlerMethod) handler));</span><br><span class="line">&#125;</span><br><span class="line">   <span class="comment">// 把请求转到具体的子类</span></span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">abstract</span> ModelAndView <span class="title function_">handleInternal</span><span class="params">(HttpServletRequest request,</span></span><br><span class="line"><span class="params">		HttpServletResponse response, HandlerMethod handlerMethod)</span> <span class="keyword">throws</span> Exception;</span><br></pre></td></tr></table></figure>
+
+<h4 id="实现类RequestMappingHandlerAdapter"><a href="#实现类RequestMappingHandlerAdapter" class="headerlink" title="实现类RequestMappingHandlerAdapter"></a>实现类RequestMappingHandlerAdapter</h4><p><code>RequestMappingHandlerAdapter</code>在作为实现类,主要是负责调用逻辑,如下所示,主要的调用逻辑在<code>invokeHandlerMethod</code>方法中.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> ModelAndView <span class="title function_">handleInternal</span><span class="params">(HttpServletRequest request,</span></span><br><span class="line"><span class="params">			HttpServletResponse response, HandlerMethod handlerMethod)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    ... </span><br><span class="line">    <span class="comment">// 调用invokeHandlerMethod方法拿到对应的结果</span></span><br><span class="line">    mav = invokeHandlerMethod(request, response, handlerMethod);</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">return</span> mav;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p><code>invokeHandlerMethod</code>方法,顾名思义是负责调用的实现,其会把<code>HandlerMethod</code>方法封装到<code>ServletInvocableHandlerMethod</code>中,然后准备上下文环境,比如参数解析器<code>HandlerMethodArgumentResolver</code>,参数转换器<code>DataBinder</code>等信息,一切准备好了之后完成调用,在对结果进行解析包装.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> ModelAndView <span class="title function_">invokeHandlerMethod</span><span class="params">(HttpServletRequest request,</span></span><br><span class="line"><span class="params">			HttpServletResponse response, HandlerMethod handlerMethod)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line"></span><br><span class="line">		<span class="type">ServletWebRequest</span> <span class="variable">webRequest</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ServletWebRequest</span>(request, response);</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">// 参数转换以及绑定类工厂</span></span><br><span class="line">      <span class="type">WebDataBinderFactory</span> <span class="variable">binderFactory</span> <span class="operator">=</span> getDataBinderFactory(handlerMethod);</span><br><span class="line">      <span class="comment">// 结果转换生成工厂</span></span><br><span class="line">	<span class="type">ModelFactory</span> <span class="variable">modelFactory</span> <span class="operator">=</span> getModelFactory(handlerMethod, binderFactory);</span><br><span class="line">      <span class="comment">// 包装要执行的方法HandlerMethod</span></span><br><span class="line">      <span class="type">ServletInvocableHandlerMethod</span> <span class="variable">invocableMethod</span> <span class="operator">=</span> createInvocableHandlerMethod(handlerMethod);</span><br><span class="line">      <span class="comment">// 加入参数解析器</span></span><br><span class="line">      invocableMethod.setHandlerMethodArgumentResolvers(<span class="built_in">this</span>.argumentResolvers);</span><br><span class="line">      <span class="comment">// 加入返回值解析器</span></span><br><span class="line">      invocableMethod.setHandlerMethodReturnValueHandlers(<span class="built_in">this</span>.returnValueHandlers);</span><br><span class="line">      <span class="comment">// 加入转换工厂</span></span><br><span class="line">      invocableMethod.setDataBinderFactory(binderFactory);</span><br><span class="line">      <span class="comment">// 用户获取方法参数名的service</span></span><br><span class="line">			invocableMethod.setParameterNameDiscoverer(<span class="built_in">this</span>.parameterNameDiscoverer);</span><br><span class="line">      .....</span><br><span class="line">      <span class="comment">// 调用方法</span></span><br><span class="line">			invocableMethod.invokeAndHandle(webRequest, mavContainer);</span><br><span class="line">			<span class="keyword">if</span> (asyncManager.isConcurrentHandlingStarted()) &#123;</span><br><span class="line">				<span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">			&#125;</span><br><span class="line">      <span class="comment">// 取出结果并进行封装</span></span><br><span class="line">			<span class="keyword">return</span> getModelAndView(mavContainer, modelFactory, webRequest);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">finally</span> &#123;</span><br><span class="line">			webRequest.requestCompleted();</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>上述流程可以确定以下几点:</p>
+<ol>
+<li>参数解析依赖<code>HandlerMethodArgumentResolver</code></li>
+<li>返回值解析依赖<code>HandlerMethodReturnValueHandler</code></li>
+<li>参数转换与绑定(针对Bean)依赖<code>WebDataBinderFactory</code></li>
+</ol>
+<h3 id="参数如何解析"><a href="#参数如何解析" class="headerlink" title="参数如何解析?"></a>参数如何解析?</h3><p>在<code>org.springframework.web.method.support.InvocableHandlerMethod#getMethodArgumentValues</code>中定义了参数的解析流程.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Object[] getMethodArgumentValues(NativeWebRequest request, ModelAndViewContainer mavContainer,</span><br><span class="line">  Object...providedArgs) <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">  <span class="comment">// 获取要执行的方法参数封装</span></span><br><span class="line">  MethodParameter[] parameters = getMethodParameters();</span><br><span class="line">  Object[] args = <span class="keyword">new</span> <span class="title class_">Object</span>[parameters.length];</span><br><span class="line">  <span class="comment">// 循环解析参数</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; parameters.length; i++) &#123;</span><br><span class="line">    <span class="type">MethodParameter</span> <span class="variable">parameter</span> <span class="operator">=</span> parameters[i];</span><br><span class="line">    parameter.initParameterNameDiscovery(<span class="built_in">this</span>.parameterNameDiscoverer);</span><br><span class="line">    <span class="comment">// 优先使用方法传来的参数</span></span><br><span class="line">    args[i] = resolveProvidedArgument(parameter, providedArgs);</span><br><span class="line">    <span class="keyword">if</span> (args[i] != <span class="literal">null</span>) &#123;</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 使用参数解析器去解析参数</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.argumentResolvers.supportsParameter(parameter)) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        args[i] = <span class="built_in">this</span>.argumentResolvers.resolveArgument(</span><br><span class="line">          parameter, mavContainer, request, <span class="built_in">this</span>.dataBinderFactory);</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Exception ex) &#123;</span><br><span class="line">        <span class="keyword">throw</span> ex;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> args;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中<code>HandlerMethodArgumentResolver</code>是负责参数解析的入口,其本身是组合设计模式中的<code>Component</code>接口类,<code>HandlerMethodArgumentResolverComposite</code>是组合模式中的<code>Composite</code>树枝节点类.而众多解析方法则是<code>Leaf</code>叶子类,组合模式的本质是为了<strong>组合多个过多的节点,统一叶子节点和组合节点</strong>,给客户端提供统一的访问形式在使用时不需要做区分,通过<code>Composite</code>类把众多解析操作组合一起.</p>
+<p><code>HandlerMethodArgumentResolver</code>接口定义如下,其中<code>MethodParameter</code>是对用户业务方法参数的封装,比如参数类型,所属Bean,修饰的<code>Annotation</code>等.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">HandlerMethodArgumentResolver</span> &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 是否支持该参数的解析.</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">	<span class="type">boolean</span> <span class="title function_">supportsParameter</span><span class="params">(MethodParameter parameter)</span>;</span><br><span class="line">	<span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 解析操作</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">	Object <span class="title function_">resolveArgument</span><span class="params">(MethodParameter parameter, ModelAndViewContainer mavContainer,</span></span><br><span class="line"><span class="params">			NativeWebRequest webRequest, WebDataBinderFactory binderFactory)</span> <span class="keyword">throws</span> Exception;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中<code>AbstractNamedValueMethodArgumentResolver</code>作为其中之一的模板类定义了那些需要根据名称解析参数方式的一些模板,比如<code>@RequestParam</code>,<code>@RequestHeader</code>等注解,大概流程如下,把具体的获取过程利用抽象方法<code>resolveName()</code>延迟到了子类实现,让子类专注于从相应区域获取到对应的参数,拿到参数后使用<code>WebDataBinder</code>对参数进行类型转换,下面是该模板类的解析流程:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> Object <span class="title function_">resolveArgument</span><span class="params">(MethodParameter parameter, ModelAndViewContainer mavContainer,</span></span><br><span class="line"><span class="params">			NativeWebRequest webRequest, WebDataBinderFactory binderFactory)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 获取要获取的参数名称</span></span><br><span class="line">		<span class="type">Object</span> <span class="variable">resolvedName</span> <span class="operator">=</span> resolveStringValue(namedValueInfo.name);</span><br><span class="line">    <span class="comment">// 根据参数名从request中取出结果,这一步延迟到子类中实现,降低子类的复杂度.</span></span><br><span class="line">		<span class="type">Object</span> <span class="variable">arg</span> <span class="operator">=</span> resolveName(resolvedName.toString(), nestedParameter, webRequest);</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 使用WebDataBinder转换到需要的类型</span></span><br><span class="line">		<span class="keyword">if</span> (binderFactory != <span class="literal">null</span>) &#123;</span><br><span class="line">			<span class="type">WebDataBinder</span> <span class="variable">binder</span> <span class="operator">=</span> binderFactory.createBinder(webRequest, <span class="literal">null</span>, namedValueInfo.name);</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				arg = binder.convertIfNecessary(arg, parameter.getParameterType(), parameter);</span><br><span class="line">			&#125;</span><br><span class="line">			...</span><br><span class="line">		&#125;</span><br><span class="line">		handleResolvedValue(arg, namedValueInfo.name, parameter, mavContainer, webRequest);</span><br><span class="line">		<span class="keyword">return</span> arg;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>这个是参数的大概解析流程,同理从playload中解析的大概也是如此设计,最底层的子类只负责从相应区域获取参数,上层的模板类负责参数的统一处理转换操作.</p>
+<h3 id="参数如何类型转换以及绑定"><a href="#参数如何类型转换以及绑定" class="headerlink" title="参数如何类型转换以及绑定?"></a>参数如何类型转换以及绑定?</h3><p>在一般的写法中,经常会使用一个对象来接收参数,Spring MVC会自动把参数设置到该参数对象对应的属性上,这个是怎么实现的呢?答案是<code>ModelAttributeMethodProcessor</code>参数解析器,解析流程如下:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> Object <span class="title function_">resolveArgument</span><span class="params">(MethodParameter parameter, ModelAndViewContainer mavContainer,</span></span><br><span class="line"><span class="params">			NativeWebRequest webRequest, WebDataBinderFactory binderFactory)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="comment">// 获取参数名</span></span><br><span class="line">    <span class="type">String</span> <span class="variable">name</span> <span class="operator">=</span> ModelFactory.getNameForParameter(parameter);</span><br><span class="line">    <span class="comment">// 获取该参数实例,该方法实质上使用无参构造函数创建实例</span></span><br><span class="line">    <span class="type">Object</span> <span class="variable">attribute</span> <span class="operator">=</span> (mavContainer.containsAttribute(name) ? mavContainer.getModel().get(name) :</span><br><span class="line">            createAttribute(name, parameter, binderFactory, webRequest));</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 创建绑定</span></span><br><span class="line">    <span class="type">WebDataBinder</span> <span class="variable">binder</span> <span class="operator">=</span> binderFactory.createBinder(webRequest, attribute, name);</span><br><span class="line">    <span class="keyword">if</span> (binder.getTarget() != <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (!mavContainer.isBindingDisabled(name)) &#123;</span><br><span class="line">        <span class="comment">// 按照名称进行参数绑定</span></span><br><span class="line">        bindRequestParameters(binder, webRequest);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 如果有必要则进行验证</span></span><br><span class="line">        validateIfApplicable(binder, parameter);</span><br><span class="line">        <span class="keyword">if</span> (binder.getBindingResult().hasErrors() &amp;&amp; isBindExceptionRequired(binder, parameter)) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">BindException</span>(binder.getBindingResult());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 转换为参数需要的类型</span></span><br><span class="line">    <span class="keyword">return</span> binder.convertIfNecessary(binder.getTarget(), parameter.getParameterType(), parameter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中参数的绑定和转换都依赖<code>WebDataBinder</code>这个类,相比<code>DataBinder</code>该类额外提供了从request中取出参数的能力,其绑定功能依赖<code>BeanWrapper</code>,转换功能依赖<code>ConversionService</code>.<br><img src="http://res.mrdear.cn/1523722430.png" alt="图片来自网络"></p>
+<p><code>ConversionService</code>是Spring3引进的类型转换系统,在Spring中想添加一个转换器有如下几种做法</p>
+<ol>
+<li>实现<code>interface Converter&lt;S, T&gt;</code>接口,负责把S转换为T</li>
+<li>实现<code>interface ConverterFactory&lt;S, R&gt;</code>接口,其负责把一类S转换为另一类R对象,与上面不同的是该方法是一个工厂类,其负责生产一类转换,比如String到Number,String到Integer等.</li>
+<li>实现<code>GenericConverter</code>接口,是类型转换中最复杂最强大的存在,可以实现根据上下文信息转换,支持一个源或者多个源到目标的转换.</li>
+</ol>
+<h4 id="自定义转换器"><a href="#自定义转换器" class="headerlink" title="自定义转换器"></a>自定义转换器</h4><p>举个例子,实现字符到枚举类的转换:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">StringToEnumConvert</span> <span class="keyword">implements</span> <span class="title class_">ConverterFactory</span>&lt;String,Enum&gt; &#123;</span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="meta">@SuppressWarnings(&quot;unchecked&quot;)</span></span><br><span class="line">  <span class="keyword">public</span> &lt;T <span class="keyword">extends</span> <span class="title class_">Enum</span>&gt; Converter&lt;String, T&gt; <span class="title function_">getConverter</span><span class="params">(Class&lt;T&gt; aClass)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> s -&gt; (T)Enum.valueOf(aClass, s.trim());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后再自定义配置中加入该转换器,参数解析是对于字符串到枚举类会自动利用该转换器进行转换处理.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MvcConfig</span> <span class="keyword">extends</span> <span class="title class_">WebMvcConfigurerAdapter</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">addFormatters</span><span class="params">(FormatterRegistry registry)</span> &#123;</span><br><span class="line">    <span class="comment">//添加字符串到枚举类的转换</span></span><br><span class="line">    registry.addConverterFactory(<span class="keyword">new</span> <span class="title class_">StringToEnumConvert</span>());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="方法如何执行"><a href="#方法如何执行" class="headerlink" title="方法如何执行?"></a>方法如何执行?</h3><p>解决了参数后直接利用反射执行.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> Object <span class="title function_">doInvoke</span><span class="params">(Object... args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">	ReflectionUtils.makeAccessible(getBridgedMethod());</span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">               <span class="comment">// 获取用户方法执行</span></span><br><span class="line">		<span class="keyword">return</span> getBridgedMethod().invoke(getBean(), args);</span><br><span class="line">	&#125;</span><br><span class="line">       ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/d64800baaa04">https://www.jianshu.com/p/d64800baaa04</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-spring-mvc-params.html">Spring MVC--参数解析与方法执行</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-spring-mvc-params.html">https://mrdear.cn/posts/framework-spring-mvc-params.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/framework-springmvc-request.html" title="Spring MVC--请求定位"><i class="iconfont icon-prev"></i>Spring MVC--请求定位</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/design-patterns-observer.html" title="设计模式--观察者模式的思考">设计模式--观察者模式的思考<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#HandlerAdapter"><span class="toc-number">1.</span> <span class="toc-text">HandlerAdapter</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A8%A1%E6%9D%BF%E7%B1%BBAbstractHandlerMethodAdapter"><span class="toc-number">1.1.</span> <span class="toc-text">模板类AbstractHandlerMethodAdapter</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E7%B1%BBRequestMappingHandlerAdapter"><span class="toc-number">1.1.1.</span> <span class="toc-text">实现类RequestMappingHandlerAdapter</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E5%A6%82%E4%BD%95%E8%A7%A3%E6%9E%90"><span class="toc-number">1.2.</span> <span class="toc-text">参数如何解析?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E5%A6%82%E4%BD%95%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E4%BB%A5%E5%8F%8A%E7%BB%91%E5%AE%9A"><span class="toc-number">1.3.</span> <span class="toc-text">参数如何类型转换以及绑定?</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E8%BD%AC%E6%8D%A2%E5%99%A8"><span class="toc-number">1.3.1.</span> <span class="toc-text">自定义转换器</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E5%A6%82%E4%BD%95%E6%89%A7%E8%A1%8C"><span class="toc-number">1.4.</span> <span class="toc-text">方法如何执行?</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">2.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

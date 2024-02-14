@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Spring Boot -- 如何获取已加载的JAR文件流 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-spring-jar-in-jar.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/mrdearblog-springboot.png" alt="Spring Boot -- 如何获取已加载的JAR文件流">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Spring Boot -- 如何获取已加载的JAR文件流</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2019-03-19</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Spring/">Spring</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>最近遇到一个需求，在程序运行期间，拿到已加载类对应的jar包，然后上传到另一个地方，本以为利用ClassLoader直接定位到jar的<code>InputStream</code>流直接读取就ok，事实却没有这么简单，我把问题总结为以下几个小点，逐一解决。</p>
+<h2 id="如何根据已加载的类定位到jar？"><a href="#如何根据已加载的类定位到jar？" class="headerlink" title="如何根据已加载的类定位到jar？"></a>如何根据已加载的类定位到jar？</h2><p>对于已加载的类，可以通过其对应的Class类的<code>getProtectionDomain()</code>方法获取到对应的文件信息，以获取<code>commons-lang3</code>jar包为例，如清单1所示。<br><strong>清单1: 根据加载类定位到文件</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Class&lt;StringUtils&gt; clazz = StringUtils.class;</span><br><span class="line"><span class="type">ProtectionDomain</span> <span class="variable">domain</span> <span class="operator">=</span> clazz.getProtectionDomain();</span><br><span class="line"><span class="comment">// 获取到对应的jar文件</span></span><br><span class="line"><span class="type">URL</span> <span class="variable">jarFile</span> <span class="operator">=</span> domain.getCodeSource().getLocation();</span><br><span class="line"><span class="comment">// 获取到对应的类加载器</span></span><br><span class="line"><span class="type">ClassLoader</span> <span class="variable">classLoader</span> <span class="operator">=</span> domain.getClassLoader();</span><br></pre></td></tr></table></figure>
+<p>该代码在不同环境下运行返回又是什么情况呢？</p>
+<h3 id="本地IDE运行"><a href="#本地IDE运行" class="headerlink" title="本地IDE运行"></a>本地IDE运行</h3><p>在IDEA中直接运行返回如下所示，很明显IDEA在运行时会把maven仓库中对应的jar路径放入classpath下，运行起来后类加载器自动寻找对应的jar，所以定位到了具体的maven目录。<br><strong>清单2: IDE直接运行输出</strong></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file:/Users/quding/.m2/repository/org/apache/commons/commons-lang3/3.7/commons-lang3-3.7.jar</span><br></pre></td></tr></table></figure>
+
+<h3 id="打包成jar运行"><a href="#打包成jar运行" class="headerlink" title="打包成jar运行"></a>打包成jar运行</h3><p>单纯的打包为一个jar，Java会把其中的依赖第三方jar解压后一起放入到jar中，如下图所示，因此定位到的是我最终打包为的jar文件，而并非第三方jar文件。因此如果是在这种环境下推荐使用指定classpath形式。<br><strong>清单3: 打包成jar输出</strong></p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file:/Users/quding/workspace/git/jar-mvn1/target/jar-mvn1-1.0-SNAPSHOT.jar</span><br></pre></td></tr></table></figure>
+<p><img src="http://res.mrdear.cn/1552829550.png"></p>
+<h3 id="打包成war运行"><a href="#打包成war运行" class="headerlink" title="打包成war运行"></a>打包成war运行</h3><p>写了个接口，返回值是一个具体的文件路径，原因也很简单，因为Tomcat在启动一个webapp时会将对应的war解压，然后针对解压后的路径使用一个单独的类加载器进行加载。<br><strong>清单4: 打包成war包输出</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line"><span class="attr">&quot;jarFile&quot;</span><span class="punctuation">:</span> <span class="string">&quot;file:/Users/quding/develop/apache-tomcat-8.5.38/webapps/ROOT/WEB-INF/lib/commons-lang3-3.7.jar&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<h3 id="打包成fat-jar"><a href="#打包成fat-jar" class="headerlink" title="打包成fat jar"></a>打包成fat jar</h3><p>fat jar是Spring Boot引入的一种新格式，其打包后的结构与war包比较类似，但是可以直接执行并不需要先解压再加载，打包后类似目录如下：<br><img src="http://res.mrdear.cn/1552834775.png"></p>
+<ol>
+<li>BOOT-INF&#x2F;classes  – 用户代码</li>
+<li>BOOT-INF&#x2F;lib  –依赖第三方架包</li>
+<li>org&#x2F;springframewora&#x2F;boot&#x2F;loader   – Fat jar启动核心，后续会分析。</li>
+</ol>
+<p>此时获取对应的jar，输出如清单5所示，可以看到与前面几种不同，此时路径为jar嵌套形式，暂且定义为<code>jar in jar</code>。<br><strong>清单5: 打包成Fat jar输出</strong></p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line"><span class="attr">&quot;jarFile&quot;</span><span class="punctuation">:</span> <span class="string">&quot;jar:file:/Users/quding/workspace/git/read-jar-demo/target/read-jar-demo-0.0.1-SNAPSHOT.jar!/BOOT-INF/lib/commons-lang3-3.7.jar!/&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>其路径可以分为两个部分看，第一部分<code>jar:file:/Users/quding/workspace/git/read-jar-demo/target/read-jar-demo-0.0.1-SNAPSHOT.jar!</code>，表示当前根架包位置，第二部分<code>/BOOT-INF/lib/commons-lang3-3.7.jar!/</code>所需要的jar在根架包中的位置路径。</p>
+<h2 id="如何读取jar？"><a href="#如何读取jar？" class="headerlink" title="如何读取jar？"></a>如何读取jar？</h2><p>对于非<code>jar in jar</code>形式，其获取到的目录是一个真是的物理文件路径，因此可以直接使用<code>File</code>读取，从而拿到文件流，这里不重点关注。对于<code>jar in jar</code>因为并不是规范的文件路径，因此无法使用<code>File</code>直接读取，那么该怎么读呢？要解决这个问题需要先了解Spring Boot是怎么做的.</p>
+<h3 id="Spring-Boot启动原理"><a href="#Spring-Boot启动原理" class="headerlink" title="Spring Boot启动原理"></a>Spring Boot启动原理</h3><p>打开Spring Boot最终产出的jar包，其<code>MANIFEST.MF</code>文件表明项目的启动入口为<code>org.springframework.boot.loader.JarLauncher</code>，该类在<code>spring-boot-loader</code>模块下，运行时由Spring Boot所提供，因此可以通过maven引入provided类型的依赖从而查看到源码。<br><strong>清单6: Spirng Boot启动模块</strong></p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-loader<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.1.3.RELEASE<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">          <span class="tag">&lt;<span class="name">scope</span>&gt;</span>provided<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p><code>org.springframework.boot.loader.JarLauncher</code>做的第一步是找到自己所在jar的位置，使用方法与上文介绍的一致。<br><strong>清单7: Spring Boot定位启动jar包</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">final</span> Archive <span class="title function_">createArchive</span><span class="params">()</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">		<span class="type">ProtectionDomain</span> <span class="variable">protectionDomain</span> <span class="operator">=</span> getClass().getProtectionDomain();</span><br><span class="line">		<span class="type">CodeSource</span> <span class="variable">codeSource</span> <span class="operator">=</span> protectionDomain.getCodeSource();</span><br><span class="line">    <span class="comment">// 获取jar位置,对于本案例返回为 jar:file:/Users/quding/workspace/git/read-jar-demo/target/read-jar-demo-0.0.1-SNAPSHOT.jar!/</span></span><br><span class="line">		<span class="type">URI</span> <span class="variable">location</span> <span class="operator">=</span> (codeSource != <span class="literal">null</span>) ? codeSource.getLocation().toURI() : <span class="literal">null</span>;</span><br><span class="line">		<span class="type">String</span> <span class="variable">path</span> <span class="operator">=</span> (location != <span class="literal">null</span>) ? location.getSchemeSpecificPart() : <span class="literal">null</span>;</span><br><span class="line">		<span class="keyword">if</span> (path == <span class="literal">null</span>) &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalStateException</span>(<span class="string">&quot;Unable to determine code source archive&quot;</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="type">File</span> <span class="variable">root</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">File</span>(path);</span><br><span class="line">		<span class="keyword">if</span> (!root.exists()) &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalStateException</span>(</span><br><span class="line">					<span class="string">&quot;Unable to determine code source archive from &quot;</span> + root);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> (root.isDirectory() ? <span class="keyword">new</span> <span class="title class_">ExplodedArchive</span>(root)</span><br><span class="line">				: <span class="keyword">new</span> <span class="title class_">JarFileArchive</span>(root));</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>之后通过<code>java.protocol.handler.pkgs</code>参数注册对应的URL协议扩展，该参数格式为<code>[package_path].[protocol].Handler</code>，因此Spring Boot注册的为<code>org.springframework.boot.loader.jar.Handler</code>这个jar协议扩展处理器，其在读取资源时会调用<code>openConnection</code>方法，如清单8所示：<br><strong>清单8: Spring Boot URL处理器</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> URLConnection <span class="title function_">openConnection</span><span class="params">(URL url)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">    <span class="comment">// 判断资源是否在该jar中,如果在则去jar中获取</span></span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">this</span>.jarFile != <span class="literal">null</span> &amp;&amp; isUrlInJarFile(url, <span class="built_in">this</span>.jarFile)) &#123;</span><br><span class="line">			<span class="keyword">return</span> JarURLConnection.get(url, <span class="built_in">this</span>.jarFile);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="comment">// 如果不在则去对应的根路径jar获取</span></span><br><span class="line">			<span class="keyword">return</span> JarURLConnection.get(url, getRootJarFileFromUrl(url));</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">catch</span> (Exception ex) &#123;</span><br><span class="line">      <span class="comment">// 获取失败使用JDK自带的方式获取,作为备份方案</span></span><br><span class="line">			<span class="keyword">return</span> openFallbackConnection(url, ex);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<p>由上述逻辑可以发现，当URL为<code>jar:file:/Users/quding/workspace/git/read-jar-demo/target/read-jar-demo-0.0.1-SNAPSHOT.jar!/BOOT-INF/lib/commons-lang3-3.7.jar!/</code>形式，最终会调用<code>JarURLConnection.get(url, this.jarFile)</code>方法来获取真正的jar文件，该<code>JarURLConnection</code>并非JDK自带的类，其为<code>class JarURLConnection extends java.net.JarURLConnection</code>，因此在运行时可以安全的向上转型为<code>java.net.JarURLConnection</code>，在其get方法中会对URL进行循环处理，对结果进行嵌套包装，近而解决jar in jar类型的读取问题。<br><strong>清单9: jar in jar循环读取</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> ((separator = spec.indexOf(SEPARATOR, index)) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="comment">// 读取对应的资源</span></span><br><span class="line">			<span class="type">JarEntryName</span> <span class="variable">entryName</span> <span class="operator">=</span> JarEntryName.get(spec.subSequence(index, separator));</span><br><span class="line">			<span class="type">JarEntry</span> <span class="variable">jarEntry</span> <span class="operator">=</span> jarFile.getJarEntry(entryName.toCharSequence());</span><br><span class="line">			<span class="keyword">if</span> (jarEntry == <span class="literal">null</span>) &#123;</span><br><span class="line">				<span class="keyword">return</span> JarURLConnection.notFound(jarFile, entryName);</span><br><span class="line">			&#125;</span><br><span class="line">      <span class="comment">// 结果嵌套包装</span></span><br><span class="line">			jarFile = jarFile.getNestedJarFile(jarEntry);</span><br><span class="line">			index = separator + SEPARATOR.length();</span><br><span class="line">		&#125;</span><br></pre></td></tr></table></figure>
+<p>最后会根据得到的URL路径创建对应的类加载器<code>org.springframework.boot.loader.LaunchedURLClassLoader</code>，使用该类加载器进行加载。</p>
+<h3 id="利用Handler读取jar"><a href="#利用Handler读取jar" class="headerlink" title="利用Handler读取jar"></a>利用Handler读取jar</h3><p>Spring Boot启动原理的关键点是实现了<code>jar in jar</code>协议的处理器<code>org.springframework.boot.loader.jar.Handler</code>，读取的主要功能为Handler中实现的<code>openConnection</code>方法，因此当在项目代码中想要读取jar in jar格式的架包，则可以用该Handler进行资源读取。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">URL</span> <span class="variable">url</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">URL</span>(jarFile, <span class="string">&quot;&quot;</span>, <span class="keyword">new</span> <span class="title class_">org</span>.springframework.boot.loader.jar.Handler());</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="http://hengyunabc.github.io/spring-boot-application-start-analysis/">spring boot应用启动原理分析</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-spring-jar-in-jar.html">Spring Boot -- 如何获取已加载的JAR文件流</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-spring-jar-in-jar.html">https://mrdear.cn/posts/framework-spring-jar-in-jar.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/framework-guava-bloomfilter.html" title="Guava -- Bloom Filter原理"><i class="iconfont icon-prev"></i>Guava -- Bloom Filter原理</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/tools-hosts.html" title="造轮子-- Hosts-Switch-Alfred插件">造轮子-- Hosts-Switch-Alfred插件<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E6%A0%B9%E6%8D%AE%E5%B7%B2%E5%8A%A0%E8%BD%BD%E7%9A%84%E7%B1%BB%E5%AE%9A%E4%BD%8D%E5%88%B0jar%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">如何根据已加载的类定位到jar？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0IDE%E8%BF%90%E8%A1%8C"><span class="toc-number">1.1.</span> <span class="toc-text">本地IDE运行</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E5%8C%85%E6%88%90jar%E8%BF%90%E8%A1%8C"><span class="toc-number">1.2.</span> <span class="toc-text">打包成jar运行</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E5%8C%85%E6%88%90war%E8%BF%90%E8%A1%8C"><span class="toc-number">1.3.</span> <span class="toc-text">打包成war运行</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%93%E5%8C%85%E6%88%90fat-jar"><span class="toc-number">1.4.</span> <span class="toc-text">打包成fat jar</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%AF%BB%E5%8F%96jar%EF%BC%9F"><span class="toc-number">2.</span> <span class="toc-text">如何读取jar？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring-Boot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86"><span class="toc-number">2.1.</span> <span class="toc-text">Spring Boot启动原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%A9%E7%94%A8Handler%E8%AF%BB%E5%8F%96jar"><span class="toc-number">2.2.</span> <span class="toc-text">利用Handler读取jar</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">3.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

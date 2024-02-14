@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>设计模式--访问者模式的思考 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/design-patterns-visitor.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">设计模式--访问者模式的思考</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2022-07-03</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>访问者模式是一个比较复杂的设计模式，他的复杂性不是由于自身，而是因为会与其他模式配合使用，两者复杂性叠加，导致逻辑很难看明白。本文主要目地是理清楚访问者模式的本质以及利弊，探究如何在业务中应用该模式的思想。</p>
+<h2 id="访问者模式"><a href="#访问者模式" class="headerlink" title="访问者模式"></a>访问者模式</h2><p>访问者模式的定义为：<strong>表示一个作用于某对象结构中的各元素的操作，它可以使你在不改变元素的类的前提下定义作用于这些元素的新操作</strong>。定义是比较拗口的，简单点来说，就是在面对复杂数据结构时，可以在对应结构不感知的情况下，为该结构增加一系列的功能，比如我们平常会定义Domain类，然后在Domain Service为Domain扩展一系列的方法，这其实也算是符合访问者模式的定义，Doamin类作为输入的复杂数据结构，DomainService在不改变Domain类的情况下，给Domain增加CRUD等方法。</p>
+<p>博主举出的这种沾亲式的案例，其实也想表达本来没有设计模式，但大家把一种策略当成模板后，设计模式就自然而然的诞生了。设计模式是编程设计原则的体现，很多人使用往往都会生搬硬套，但博主认为设计模式需要了解模式背后要解决的问题是什么，了解本质目地后，那么各种约束规则便不再是设计束缚。</p>
+<h2 id="访问者模式的结构"><a href="#访问者模式的结构" class="headerlink" title="访问者模式的结构"></a>访问者模式的结构</h2><p><img src="https://res.mrdear.cn/uPic/image-20220702190601681_1656759962.png" alt="image-20220702190601681"></p>
+<p>访问者模式就涉及两个关键的类，Element与Visitor，其中Element是复杂数据结构，Visitor是想要为Element增加的功能实现。</p>
+<p><strong>Visitor</strong></p>
+<p>上图中Visitor定义为一个访问者接口，其中含有<code>visitor(ConcreteElement1)</code>,<code>visitor(ConcreteElement2)</code>两个方法， 该接口本身不具有明确意义，只是提供了针对具象元素的访问通道，实现上具体什么含义，取决于<code>ConcreteVisitor1</code>和<code>ConcreteVisitor2</code>的实现逻辑。</p>
+<p><strong>Element</strong></p>
+<p>本身就是一个数据结构模型，可以是一个Model，也可以是多个Model组合而成的复杂结构。往往在不同的模型上有着差别的方法，并且需要很灵活的扩展。比如<code>ConcreteElement1</code>可能只需要分析(analysis)功能，<code>ConcreteElement2</code>则不需要分析，需要保存(save)功能。按照传统思路，要么直接在<code>ConcreteElement1</code>中增加analysis方法，要么就专为<code>ConcreteElement1</code>新建一个Service，这两种方法都存在扩展性不足的问题，因此visitor模式是为了对这两种方式进行改进而诞生的设计。</p>
+<h2 id="简单的访问者模式"><a href="#简单的访问者模式" class="headerlink" title="简单的访问者模式"></a>简单的访问者模式</h2><p>简单的访问者模式是我自己起的名字，简化一些不必要的扩展，看看最简单的情况下访问者模式是什么样子，然后再由这种最简单的模式扩展到下面的复杂形式。这里的简化是将Element的多态给去除，假设Element就是一个实现类，那么此时每一个Visitor就相当于一个Element内部方法的迁移，接下来看具体案例。</p>
+<p>如下图所示，假设当前Element是Dog，狗，然后我们想要给他增加健康评估(Health)和耐力预测(Endurance)技能。</p>
+<p><img src="https://res.mrdear.cn/uPic/image-20220702194526944_1656762327.png" alt="image-20220702194526944"></p>
+<p>首先是定义Visitor接口以及Element实体类，并分别实现通道方法<code>visit</code>和<code>accept</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 访问者接口</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">Visitor</span> &#123;</span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 连接Element的通道方法</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">visit</span><span class="params">(Dog dog)</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 定义实体类</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Dog</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> String name;</span><br><span class="line">    <span class="keyword">private</span> String type;</span><br><span class="line">    <span class="keyword">private</span> String ...;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 定义通道方法，将自身传递给访问者，让访问者能够访问自身属性</span></span><br><span class="line"><span class="comment">     * 当然这里还可以用instance of感知到具体访问者，并由此做额外的功能</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">accept</span><span class="params">(Visitor visitor)</span> &#123;</span><br><span class="line">        visitor.visit(<span class="built_in">this</span>);   </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>接下来是实现具体访问者的逻辑，访问者主要是获取Element的属性，然后按照自己的逻辑实现计算，变相的为Element增加对应的能力。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 健康度计算</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">HealthVisitor</span> <span class="keyword">implements</span> <span class="title class_">Visitor</span> &#123;</span><br><span class="line">    <span class="meta">@Getter</span></span><br><span class="line">    <span class="keyword">private</span> String score;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">visit</span><span class="params">(Dog dog)</span> &#123;</span><br><span class="line">        <span class="comment">// 模拟获取Dog的各种指标数据，然后计算健康度</span></span><br><span class="line">        <span class="built_in">this</span>.score = 健康度(dog);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 耐力评估</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EnduranceVisitor</span> <span class="keyword">implements</span> <span class="title class_">Visitor</span> &#123;</span><br><span class="line">    <span class="meta">@Getter</span></span><br><span class="line">    <span class="keyword">private</span> String endurance;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">visit</span><span class="params">(Dog dog)</span> &#123;</span><br><span class="line">        <span class="comment">// 模拟获取Dog的各种指标数据，然后计算耐力</span></span><br><span class="line">        <span class="built_in">this</span>.endurance = 耐力(dog);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>那么定义以及实现都搞定后，想要使用什么功能，如下所示，直接初始化对应的访问者，然后用访问者调用主体类。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">    <span class="type">Dog</span> <span class="variable">dog</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Dog</span>();</span><br><span class="line">    dog.setName(<span class="string">&quot;张三&quot;</span>);</span><br><span class="line">    dog.setType(<span class="string">&quot;二哈&quot;</span>);</span><br><span class="line"><span class="comment">// 初始化访问者，调用实体类</span></span><br><span class="line">    <span class="type">HealthVisitor</span> <span class="variable">visitor</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">HealthVisitor</span>();</span><br><span class="line">    visitor.visit(dog);</span><br><span class="line">    </span><br><span class="line">    System.out.println(visitor.getScore());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>看完上述实现，我们可以分析下这个简单案例。如果不使用访问者模式，那么可以新建一个DogDomainService，然后在Service中实现健康评估(Health)和耐力预测(Endurance)技能，这种方式也是可以的，当功能更加复杂后，将其用访问者模式分离开功能，每个复杂功能单独实现，像是插件一样，想要扩展时，也只需要新增加一个Visitor的实现策略，也是合理的。因此访问者模式的本质目地之一我们可以简单的认为就是将原本的属于Element的功能给拆散到Visitor中，便于后续灵活扩展。当然这样的简单案例发挥不出访问模式的优势，这种扩展一般策略模式就足以了，接下来看下多主体类下的访问者模式。</p>
+<h2 id="多主体类的访问者模式"><a href="#多主体类的访问者模式" class="headerlink" title="多主体类的访问者模式"></a>多主体类的访问者模式</h2><p>与上述访问者模式不同的是，多主体模式下的Element是多继承结构，比如Animal下面分为了狗(Dog)以及猫(Cat)还有鹦鹉(Parrot)等等，每个不同的Element具有特殊的功能，比如猫(Cat)的攀爬(scramble)能力，鹦鹉(Parrot)的飞行(flight)能力，那么此时Visitor接口本身还是具有通用通道，访问者的具体实现类就根据自身需要，具有针对性的实现对应方法，一般依赖多态来分别实现区分不同的功能。</p>
+<p><img src="https://res.mrdear.cn/uPic/image-20220703114253495_1656819773.png" alt="image-20220703114253495"></p>
+<p>如上图所示：此时Element被分为了Animal接口，以及三个实现类：Dog，Cat，Parrot。Visitor接口中分别增加了对三类主体的访问方法：visit(Dog)，visit(Cat)，visit(Parrot)。其中实现类HealthVisitor，EnduranceVisitor可以同时对三者进行健康评估和耐力评估，ScrambleVisitor只针对Cat做攀爬能力分析，FlightVisitor则只针对Parrot做飞行能力分析。</p>
+<p>案例很好理解，就是上面的变种，因此就不展示具体代码了，这里我们分析下引入多主体类后，会产生哪些问题。</p>
+<p><strong>问题一</strong>：Visitor中对每个类都有个visitor方法，目地是什么？</p>
+<p>这个问题想必是很多人的疑问，Visitor接口承担的是一个通道的作用，重载方法的定义是为了<strong>方法调用的一致性</strong>，只需要visit(xxx)以及accept(xxx)。当然也可以直接定义一个visit(Animal)，但这样子类由需要instance of感知具体的Element是什么，才能进行单独的逻辑，反而增加复杂性，直观性也不足够，比如想找到所有给Dog增加的方法，就比较麻烦，不像有单独接口，可以直接定位到子类，得不偿失。</p>
+<p><strong>问题二</strong>：Visitor子类如何方便的选择自己针对的Element？</p>
+<p>上述方式带来的弊端是子类感知到了所有的方法，像FlightVisitor这种实现类，只针对Parrot，他就不需要感知visit(Dog&#x2F;Cat)，此时一般会在Visitor接口下面增加一个VisitorAdapter抽象类，来实现所有的方法，只不过实现的逻辑都是Throw UnSupportException，然后子类再选择自己想要覆盖的实现。在或者将visit(Dog)，visit(Cat)，visit(Parrot)分别拆分到三个Visitor接口：DogVisitor，CatVisitor，ParrotVisitor，然后实现类利用多重继承，选择实现对应的接口，也是一种合理方式。</p>
+<p><strong>问题三</strong>：Visitor与Element之间的耦合关系是什么样子？</p>
+<p>耦合关系决定了使用形式，从上述关系图来看，Element是不感知Visitor的，也就是具体有哪些Visitor，Element毫不关心，但反过来Visitor是强感知Element的，Visitor需要知道自己针对的是哪个Element，不针对哪些Element。这样的关系决定了我们在使用访问者模式时，是需要知道当下业务到底想要什么样子的Visitor。比如当前就需要对鹦鹉(Parrot)做飞行评估，那么就需要主动实例化出来FlightVisitor。</p>
+<h2 id="嵌套其他模式的访问者模式"><a href="#嵌套其他模式的访问者模式" class="headerlink" title="嵌套其他模式的访问者模式"></a>嵌套其他模式的访问者模式</h2><p>这个是在实际开发过程中用到的最多的一种情况了，因此基于上面两个案例的铺垫，这里会直接使用实际案例来进行分析。</p>
+<p>在SQL解析中，一般会经过词法分析，语法／语义分析（生成AST语法树），各种业务自定义逻辑（比如分库分表表名替换）这几个步骤，参考美团文章中的图，针对如下SQL会生成对应AST语法树：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> username, ismale <span class="keyword">from</span> userinfo <span class="keyword">where</span> age <span class="operator">&gt;</span> <span class="number">20</span> <span class="keyword">and</span> level <span class="operator">&gt;</span> <span class="number">5</span> <span class="keyword">and</span> <span class="number">1</span> <span class="operator">=</span> <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://res.mrdear.cn/uPic/a74c9e9c_1656837542.png" alt="图2 语法树"></p>
+<p>这种树形结构，在应用中一般以<a href="https://mrdear.cn/posts/design-patterns-composite.html">组合模式</a>形式构建，以Druid为例，解析后结构如下图所示，应用对外展示的则是最顶层的<code>SQLStatement</code>，其本质是<code>SQLSelectStatement</code>。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;select username, ismale from userinfo where age &gt; 20 and level &gt; 5 and 1 = 1&quot;</span>;</span><br><span class="line"><span class="comment">// 新建 MySQL Parser</span></span><br><span class="line"><span class="type">SQLStatementParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MySqlStatementParser</span>(sql);</span><br><span class="line"><span class="comment">// 使用Parser解析生成AST，这里SQLStatement就是AST</span></span><br><span class="line"><span class="type">SQLStatement</span> <span class="variable">sqlStatement</span> <span class="operator">=</span> parser.parseStatement();</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://res.mrdear.cn/uPic/image-20220703164319627_1656837799.png" alt="image-20220703164319627"></p>
+<p>运用<a href="https://mrdear.cn/posts/design-patterns-composite.html">组合模式</a>提供的嵌套能力，可以很轻松的将这个AST语法树给构建出来，但问题是怎么方便的访问？比如从上述语句中提取出来表名，就需要从顶层Select节点遍历到From节点，然后获取表名，如果再嵌套子查询，那么情况更加复杂。因此实际情况下，更多时候使用Visitor模式做组合对象的功能扩展，接下来我们使用Druid提供的Visitor接口，实现一个表名提取器。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义一个表名提取的visitor</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TableNameVisitor</span> <span class="keyword">implements</span> <span class="title class_">SQLASTVisitor</span> &#123;</span><br><span class="line">    <span class="meta">@Getter</span></span><br><span class="line">    List&lt;String&gt; tables = <span class="keyword">new</span> <span class="title class_">LinkedList</span>&lt;&gt;();</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">visit</span><span class="params">(SQLExprTableSource x)</span> &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">tableName</span> <span class="operator">=</span> x.getTableName();</span><br><span class="line">        <span class="keyword">if</span> (<span class="literal">null</span> != tableName) &#123;</span><br><span class="line">            tables.add(tableName);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>该Visitor实现了<code>SQLASTVisitor</code>接口，这个是Druid预留的扩展，里面针对每一个组合中的实体类Element提供了Visitor通道，比如这里访问表名，只需要实现<code>visit(SQLExprTableSource x)</code>来访问表来源相关的语法节点即可。接下来使用该Visitor遍历语法树：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">sql</span> <span class="operator">=</span> <span class="string">&quot;select username, ismale from userinfo where age &gt; 20 and level &gt; 5 and 1 = 1&quot;</span>;</span><br><span class="line">    <span class="comment">// 新建 MySQL Parser</span></span><br><span class="line">    <span class="type">SQLStatementParser</span> <span class="variable">parser</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MySqlStatementParser</span>(sql);</span><br><span class="line">    <span class="comment">// 使用Parser解析生成AST，这里SQLStatement就是AST</span></span><br><span class="line">    <span class="type">SQLStatement</span> <span class="variable">sqlStatement</span> <span class="operator">=</span> parser.parseStatement();</span><br><span class="line">    <span class="comment">// 使用访问者去遍历语法树</span></span><br><span class="line">    <span class="type">TableNameVisitor</span> <span class="variable">visitor</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">TableNameVisitor</span>();</span><br><span class="line">    sqlStatement.accept(visitor);</span><br><span class="line">    System.out.println(<span class="string">&quot;getTables:&quot;</span> + visitor.getTables());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>遍历的过程只需要调用SQLStatement.accept(visitor)，该节点会自动顺着语法树的顶层，一直遍历，直到每一个叶子节点。</p>
+<h2 id="模式总结"><a href="#模式总结" class="headerlink" title="模式总结"></a>模式总结</h2><p>到这里，针对Visitor模式的本质基本上差不多了，Visitor模式的复杂性来源博主认为主要有两点：1）主体类Element本身是多重继承结构，或者是组合模式这种复合型结构，不符合人的直观思维，增加理解难度。2）Visitor的实现类是分散开的，且都是一个个独立的功能，不能很直观的展示一个对象究竟有哪些能力，也增加理解成本。</p>
+<p>大多数时候，使用Visitor模式扩展必要性是不大的，策略模式就能满足了。但在最后一个案例中，如果没有Visitor模式，笔者还真的想象不到有什么好的方式能够解决组合模式的扩展性问题，这大概也是在实际开发中看到的Visitor模式都是和组合模式一起出现的原因。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://book.douban.com/subject/5343318/">《研磨设计模式》- 访问者模式</a></p>
+<p><a target="_blank" rel="noopener" href="https://tech.meituan.com/2018/05/20/sql-parser-used-in-mtdp.html">SQL解析在美团的应用</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/design-patterns-visitor.html">设计模式--访问者模式的思考</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/design-patterns-visitor.html">https://mrdear.cn/posts/design-patterns-visitor.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/readnote-maven_in_action.html" title="读书笔记 -- 《Maven实战》"><i class="iconfont icon-prev"></i>读书笔记 -- 《Maven实战》</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">Linux -- Expect Script入门<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">访问者模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">2.</span> <span class="toc-text">访问者模式的结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E5%8D%95%E7%9A%84%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.</span> <span class="toc-text">简单的访问者模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E4%B8%BB%E4%BD%93%E7%B1%BB%E7%9A%84%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="toc-number">4.</span> <span class="toc-text">多主体类的访问者模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B5%8C%E5%A5%97%E5%85%B6%E4%BB%96%E6%A8%A1%E5%BC%8F%E7%9A%84%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="toc-number">5.</span> <span class="toc-text">嵌套其他模式的访问者模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A8%A1%E5%BC%8F%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">模式总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

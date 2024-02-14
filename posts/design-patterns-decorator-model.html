@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>设计模式--装饰者模式思考 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/design-patterns-decorator-model.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--装饰者模式思考">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">设计模式--装饰者模式思考</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-03-08</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <!-- toc -->
+<hr>
+<p>装饰者模式实际上是一直提倡的<strong>组合代替继承</strong>的实践方式,个人认为要理解装饰者模式首先需要理解为什么需要<strong>组合代替继承</strong>,继承又是为什么让人深恶痛绝.</p>
+<h2 id="为什么建议使用组合代替继承"><a href="#为什么建议使用组合代替继承" class="headerlink" title="为什么建议使用组合代替继承?"></a>为什么建议使用组合代替继承?</h2><p>面向对象的特性有继承与封装,但两者却又有一点矛盾,继承意味子类依赖了父类中的实现,一旦父类中改变实现则会对子类造成影响,这是打破了封装性的一种表现.<br>而组合就是巧用封装性来实现继承功能的代码复用.<br>举一个Effective Java中的案例,当前需求是为HashSet提供一个计数,要求统计它创建以来曾经添加了多少个元素,那么可以写出下面的代码.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">InstrumentedHashSet</span> &lt;E&gt; <span class="keyword">extends</span> <span class="title class_">HashSet</span>&lt;E&gt; &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="type">int</span> <span class="variable">addCount</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">add</span><span class="params">(E e)</span> &#123;</span><br><span class="line">    <span class="built_in">this</span>.addCount++;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">super</span>.add(e);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">addAll</span><span class="params">(Collection&lt;? extends E&gt; c)</span> &#123;</span><br><span class="line">    <span class="built_in">this</span>.addCount += c.size();</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">super</span>.addAll(c);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">getAddCount</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.addCount;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>下面测试代码会抛出异常,正确结果是6,是不是匪夷所思,这种匪夷所思需要你去看<code>HashSet</code>的具体实现,其<code>addAll</code>实际上是调用了<code>add</code>方法.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">InstrumentedHashSet&lt;String&gt; hashSet = <span class="keyword">new</span> <span class="title class_">InstrumentedHashSet</span>&lt;&gt;();</span><br><span class="line">  hashSet.addAll(Arrays.asList(<span class="string">&quot;张三&quot;</span>, <span class="string">&quot;李四&quot;</span>, <span class="string">&quot;王二&quot;</span>));</span><br><span class="line">  Assert.assertEquals(hashSet.getAddCount(), <span class="number">3</span>);</span><br></pre></td></tr></table></figure>
+<p>这个案例说明了继承导致子类变得很脆弱,其不知道父类的细节,但是却实实在在的依赖了父类的实现.出现了问题也很难找出bug.本质原因是<strong>HashSet并不是专门为继承所设计的类</strong>,因此强行继承那会出现意想不到的问题.有关什么时候该用继承在<a href="https://mrdear.cn/2018/03/25/experience/design_patterns--template_method/">设计模式–模板方法模式的思考</a>一文章有相关讨论,感兴趣的可以去看看.</p>
+<p>回到正题那么换成组合模式,让<code>InstrumentedHashSet</code>持有<code>HashSet</code>的私有实例,add以及addAll方法由<code>HashSet</code>的私有实例代理执行.这就是组合所带来的优势,充分利用其它类的特点,降低耦合度,我只需要你已完成的功能,相比继承而并不受到你内部实现的制约.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">InstrumentedHashSet</span> &lt;E&gt;&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="type">int</span> <span class="variable">addCount</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> HashSet&lt;E&gt; hashSet = <span class="keyword">new</span> <span class="title class_">HashSet</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">add</span><span class="params">(E e)</span> &#123;</span><br><span class="line">    <span class="built_in">this</span>.addCount++;</span><br><span class="line">    <span class="keyword">return</span> hashSet.add(e);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">addAll</span><span class="params">(Collection&lt;? extends E&gt; c)</span> &#123;</span><br><span class="line">    <span class="built_in">this</span>.addCount += c.size();</span><br><span class="line">    <span class="keyword">return</span> hashSet.addAll(c);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">getAddCount</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">this</span>.addCount;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="装饰者模式"><a href="#装饰者模式" class="headerlink" title="装饰者模式"></a>装饰者模式</h2><p>装饰者模式定义为:动态的给一对象添加一些额外的职责,对该对象进行功能性的增强.(只是增强,并没有改变使用原对象的意图)<br>装饰器模式类图:<br><img src="http://res.mrdear.cn/1520506012.png"><br>以上是标准的装饰器模式,其中<code>AbstractDecorator</code>为一个装饰器模板,目的是为了提高代码复用,简化具体装饰器子类的实现成本,当然不需要的话也是可以省略的,其最主要的功能是持有了<code>ComponentInterface</code>这个被装饰者对象,然后子类可以利用类似AOP环绕通知形式来在被装饰类执行<code>sayHello()</code>前后执行自己的逻辑.这是装饰者模式的本质.</p>
+<p>比如<code>ContreteDecoratorA</code>增强了<code>sayHello()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ContreteDecoratorA</span> <span class="keyword">extends</span> <span class="title class_">AbstractDecorator</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="title function_">ContreteDecoratorA</span><span class="params">(ComponentInterface componentInterface)</span> &#123;</span><br><span class="line">    <span class="built_in">super</span>(componentInterface);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">sayHello</span><span class="params">()</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;A start&quot;</span>);</span><br><span class="line">    <span class="built_in">super</span>.sayHello();</span><br><span class="line">    System.out.println(<span class="string">&quot;A end&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>具体使用方式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">   <span class="keyword">final</span> <span class="type">ContreteDecoratorA</span> <span class="variable">decoratorA</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ContreteDecoratorA</span>(<span class="keyword">new</span> <span class="title class_">ComponentInterfaceImpl</span>());</span><br><span class="line">   decoratorA.sayHello();</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>输出</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">A start</span><br><span class="line">hello world</span><br><span class="line">A end</span><br></pre></td></tr></table></figure>
+<p>其中默认实现<code>ComponentInterfaceImpl</code>的sayHello()功能被装饰后增强.</p>
+<h2 id="Java-I-O与装饰者"><a href="#Java-I-O与装饰者" class="headerlink" title="Java I&#x2F;O与装饰者"></a>Java I&#x2F;O与装饰者</h2><h3 id="字节流"><a href="#字节流" class="headerlink" title="字节流"></a>字节流</h3><p>Java I&#x2F;O框架就是一个很好的装饰者模式的实例.如下<code>InputStream</code>关系图<br><img src="http://res.mrdear.cn/1520512559.png"><br>其中<code>FileInputStream</code>,<code>ObjectInputStream</code>等直接实现类提供了最基本字节流读取功能.<br>而<code>FilterInputStream</code>作为装饰者,其内部引用了另一个<code>InputStream</code>(实际被装饰的对象),然后以AOP环绕通知的形式来进行功能增强,笔者认为这里应该把该类定义为abstract更为合适.其承担的角色只是代码复用,帮助具体的装饰者类更加容易的实现功能增强.<br><img src="http://res.mrdear.cn/1520512740.png"><br>具体的装饰者<code>BufferedInputStream</code>为其他字节流提供了缓冲输入的支持.<code>DataInputStream</code>则提供了直接解析Java原始数据流的功能.</p>
+<p>由于装饰者模式的存在,原本一个字节一个字节读的<code>FileInputStream</code>只需要嵌套一层<code>BufferedInputStream</code>即可支持缓冲输入,</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">BufferedInputStream</span> <span class="variable">br</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BufferedInputStream</span>(<span class="keyword">new</span> <span class="title class_">FileInputStream</span>(<span class="keyword">new</span> <span class="title class_">File</span>(<span class="string">&quot;path&quot;</span>)));</span><br></pre></td></tr></table></figure>
+
+<h3 id="字符流"><a href="#字符流" class="headerlink" title="字符流"></a>字符流</h3><p>相比较字节流,字符流这边的关系则有点混乱,主要集中在<code>BufferedReader</code>与<code>FilterReader</code>,其两个角色都是装饰者,而<code>FilterReader</code>是更加基本的装饰者其相对于字节流中的<code>FilterInputStream</code>已经升级为abstract了,目的就是便于具体装饰者实现类更加容易的编写.那么为什么<code>BufferedReader</code>不继承<code>FilterReader</code>呢?这个问题暂时不知道答案,有兴趣的可以关注下知乎,等大牛回答.<br><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/57094582/answer/337119885">为什么BufferedReader 不是 FilterReader的子类，而直接是Reader的子类？</a></p>
+<p>不过从另一个角度来说,设计模式并不是套用模板,其最主要的是思想,对于装饰者模式最重要的是利用组合代替了继承,原有逻辑交给内部引用的类来实现,而自己只做增强功能,只要符合这一思想都可以称之为装饰者模式.<br><img src="http://res.mrdear.cn/1520514188.png"></p>
+<h2 id="Mybatis与装饰者"><a href="#Mybatis与装饰者" class="headerlink" title="Mybatis与装饰者"></a>Mybatis与装饰者</h2><p>Mybatis中有不少利用到装饰者模式,比如二级缓存<code>Cache</code>,另外其<code>Executor</code>也正在朝着装饰者模式改变.这里以Cache接口为主,类图如下:<br><img src="http://res.mrdear.cn/1520515773.png"><br>从类图来看和装饰者模式似乎无半毛钱关系,实际上其省略了<code>AbstractDecorator</code>这一公共的装饰者基类.那么要实现装饰者其实现类中必须有一个Cache的被装饰对象,以LruCache为例.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LruCache</span> <span class="keyword">implements</span> <span class="title class_">Cache</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Cache delegate;</span><br><span class="line">  <span class="keyword">private</span> Map&lt;Object, Object&gt; keyMap;</span><br><span class="line">  <span class="keyword">private</span> Object eldestKey;</span><br><span class="line">  </span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> String <span class="title function_">getId</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> delegate.getId();</span><br><span class="line">  &#125;</span><br><span class="line">  ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其内部拥有<code>Cache delegate</code>这一被装饰者,也就是无论什么Cache,只要套上了<code>LruCache</code>那么就有了LRU这一特性.<br>在<code>org.apache.ibatis.mapping.CacheBuilder#setStandardDecorators</code>构造时则根据配置参数来决定增强哪些功能,下面代码则很好的体现了装饰者模式的优势,还望好好体会.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Cache <span class="title function_">setStandardDecorators</span><span class="params">(Cache cache)</span> &#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="type">MetaObject</span> <span class="variable">metaCache</span> <span class="operator">=</span> SystemMetaObject.forObject(cache);</span><br><span class="line">    <span class="keyword">if</span> (size != <span class="literal">null</span> &amp;&amp; metaCache.hasSetter(<span class="string">&quot;size&quot;</span>)) &#123;</span><br><span class="line">      metaCache.setValue(<span class="string">&quot;size&quot;</span>, size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (clearInterval != <span class="literal">null</span>) &#123;</span><br><span class="line">      cache = <span class="keyword">new</span> <span class="title class_">ScheduledCache</span>(cache);</span><br><span class="line">      ((ScheduledCache) cache).setClearInterval(clearInterval);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (readWrite) &#123;</span><br><span class="line">      cache = <span class="keyword">new</span> <span class="title class_">SerializedCache</span>(cache);</span><br><span class="line">    &#125;</span><br><span class="line">    cache = <span class="keyword">new</span> <span class="title class_">LoggingCache</span>(cache);</span><br><span class="line">    cache = <span class="keyword">new</span> <span class="title class_">SynchronizedCache</span>(cache);</span><br><span class="line">    <span class="keyword">if</span> (blocking) &#123;</span><br><span class="line">      cache = <span class="keyword">new</span> <span class="title class_">BlockingCache</span>(cache);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> cache;</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">CacheException</span>(<span class="string">&quot;Error building standard cache decorators.  Cause: &quot;</span> + e, e);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="线程安全与装饰者"><a href="#线程安全与装饰者" class="headerlink" title="线程安全与装饰者"></a>线程安全与装饰者</h2><p>装饰者模式的功能是增强原有类，因此其经常被用来包装一个非线程安全的类，使其提供线程安全的访问，在JDK中的体现则是<code>Collections.synchronizedXXX</code>方法以及与其类似的一些方法。以<code>synchronizedList</code>为例，其本意是将线程不安全的<code>List</code>实例包装成线程安全的实例，包装方式是使用<code>SynchronizedList</code>提供同步包装，如下所示：对相关方法都使用独占锁来修饰，保证了并发访问的线程安全性。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">SynchronizedList</span>&lt;E&gt; <span class="keyword">extends</span> <span class="title class_">SynchronizedCollection</span>&lt;E&gt; <span class="keyword">implements</span> <span class="title class_">List</span>&lt;E&gt; &#123;</span><br><span class="line">  <span class="keyword">final</span> List&lt;E&gt; list;</span><br><span class="line"></span><br><span class="line">  SynchronizedList(List&lt;E&gt; list) &#123;</span><br><span class="line">    <span class="built_in">super</span>(list);</span><br><span class="line">    <span class="built_in">this</span>.list = list;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> E <span class="title function_">get</span><span class="params">(<span class="type">int</span> index)</span> &#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (mutex) &#123;</span><br><span class="line">      <span class="keyword">return</span> list.get(index);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">add</span><span class="params">(<span class="type">int</span> index, E element)</span> &#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (mutex) &#123;</span><br><span class="line">      list.add(index, element);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  ....</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="函数式编程与装饰者"><a href="#函数式编程与装饰者" class="headerlink" title="函数式编程与装饰者"></a>函数式编程与装饰者</h2><p>在函数式编程中因为函数是一等公民，因此互相嵌套是常有的事情，比如以下对于加锁解锁的一个函数封装调用</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;T&gt; T  <span class="title function_">lockTemplate</span><span class="params">(Lock lock, Supplier&lt;T&gt; supplier)</span> &#123;</span><br><span class="line">  lock.lock();</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> supplier.get();</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    lock.unlock();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数接收一个锁以及一个<code>supplier</code>提供者，其使用方式也很简单，比如下面方式使得<code>i++</code>变得线程安全。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ReentrantLock</span> <span class="variable">lock</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ReentrantLock</span>();</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span>[] boxInt = <span class="keyword">new</span> <span class="title class_">int</span>[<span class="number">1</span>];</span><br><span class="line">  </span><br><span class="line">  <span class="type">Integer</span> <span class="variable">value</span> <span class="operator">=</span> LockTemplate.lockTemplate(lock, () -&gt; &#123;</span><br><span class="line">    <span class="comment">// 线程不安全的操作</span></span><br><span class="line">    <span class="keyword">return</span> boxInt[<span class="number">0</span>]++;</span><br><span class="line">  &#125;);</span><br></pre></td></tr></table></figure>
+<p>由于Java是面向对象范式语言，对函数式编程支持的并不是很好，所以这个例子并不能很好的描述函数式编程，不过思想上来看这是一种装饰者模式的实践，只不过装饰者与被装饰都变成了函数，装饰者函数的功能也是对被装饰者功能的增强。</p>
+<h2 id="装饰者模式与桥接模式"><a href="#装饰者模式与桥接模式" class="headerlink" title="装饰者模式与桥接模式"></a>装饰者模式与桥接模式</h2><p>这两个模式起初笔者很疑惑，两者的本质都是组合，并且从类图上来看两者几乎是一致的，那么他们的区别是什么呢？<br>我认为从继承树上来看装饰者模式的目的是纵向的扩展类（增加树的深度），从而为现有的实现类提供更强大的支援。<br>桥接模式则是水平扩展（增加树的宽度），以现有的类为代码复用的基础，然后在这个基础上水平扩展出另外的业务实现，这里更加注重的是解耦，把变化的与不变的分离开。</p>
+<p>另外设计模式本身之间相互影响，没必要纠结于是某一种特定的模式，只要理解其背后的思想就可以了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>装饰者模式本质上来说是AOP思想的一种实现方式，其持有被装饰者，因此可以控制被装饰者的行为从而达到了AOP的效果。</p>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><p>偶然看到一篇博文: <a target="_blank" rel="noopener" href="http://javatar.iteye.com/blog/40188">项目中用到的一个小工具类(字符过滤器)</a>,里面运用了装饰者设计模式,工厂模式,模板方法模式设计了这样一个符合开闭原则的工具类.感兴趣的也可以看看.</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/design-patterns-decorator-model.html">设计模式--装饰者模式思考</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/design-patterns-decorator-model.html">https://mrdear.cn/posts/design-patterns-decorator-model.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/design-patterns-builder.html" title="设计模式--Builder模式的思考"><i class="iconfont icon-prev"></i>设计模式--Builder模式的思考</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/java_enum.html" title="Java--Enum的思考">Java--Enum的思考<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BB%BA%E8%AE%AE%E4%BD%BF%E7%94%A8%E7%BB%84%E5%90%88%E4%BB%A3%E6%9B%BF%E7%BB%A7%E6%89%BF"><span class="toc-number">1.</span> <span class="toc-text">为什么建议使用组合代替继承?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A3%85%E9%A5%B0%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.</span> <span class="toc-text">装饰者模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java-I-O%E4%B8%8E%E8%A3%85%E9%A5%B0%E8%80%85"><span class="toc-number">3.</span> <span class="toc-text">Java I&#x2F;O与装饰者</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%97%E8%8A%82%E6%B5%81"><span class="toc-number">3.1.</span> <span class="toc-text">字节流</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%97%E7%AC%A6%E6%B5%81"><span class="toc-number">3.2.</span> <span class="toc-text">字符流</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Mybatis%E4%B8%8E%E8%A3%85%E9%A5%B0%E8%80%85"><span class="toc-number">4.</span> <span class="toc-text">Mybatis与装饰者</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E4%B8%8E%E8%A3%85%E9%A5%B0%E8%80%85"><span class="toc-number">5.</span> <span class="toc-text">线程安全与装饰者</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B%E4%B8%8E%E8%A3%85%E9%A5%B0%E8%80%85"><span class="toc-number">6.</span> <span class="toc-text">函数式编程与装饰者</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A3%85%E9%A5%B0%E8%80%85%E6%A8%A1%E5%BC%8F%E4%B8%8E%E6%A1%A5%E6%8E%A5%E6%A8%A1%E5%BC%8F"><span class="toc-number">7.</span> <span class="toc-text">装饰者模式与桥接模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">8.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%B1%95"><span class="toc-number">9.</span> <span class="toc-text">扩展</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>并行设计模式--Thread Specific Storge模式 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/design-patterns-thread-specific-storge.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/designpattern.png" alt="并行设计模式--Thread Specific Storge模式">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">并行设计模式--Thread Specific Storge模式</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-05-20</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>多线程的不安全在于共享了变量实例，因此<code>Thread Specific Storge</code>模式的思路是把变量与单一线程绑定，那么就不存在共享，自然就避免了加锁消耗以及其他高并发所需要的策略。<br><code>Thread Specific Storge</code>一般有两种策略：1. ThreadLocal策略，也就是与当前线程实例绑定。 2. 借用模式对象池策略，由对象池进行管理，控制对象只能同一时间被一个单线程使用。</p>
+<h2 id="ThreadLocal设计与应用"><a href="#ThreadLocal设计与应用" class="headerlink" title="ThreadLocal设计与应用"></a>ThreadLocal设计与应用</h2><h3 id="ThreadLocal策略"><a href="#ThreadLocal策略" class="headerlink" title="ThreadLocal策略"></a>ThreadLocal策略</h3><p>ThreadLocal策略比较简单，其原理是在<code>Thread</code>类中私有化一个属性变量<code>java.lang.ThreadLocal.ThreadLocalMap</code>，该Map存储着与当前线程绑定的相关变量。一个<code>ThreadLocal</code>的基本使用如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> ThreadLocal&lt;String&gt; threadLocal1 = <span class="keyword">new</span> <span class="title class_">ThreadLocal</span>&lt;&gt;();</span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> ThreadLocal&lt;String&gt; threadLocal2 = ThreadLocal.withInitial(() -&gt; &#123;</span><br><span class="line">  System.out.println(<span class="string">&quot;t2触发初始化&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="string">&quot;threadLocal2&quot;</span>;</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">  threadLocal1.set(<span class="string">&quot;threadLocal1&quot;</span>);</span><br><span class="line">  <span class="comment">// 触发t2的初始化操作,并返回t2的值</span></span><br><span class="line">  System.out.println(threadLocal2.get());</span><br><span class="line">  <span class="comment">// 得到t1的值</span></span><br><span class="line">  System.out.println(threadLocal1.get());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码在内存中的结构如下，其对象本身<code>ThreadLocal</code>会作为<code>ThreadLocalMap</code>的key存储。<br><img src="http://res.mrdear.cn/1526516764.png"><br>既然是Map结构，那么会有几个问题：<br><strong>ThreadLocalMap是如何解决hash冲突的？</strong><br><code>ThreadLocalMap</code>是一个简单的Map实现，其没有构造对应的冲突链，而是当遇到冲突时<strong>顺延到下一个槽位</strong>，也就是常说的开放地址法，具体逻辑可以在<code>java.lang.ThreadLocal.ThreadLocalMap#set</code>中看到。</p>
+<p><strong>ThreadLocalMap的扩容机制是什么？</strong><br>扩容要提到负载因子,其负载因子计算为<code>threshold = len * 2 / 3</code>，当元素个数大于该值时会触发扩容，扩容操作把之前元素拷贝进来后替换掉之前的数组。</p>
+<h3 id="使用ThreadLocal复用对象"><a href="#使用ThreadLocal复用对象" class="headerlink" title="使用ThreadLocal复用对象"></a>使用ThreadLocal复用对象</h3><p>在Java中有一些线程不安全的对象需要被频繁创建，比如<code>StringBuilder</code>，那么就可以利用<code>ThreadLocal</code>复用这些对象。<br>在<code>BigDecimal</code>中有如下类，其本身是包装了<code>StringBuilder</code>，并提供重置方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">StringBuilderHelper</span> &#123;</span><br><span class="line">      <span class="keyword">final</span> StringBuilder sb;    <span class="comment">// Placeholder for BigDecimal string</span></span><br><span class="line"></span><br><span class="line">      StringBuilderHelper() &#123;</span><br><span class="line">          sb = <span class="keyword">new</span> <span class="title class_">StringBuilder</span>();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Accessors.</span></span><br><span class="line">      StringBuilder <span class="title function_">getStringBuilder</span><span class="params">()</span> &#123;</span><br><span class="line">          sb.setLength(<span class="number">0</span>);</span><br><span class="line">          <span class="keyword">return</span> sb;</span><br><span class="line">      &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在使用前需要把该类使用<code>ThreadLocal</code>包裹</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ThreadLocal&lt;StringBuilderHelper&gt;</span><br><span class="line">    threadLocalStringBuilderHelper = <span class="keyword">new</span> <span class="title class_">ThreadLocal</span>&lt;StringBuilderHelper&gt;() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> StringBuilderHelper <span class="title function_">initialValue</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">StringBuilderHelper</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>利用<code>ThreadLocal</code>这样设计解决了线程不安全的问题，然后提高对象复用性，尤其是大字符串的拼接会让<code>StringBuilder</code>不停的扩容，频繁创建对性能影响还是挺大的。</p>
+<h2 id="对象池策略"><a href="#对象池策略" class="headerlink" title="对象池策略"></a>对象池策略</h2><p>借还策略下的对象池模式也经常被用来解决非线程安全的类在多线程环境下的使用，所谓的借还模式如下所示</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">  GenericObjectPool&lt;SimpleDateFormat&gt; pool = <span class="keyword">new</span> <span class="title class_">GenericObjectPool</span>&lt;&gt;(<span class="keyword">new</span> <span class="title class_">SimplePoolObjectFactory</span>());</span><br><span class="line">  <span class="comment">// 借对象，如果池中没有对象则主动去创建然后再返回</span></span><br><span class="line">  <span class="type">SimpleDateFormat</span> <span class="variable">dateFormat</span> <span class="operator">=</span> pool.borrowObject();</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    System.out.println(dateFormat.format(<span class="keyword">new</span> <span class="title class_">Date</span>()));</span><br><span class="line">  &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">    <span class="comment">// 用完释放，返回池中</span></span><br><span class="line">    pool.returnObject(dateFormat);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述代码中<code>pool</code>是一个多线程可以共享的实例，其必须保证对象的借出与归还的原子性，当对象被借出时那么对象就与当前线程绑定了起来，对象池保证了其他线程操作时不会再次获取到该实例，因此对象不存在共享，也就不存在多线程并发问题。</p>
+<h3 id="对象池的控制原理"><a href="#对象池的控制原理" class="headerlink" title="对象池的控制原理"></a>对象池的控制原理</h3><p>以<code>apache common pool2</code>为例，其<code>GenericObjectPool</code>的实现原理主要是<code>ConcurrentMap</code>与<code>LinkedBlockingDeque（非JDK版本）</code>，如下图所示：<br><img src="http://res.mrdear.cn/1526557246.png"><br>对象池本质上是一个<strong>集生产与消费，且支持可回收的工厂</strong>。生产则对应着用户获取对象时，如果当前<code>idleObjects</code>中不存在则主动去创建对象，消费则对应着Client的<code>borrowObject</code>操作，可回收则是<code>returnObject</code>还回池中操作。作为工厂其由责任对生产出的产品个数与消费能力的变化进行调整，因此还需要有一个后台线程做这件事，对应着是<code>org.apache.commons.pool2.impl.BaseGenericObjectPool.Evictor</code>类定时清理策略。</p>
+<p>对应的核心操作解析：<br><strong>borrowObject操作</strong><br><code>borrowObject</code>操作主要是从对象池也就是上述的<code>LinkedBlockingDeque&lt;PooledObject&lt;T&gt;&gt; idleObjects</code>中取出实体，当实体不存在的时候要主动去创建，</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 取出队首元素，该方法并不会产生阻塞</span></span><br><span class="line">p = idleObjects.pollFirst();</span><br><span class="line"><span class="keyword">if</span> (p == <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 没有获取到对应元素则主动创建</span></span><br><span class="line">    p = create();</span><br><span class="line">    <span class="keyword">if</span> (p != <span class="literal">null</span>) &#123;</span><br><span class="line">        create = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果上述过程中仍然没有获取到对象，则根据配置选择是否阻塞当前调用，阻塞则使用<code>BlockingDeque</code>的take操作或者poll(time)操作</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (p == <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 根据最大等待获取时间采取不同的等待策略</span></span><br><span class="line">    <span class="keyword">if</span> (borrowMaxWaitMillis &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// take操作无限等待</span></span><br><span class="line">        p = idleObjects.takeFirst(); </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 有限时间的等待</span></span><br><span class="line">        p = idleObjects.pollFirst(borrowMaxWaitMillis, </span><br><span class="line">                TimeUnit.MILLISECONDS);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>returnObject操作</strong><br><code>returnObject</code>操作主要是把使用过的对象还回池中，反映到操作上就是把一个对象放入<code>LinkedBlockingDeque&lt;PooledObject&lt;T&gt;&gt; idleObjects</code>的队首或者队尾，当可用对象过多，则是使用直接销毁对象的策略。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 最大可用对象数量</span></span><br><span class="line"><span class="keyword">final</span> <span class="type">int</span> <span class="variable">maxIdleSave</span> <span class="operator">=</span> getMaxIdle();</span><br><span class="line"><span class="comment">// 池关闭或者池已经满了则主动销毁掉释放过来的对象</span></span><br><span class="line"><span class="keyword">if</span> (isClosed() || maxIdleSave &gt; -<span class="number">1</span> &amp;&amp; maxIdleSave &lt;= idleObjects.size()) &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        destroy(p);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (<span class="keyword">final</span> Exception e) &#123;</span><br><span class="line">        swallowException(e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 根据队列配置选择头插法或者尾插法</span></span><br><span class="line">    <span class="keyword">if</span> (getLifo()) &#123;</span><br><span class="line">        idleObjects.addFirst(p);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        idleObjects.addLast(p);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 关闭则清理池</span></span><br><span class="line">    <span class="keyword">if</span> (isClosed()) &#123;</span><br><span class="line">        clear();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>removeAbandoned操作</strong><br><code>removeAbandoned</code>主要应对内存中对象实例进行清理，当Client使用完对象却没有还回,此时该对象就应该被清理掉。<br>清理策略主要针对被借出的对象，对象被借出时该对象上有对应的时间标记，因此遍历池中所有对象，清除状态为被借出，并且借出时间大于指定时间的对象即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取全部对象的迭代器</span></span><br><span class="line"><span class="keyword">final</span> Iterator&lt;PooledObject&lt;T&gt;&gt; it = allObjects.values().iterator();</span><br><span class="line"><span class="comment">// 遍历池中产生的所有对象</span></span><br><span class="line"><span class="keyword">while</span> (it.hasNext()) &#123;</span><br><span class="line">    <span class="keyword">final</span> PooledObject&lt;T&gt; pooledObject = it.next();</span><br><span class="line">    <span class="keyword">synchronized</span> (pooledObject) &#123;</span><br><span class="line">        <span class="comment">// 遍历池中已被借出,并且借出时间大于指定时间的对象</span></span><br><span class="line">        <span class="keyword">if</span> (pooledObject.getState() == PooledObjectState.ALLOCATED &amp;&amp;</span><br><span class="line">                pooledObject.getLastUsedTime() &lt;= timeout) &#123;</span><br><span class="line">            <span class="comment">// 标记为待清理</span></span><br><span class="line">            pooledObject.markAbandoned();</span><br><span class="line">            <span class="comment">// 清理对象列表</span></span><br><span class="line">            remove.add(pooledObject);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>Evictor驱逐线程</strong><br><code>Evictor</code>是一个<code>TimerTask</code>的定时任务，其主要功能是清理可用对象数量，保证<code>idleObjects</code>中的数量最小可用。<br><code>Evictor</code>对应的操作在<code>org.apache.commons.pool2.impl.GenericObjectPool#evict</code>方法中，其逻辑是遍历<code>idleObjects</code>中可用对象，使用策略接口<code>EvictionPolicy</code>判断是否符合销毁条件，符合则销毁，逻辑比较简单。</p>
+<p>而<code>EvictionPolicy</code>的默认策略为对象在<code>idleObjects</code>的存活时间大于配置的清理时间，并且当前<code>idleObjects</code>的数量对象大于最小可用对象配置的情况下进行回收。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">evict</span><span class="params">(<span class="keyword">final</span> EvictionConfig config, <span class="keyword">final</span> PooledObject&lt;T&gt; underTest,</span></span><br><span class="line"><span class="params">        <span class="keyword">final</span> <span class="type">int</span> idleCount)</span> &#123;</span><br><span class="line">    <span class="comment">// 清理策略是根据当前对象的空闲时间与配置空闲时间比较</span></span><br><span class="line">    <span class="keyword">if</span> ((config.getIdleSoftEvictTime() &lt; underTest.getIdleTimeMillis() &amp;&amp;</span><br><span class="line">            config.getMinIdle() &lt; idleCount) ||</span><br><span class="line">            config.getIdleEvictTime() &lt; underTest.getIdleTimeMillis()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>Thread Specific Storge</code>模式的本质是不共享数据，从而解决了多线程下竞争的问题，一般情况下对于构造成本比较小的数据直接使用<code>ThreadLocal</code>，需要时则直接创建一个与当前线程所绑定。构造成本比较大的对象比如各种连接池则使用对象池方式。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://item.jd.com/11785190.html">Java多线程编程实战指南</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/design-patterns-thread-specific-storge.html">并行设计模式--Thread Specific Storge模式</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/design-patterns-thread-specific-storge.html">https://mrdear.cn/posts/design-patterns-thread-specific-storge.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/design-patterns-immutable.html" title="并行设计模式--immutable模式"><i class="iconfont icon-prev"></i>并行设计模式--immutable模式</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-double-loadbalance.html" title="Dubbo --常见负载均衡算法分析">Dubbo --常见负载均衡算法分析<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#ThreadLocal%E8%AE%BE%E8%AE%A1%E4%B8%8E%E5%BA%94%E7%94%A8"><span class="toc-number">1.</span> <span class="toc-text">ThreadLocal设计与应用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ThreadLocal%E7%AD%96%E7%95%A5"><span class="toc-number">1.1.</span> <span class="toc-text">ThreadLocal策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8ThreadLocal%E5%A4%8D%E7%94%A8%E5%AF%B9%E8%B1%A1"><span class="toc-number">1.2.</span> <span class="toc-text">使用ThreadLocal复用对象</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E6%B1%A0%E7%AD%96%E7%95%A5"><span class="toc-number">2.</span> <span class="toc-text">对象池策略</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E6%B1%A0%E7%9A%84%E6%8E%A7%E5%88%B6%E5%8E%9F%E7%90%86"><span class="toc-number">2.1.</span> <span class="toc-text">对象池的控制原理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

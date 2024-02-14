@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>存储技术 -- SSD原理简介 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/storage-ssd.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/uPic/SSD_1620197401.png" alt="存储技术 -- SSD原理简介">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">存储技术 -- SSD原理简介</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2021-05-05</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>最近开始读《深入浅出SSD-固态存储核心技术》等相关存储原理的书籍，本文是根据书内容所做的总结，解答了博主多年以来对存储方面的疑惑，希望本文对你有帮助。</p>
+<h2 id="SSD物理结构"><a href="#SSD物理结构" class="headerlink" title="SSD物理结构"></a>SSD物理结构</h2><p>SSD (Solid State Drive)：即固态硬盘，是一种以半导体(NAND Flash)为介质的存储设备。从物理结构上来看，有以下几个组件：</p>
+<ul>
+<li>接口：用于与计算机等设备相连</li>
+<li>主控：本质上也是一颗小型CPU，负责数据读取，写入以及SSD自身维护等</li>
+<li>缓存DRAM：用于一些加速场景，比如映射表缓存 </li>
+<li>闪存：实际数据存储区域</li>
+<li>PCB(电源，电容等)：电源管理</li>
+</ul>
+<p>因此可以大致想象整个工作方式如下图所示：主机通过接口将<strong>数据</strong>提交到SSD，SSD<strong>主控</strong>首先决定数据到底存储在<strong>闪存</strong>的什么位置，然后再将数据写入到具体的<strong>闪存</strong>位置中。</p>
+<p><img src="https://res.mrdear.cn/uPic/image-20210504213628535_1620135389.png" alt="image-20210504213628535"></p>
+<p>SSD使用的闪存芯片其内部由许许多多存储单元构成，每一个存储单元是浮栅晶体管结构，对于该结构我们只需要知道其可以存储电子，且断电后电子不会消失，也因此SSD为非易失性存储器。从数据的角度，所谓的写数据，是控制电子数量来标识状态，读数据则是加电压，获取对应的状态。随着SSD不断的发展，一个存储单元能够标识的bit位数据在不断增加，将SSD颗粒分为SLC，MLC，TLC，QLC，分别对应1bit，2bit，3bit，4bit，其速度以及寿命随着bit位数增加而<strong>减少</strong>，但容量不断<strong>增大</strong>，当然成本也在逐渐<strong>降低</strong>，时至今日，SSD已经很接近与HDD的价格了。</p>
+<p><img src="https://res.mrdear.cn/uPic/image-20210504221045333_1620137445.png" alt="image-20210504221045333"></p>
+<p>那么如何理解这发展现象？举个例子，当一个存储单元只需要表示1bit位数时，可以很简单的认为电子数大于0，标识1，小于等于0标识0，那么无论是加电压判断还是清空电子逻辑都方便很多。当需要表示2bit时，可以认为当<strong>电子数&gt;&#x3D;3</strong>时，为11，3&gt;电子数&gt;&#x3D;2时标识10，<strong>2&gt;电子数&gt;&#x3D;1</strong>时标识01，电子数为0时标识0，那么要准确判断数据到底是什么自然就麻烦了很多，因此随着bit表示增加，实际情况只会更加复杂，因此性能是逐渐下降的。</p>
+<p>但随之带来的好处是成本的下降，在1bit存储单元时代，大容量的SSD只能依赖工艺的提升，在一个闪存芯片中塞入更多的存储单元，但带来的容量却很有限，然而牺牲部分速度前提下，一个存储单元标识2bit，相同面积下容量直接翻倍，这是SSD能够普及消费者市场的重要推力。</p>
+<h2 id="SSD数据存储结构"><a href="#SSD数据存储结构" class="headerlink" title="SSD数据存储结构"></a>SSD数据存储结构</h2><p>大容量的SSD，一般由多个NAND Flash所组成，这里单独看一个NAND Flash。</p>
+<p>最外层被称为DIE&#x2F;LUN，该部分是接收与执行闪存命令的基本单元，一个LUN又由多个Plane所构成，Plane是真正执行数据读写单元，因此具备独立的Cache Register以及Page Register，一个Plane由多个Block所构成，Block是数据擦除的基本单位，由于擦除需要较高电压，因此在Block层面是比较妥协的做法，Block由多个Page构成，一个Page一般4KB，Page是最基本的数据读写单位。这里直接借用书中的图，能够很清晰的展示上述关系。</p>
+<p><img src="https://res.mrdear.cn/uPic/image-20210505000759287_1620144479.png" alt="image-20210505000759287"></p>
+<h3 id="读写流程"><a href="#读写流程" class="headerlink" title="读写流程"></a>读写流程</h3><p>先不考虑操作系统的影响，当主控接收到读写命令后，会将其下发到对应的LUN，LUN再下发到Plane上。正常情况下读写流程只需要Cache Register参与即可。举个例子，写入时，数据先写到Cache Register，然后再由Cache Register写入到闪存介质中，读取时，数据先读取到Cache Register，然后再传输到主控，这里的读写单位都是Page。</p>
+<p>那么Page Register有什么用？闪存除了上述正常读写流程外，还支持Cache读写，在Cache读情况下，当主控读取Cache Register时，Page Register可以开始读取下一份数据，也就是预读，从而减少等待时间。同理，Cache写情况下当一份数据正在写入时，主控可以将另一份数据传输到Cache Register中。这里博主是类比计算机设计，一个SSD看作是小型计算机系统，主控作为CPU属于高速设备，存储介质自然是低速设备，两者之间速度不匹配带来了巨大的CPU性能损耗，因此Cache Register以及Page Register承担的是寄存器的作用，尽可能降低这种速度不匹配带来的影响。</p>
+<p><img src="https://res.mrdear.cn/uPic/image-20210505102331283_1620181411.png" alt="image-20210505102331283"></p>
+<h3 id="Block有什么用"><a href="#Block有什么用" class="headerlink" title="Block有什么用"></a>Block有什么用</h3><p>上述读写流程中，并没有出现Block这一结构，那么为什么需要Block？</p>
+<p>在SSD中，由于NAND Flash的特性，每次写入都是以Page维度，并且只能写入到空闲的Page，无法覆写原本有内容的Page，因此产生了擦除。由于擦除本身需要高电压，让电子转移，也因此Block的存在是为了应对数据擦除，对于SSD来说数据的擦除是在对应存储单元上加高电压，经过足够长的时间后，电子会丢失，整个存储单元回到初始状态。</p>
+<h2 id="SSD核心：FTL"><a href="#SSD核心：FTL" class="headerlink" title="SSD核心：FTL"></a>SSD核心：FTL</h2><p>可以认为Block是SSD的基本管理单位，由于闪存块的寿命限制，整个Block的管理算法并没有想象中那么简单，常见的有以下几个问题：</p>
+<ul>
+<li>由于Page不能覆写，当数据发生变更时，必须写入到一个新的位置，那么必须需要映射表存在。旧位置的数据此时成为了垃圾数据，那么必须需要GC来进行垃圾回收。</li>
+<li>闪存块都是有具体寿命的，因此要保证SSD的整体寿命以及性能，需要均衡每个闪存块的擦除次数，保证整体使用寿命，这叫磨损平衡。</li>
+<li>闪存块读取存在次数限制，读的太多了，上面数据会出错，造成读干扰，因此在读取一定次数后，需要将数据搬迁到新的块当中。同样，如果长时间不读，那么电子也会流失，造成数据错乱，闪存块也需要搬动数据来提高数据准确性。这也是SSD断电不使用容易丢失数据的本质原因。</li>
+</ul>
+<p>上述问题的解决全靠FTL (Flash Translation Layer)，FTL最基础的功能是将主机的逻辑地址空间翻译成闪存的物理地址空间，除此之外好的FTL还会实现上述的垃圾回收，磨损平衡，坏块管理，数据保持等问题。</p>
+<h3 id="页映射"><a href="#页映射" class="headerlink" title="页映射"></a>页映射</h3><p>操作系统访问SSD时，是通过LBA(Logical Block Address)进行寻址，LBA的大小由具体的文件系统所决定，一般为4KB。SSD内部维护了一个逻辑页到物理页的映射关系表，用户每写入一个逻辑页，就会产生一条新的映射关系。</p>
+<p>SSD会在内部开辟一个单独的空间用于存储映射表，以256G大小的SSD，映射表大概256MB，SSD板载的DRAM其主要目地是为了缓存该映射表，这样，映射关系的查找就会变得非常迅速，从而提高整个SSD的访问效率。</p>
+<p><img src="https://res.mrdear.cn/uPic/image-20210505114449143_1620186289.png" alt="image-20210505114449143"></p>
+<h3 id="垃圾回收"><a href="#垃圾回收" class="headerlink" title="垃圾回收"></a>垃圾回收</h3><p>由于闪存无法覆盖写，那么数据变更时，变更部分会直接写入到新的区域。FTL会控制一个块上垃圾页的比例，垃圾页大于一定阈值时，触发垃圾回收，主要流程是将正常页搬迁到其他块，然后对整个块进行擦除达到回收目地。如下图所示，回收到x,y两个块的可用数据迁移到z，同时擦除x，y。</p>
+<p><img src="https://res.mrdear.cn/uPic/image-20210505140231494_1620194551.png" alt="image-20210505140231494"></p>
+<p>这里额外提下Trim指令，Trim是SSD提供的指令，用于主机上删除文件时，主动通知SSD对应文件已经被删除，这样可以方便对SSD做垃圾回收，而不是写入时才垃圾回收。按理来说这个是本来就该有的指令，为什么单独提起呢？我想大概原因还是SSD近些年才开始大范围普及，早起的HDD是支持覆写的，不需要垃圾回收，操作系统给定指令直接写即可，而SSD需要擦除后才能写，因此多了这一步骤。现在的SSD基本都默认开启了trim，我们也无需太关注这个。</p>
+<h3 id="磨损平衡"><a href="#磨损平衡" class="headerlink" title="磨损平衡"></a>磨损平衡</h3><p>每个闪存块的寿命有限，想要保证SSD最佳寿命，即需要保证每个闪存块的擦除数保持平衡。从数据的更新频次来看，主要有冷数据以及热数据，比如操作系统的很多文件，写入后基本不再更新。而日常应用日志却更新频繁。那么FTL需要将冷的数据搬迁到<strong>写入次数</strong>比较多的闪存块，这叫静态磨损平衡。此外FTL还需要将热数据写到磨损次数比较少的块上，这叫动态磨损平衡。</p>
+<h3 id="数据保持"><a href="#数据保持" class="headerlink" title="数据保持"></a>数据保持</h3><p>数据保持主要解决两个问题，其一是读次数限制，读次数主要因为读取时是加一定电压，相当于轻微写入，次数多了自然会造成数据不准确，FTL的做法很简单，针对读大于一定次数的块，主动搬迁数据到新的块，然后擦除该块。其二是电子自然流失导致数据不准确，FTL则会每隔一段时间对块进行扫描，发现其中bit翻转大于一定阈值，则主动进行搬迁刷新数据。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>整个SSD设计还有很多其他的问题需要处理，本文根据书籍内容只是做了一些简单总结，有兴趣的建议看参考中的书籍，写的很详细，值得阅读。</p>
+<p>另外一块单独的SSD我们可以理解是一块未被开垦的荒地，想要实际存储数据还需要搭配文件系统+操作系统，这部分内容后续文章会分析总结，敬请期待。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>《深入浅出SSD-固态存储核心技术》- SSDFans</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/storage-ssd.html">存储技术 -- SSD原理简介</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/storage-ssd.html">https://mrdear.cn/posts/storage-ssd.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/tools-alfred-cmd-search.html" title="造轮子--Command Search Alfred"><i class="iconfont icon-prev"></i>造轮子--Command Search Alfred</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/readnote-maven_in_action.html" title="读书笔记 -- 《Maven实战》">读书笔记 -- 《Maven实战》<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#SSD%E7%89%A9%E7%90%86%E7%BB%93%E6%9E%84"><span class="toc-number">1.</span> <span class="toc-text">SSD物理结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SSD%E6%95%B0%E6%8D%AE%E5%AD%98%E5%82%A8%E7%BB%93%E6%9E%84"><span class="toc-number">2.</span> <span class="toc-text">SSD数据存储结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%BB%E5%86%99%E6%B5%81%E7%A8%8B"><span class="toc-number">2.1.</span> <span class="toc-text">读写流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Block%E6%9C%89%E4%BB%80%E4%B9%88%E7%94%A8"><span class="toc-number">2.2.</span> <span class="toc-text">Block有什么用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SSD%E6%A0%B8%E5%BF%83%EF%BC%9AFTL"><span class="toc-number">3.</span> <span class="toc-text">SSD核心：FTL</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B5%E6%98%A0%E5%B0%84"><span class="toc-number">3.1.</span> <span class="toc-text">页映射</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6"><span class="toc-number">3.2.</span> <span class="toc-text">垃圾回收</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A3%A8%E6%8D%9F%E5%B9%B3%E8%A1%A1"><span class="toc-number">3.3.</span> <span class="toc-text">磨损平衡</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BF%9D%E6%8C%81"><span class="toc-number">3.4.</span> <span class="toc-text">数据保持</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Mybatis源码分析(四)--TypeHandler的解析 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-mybatis-type-handler.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/mybatis.png" alt="Mybatis源码分析(四)--TypeHandler的解析">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Mybatis源码分析(四)--TypeHandler的解析</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2017-12-15</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Mybatis/">Mybatis</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <h3 id="学习前的疑问"><a href="#学习前的疑问" class="headerlink" title="学习前的疑问"></a>学习前的疑问</h3><ol>
+<li>TypeHandler的主要功能是什么?</li>
+<li>TypeHandler如何配置?</li>
+<li>Mybatis是如何使用TypeHandler?(参数设置,结果映射)</li>
+<li>实现通用枚举转换器的可行方案是什么?</li>
+</ol>
+<h3 id="TypeHandler的主要功能是什么"><a href="#TypeHandler的主要功能是什么" class="headerlink" title="TypeHandler的主要功能是什么?"></a>TypeHandler的主要功能是什么?</h3><p><code>TypeHandler</code>是一个接口,那么其所拥有什么功能最简单的方法是看接口方法与注释(这里mybatis注释相当少),那么看下列方法.<br>1.<code>void setParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException;</code><br>该方法为设置参数使用的转换方法,所需要的参数基本都给你传过来了,因此很好理解.<br>2.<code>T getResult(ResultSet rs, String columnName) throws SQLException;</code><br>该方法是拿到结果集后根据列名称处理结果<br>3.<code>T getResult(ResultSet rs, int columnIndex) throws SQLException</code><br>该方法是拿到结果集后根据列序号处理结果<br>4.<code>T getResult(CallableStatement cs, int columnIndex) throws SQLException;</code><br>该方法是针对存储过程转换结果.</p>
+<p>那么<code>TypeHandler</code>的作用就可以简单的理解为: </p>
+<ol>
+<li><strong>转换参数到sql中</strong></li>
+<li><strong>转换查询结果到Java类中</strong></li>
+</ol>
+<h3 id="TypeHandler如何配置"><a href="#TypeHandler如何配置" class="headerlink" title="TypeHandler如何配置?"></a>TypeHandler如何配置?</h3><h4 id="1-系统默认转换器"><a href="#1-系统默认转换器" class="headerlink" title="1.系统默认转换器"></a>1.系统默认转换器</h4><p>TypeHandler有一个注册工厂为<code>TypeHandlerRegistry</code>类,该类中默认初始化了常用的转换器,其成员变量中有如下两个Map,可以看到<code>JDBC_TYPE_HANDLER_MAP</code>该map是针对jdbc转换到Java类的转换,为一对一结构,<code>TYPE_HANDLER_MAP</code>该map是针对Java类到JDBC类型的转换,为一对多结构.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Map&lt;JdbcType, TypeHandler&lt;?&gt;&gt; JDBC_TYPE_HANDLER_MAP = <span class="keyword">new</span> <span class="title class_">EnumMap</span>&lt;JdbcType, TypeHandler&lt;?&gt;&gt;(JdbcType.class);</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> Map&lt;Type, Map&lt;JdbcType, TypeHandler&lt;?&gt;&gt;&gt; TYPE_HANDLER_MAP = <span class="keyword">new</span> <span class="title class_">ConcurrentHashMap</span>&lt;Type, Map&lt;JdbcType, TypeHandler&lt;?&gt;&gt;&gt;();</span><br></pre></td></tr></table></figure>
+
+<p>以String类的转换器注册为例分析下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">register(String.class, <span class="keyword">new</span> <span class="title class_">StringTypeHandler</span>());</span><br><span class="line">register(String.class, JdbcType.CHAR, <span class="keyword">new</span> <span class="title class_">StringTypeHandler</span>());</span><br><span class="line">register(String.class, JdbcType.CLOB, <span class="keyword">new</span> <span class="title class_">ClobTypeHandler</span>());</span><br><span class="line">register(String.class, JdbcType.VARCHAR, <span class="keyword">new</span> <span class="title class_">StringTypeHandler</span>());</span><br><span class="line">register(String.class, JdbcType.LONGVARCHAR, <span class="keyword">new</span> <span class="title class_">ClobTypeHandler</span>());</span><br><span class="line">register(String.class, JdbcType.NVARCHAR, <span class="keyword">new</span> <span class="title class_">NStringTypeHandler</span>());</span><br><span class="line">register(String.class, JdbcType.NCHAR, <span class="keyword">new</span> <span class="title class_">NStringTypeHandler</span>());</span><br><span class="line">register(String.class, JdbcType.NCLOB, <span class="keyword">new</span> <span class="title class_">NClobTypeHandler</span>());</span><br><span class="line">register(JdbcType.CHAR, <span class="keyword">new</span> <span class="title class_">StringTypeHandler</span>());</span><br><span class="line">register(JdbcType.VARCHAR, <span class="keyword">new</span> <span class="title class_">StringTypeHandler</span>());</span><br><span class="line">register(JdbcType.CLOB, <span class="keyword">new</span> <span class="title class_">ClobTypeHandler</span>());</span><br><span class="line">register(JdbcType.LONGVARCHAR, <span class="keyword">new</span> <span class="title class_">ClobTypeHandler</span>());</span><br><span class="line">register(JdbcType.NVARCHAR, <span class="keyword">new</span> <span class="title class_">NStringTypeHandler</span>());</span><br><span class="line">register(JdbcType.NCHAR, <span class="keyword">new</span> <span class="title class_">NStringTypeHandler</span>());</span><br><span class="line">register(JdbcType.NCLOB, <span class="keyword">new</span> <span class="title class_">NClobTypeHandler</span>());</span><br></pre></td></tr></table></figure>
+<p>那么对应的<strong>JDBC_TYPE_HANDLER_MAP</strong>内存里面为<br><img src="http://res.mrdear.cn/1513402348.png?imageMogr2/thumbnail/!70p"><br><strong>TYPE_HANDLER_MAP</strong>内存里面接口如下图,注意在其<code>TypeHandler</code>中有一个key为null的转换器,其对应的注册方法自然为<code> register(String.class, new StringTypeHandler());</code>,那么也就是说当没指定jdbc类型时对于String.class类的转换均使用该转换器作为默认的<code>TypeHandler</code>.<br><img src="http://res.mrdear.cn/1513402290.png?imageMogr2/thumbnail/!70p"></p>
+<h4 id="2-mybatis-type-handlers-package转换器"><a href="#2-mybatis-type-handlers-package转换器" class="headerlink" title="2.mybatis.type-handlers-package转换器"></a>2.mybatis.type-handlers-package转换器</h4><p>该指令是配置一个转换器所在的包,然后扫描该包下的<code>TypeHandler</code>的实现类,自动注册为转换器,详情可以看<code>org.apache.ibatis.type.TypeHandlerRegistry#register(java.lang.String)</code>方法<br>由于Java存在泛型擦除机制,那么该Handler针对的JavaType该方法从<code>TypeHandler</code>实现类是拿不到的,因此其需要配合<code>MappedTypes</code>注解,看如下实现方法,针对<code>TypeHandler</code>去主动获取其上的<code>MappedTypes</code>注解,使用注解中的JavaType作为该<code>TypeHandler</code>的转换主体,如果获取不到则使用null,因此需要额外注意.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">register</span><span class="params">(Class&lt;?&gt; typeHandlerClass)</span> &#123;</span><br><span class="line">   <span class="type">boolean</span> <span class="variable">mappedTypeFound</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">   <span class="type">MappedTypes</span> <span class="variable">mappedTypes</span> <span class="operator">=</span> typeHandlerClass.getAnnotation(MappedTypes.class);</span><br><span class="line">   <span class="keyword">if</span> (mappedTypes != <span class="literal">null</span>) &#123;</span><br><span class="line">     <span class="keyword">for</span> (Class&lt;?&gt; javaTypeClass : mappedTypes.value()) &#123;</span><br><span class="line">       register(javaTypeClass, typeHandlerClass);</span><br><span class="line">       mappedTypeFound = <span class="literal">true</span>;</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">if</span> (!mappedTypeFound) &#123;</span><br><span class="line">     register(getInstance(<span class="literal">null</span>, typeHandlerClass));</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-Mapper中定义的TypeHandler"><a href="#3-Mapper中定义的TypeHandler" class="headerlink" title="3.Mapper中定义的TypeHandler"></a>3.Mapper中定义的TypeHandler</h4><p>首先我定义一个自定义的<code>TypeHandler</code>,该Handler只针对我所定义的枚举类处理,当然只能处理<code>UserIdentifyType</code>枚举类型,后面会实现一个通用的枚举转换器.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserIdentifyTypeHandler</span> <span class="keyword">extends</span> <span class="title class_">BaseTypeHandler</span>&lt;UserIdentifyType&gt; &#123;</span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setNonNullParameter</span><span class="params">(PreparedStatement ps, <span class="type">int</span> i, UserIdentifyType parameter, JdbcType jdbcType)</span> <span class="keyword">throws</span> SQLException &#123;</span><br><span class="line">    ps.setInt(i, parameter.getValue());</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> UserIdentifyType <span class="title function_">getNullableResult</span><span class="params">(ResultSet rs, String columnName)</span> <span class="keyword">throws</span> SQLException &#123;</span><br><span class="line">    <span class="keyword">return</span> UserIdentifyType.of(rs.getInt(columnName));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> UserIdentifyType <span class="title function_">getNullableResult</span><span class="params">(ResultSet rs, <span class="type">int</span> columnIndex)</span> <span class="keyword">throws</span> SQLException &#123;</span><br><span class="line">    <span class="keyword">return</span> UserIdentifyType.of(rs.getInt(columnIndex));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> UserIdentifyType <span class="title function_">getNullableResult</span><span class="params">(CallableStatement cs, <span class="type">int</span> columnIndex)</span> <span class="keyword">throws</span> SQLException &#123;</span><br><span class="line">    <span class="keyword">return</span> UserIdentifyType.of(cs.getInt(columnIndex));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>然后在mapper.xml文件中也是可以定义<code>TypeHandler</code>的,如下形式</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;select id=<span class="string">&quot;findByOpenIdAnyType&quot;</span> resultType=<span class="string">&quot;com.itoolshub.user.repository.domain.UserAuth&quot;</span>&gt;</span><br><span class="line">		SELECT &lt;include refid=<span class="string">&quot;RM-USERAUTH-ALLCOLS&quot;</span>/&gt;</span><br><span class="line">		FROM user_auth</span><br><span class="line">		<span class="type">WHERE</span> <span class="variable">status</span> <span class="operator">=</span> <span class="number">1</span> <span class="type">AND</span> <span class="variable">openid</span> <span class="operator">=</span> #&#123;openId&#125; <span class="type">AND</span> <span class="variable">identity_type</span> <span class="operator">=</span> #&#123;type,typeHandler=com.itoolshub.user.convert.UserIdentifyTypeHandler&#125;</span><br><span class="line">	&lt;/select&gt;</span><br></pre></td></tr></table></figure>
+<p>那么这个<code>TypeHandler</code>是什么时候初始化的呢?<br>这里涉及到<code>ParameterMapping</code>这个类,该类是Mybatis存储参数映射的地方,其内部有方法<code>org.apache.ibatis.builder.BaseBuilder#resolveTypeHandler(java.lang.Class&lt;?&gt;, java.lang.Class&lt;? extends org.apache.ibatis.type.TypeHandler&lt;?&gt;&gt;)</code>,该方法会获取到对应的<code>TypeHandler</code>,然后从<code>typeHandlerRegistry</code>中获取,获取不到则使用反射生成一个.<strong>生成后并没有加入到typeHandlerRegistry中,也就是该TypeHandler并非单例,多少个sqlStament中如果使用了该转换器那么就会实例化几个该转换器</strong>,因此正确的使用方法是把该<code>TypeHandler</code>注册到<code>typeHandlerRegistry</code>中,然后在xml中使用.那么针对上述sql的<code>ParameterMapping</code>如下.<br>另外由于我没有在xml中指定JavaType,那么其默认为Object,也就是参数设置是不能动态获取参数类型的.<br><img src="http://res.mrdear.cn/1513414409.png?imageMogr2/thumbnail/!70p"></p>
+<h3 id="参数如何使用TypeHandler设置到sql中"><a href="#参数如何使用TypeHandler设置到sql中" class="headerlink" title="参数如何使用TypeHandler设置到sql中?"></a>参数如何使用TypeHandler设置到sql中?</h3><p>上面说到对于每一个sqlSatment都会解析为一个ParameterMapping的Map集合,在该<code>ParameterMapping</code>中TypeHandler已经确定好了,那么设置参数就只需要简单的调用下<code>typeHandler.setParameter(ps, i + 1, value, jdbcType);</code>方法,具体可以参考<code>org.apache.ibatis.scripting.defaults.DefaultParameterHandler#setParameters</code>方法中对其的做法.<br>这里有一个很重要的点就是这里的<code>TypeHandler</code>的选择没有和我传入的参数类型绑定,举个例子我把上述参数去掉typehandler变成<code>identity_type = #&#123;type&#125;</code>,那么得到的则是一个<code>UnknownTypeHandler</code>.<br><img src="http://res.mrdear.cn/1513423812.png?imageMogr2/thumbnail/!70p"></p>
+<h4 id="UnknownTypeHandler并不Unknow"><a href="#UnknownTypeHandler并不Unknow" class="headerlink" title="UnknownTypeHandler并不Unknow"></a>UnknownTypeHandler并不Unknow</h4><p><code>UnknownTypeHandler</code>的实现中能获取到具体输入参数的类型,然后调用<code>org.apache.ibatis.type.UnknownTypeHandler#resolveTypeHandler(java.lang.Object, org.apache.ibatis.type.JdbcType)</code>方法从<code>TypeHandlerRegistry</code>中获取到真正的转换器,这里的获取是根据输入参数的具体类型的class名称.获取不到则使用<code>ObjectTypeHandler</code>作为转换器.</p>
+<h3 id="结果如何使用TypeHandler设置到结果集中"><a href="#结果如何使用TypeHandler设置到结果集中" class="headerlink" title="结果如何使用TypeHandler设置到结果集中?"></a>结果如何使用TypeHandler设置到结果集中?</h3><p>相比参数设置结果的取出转换要复杂很多,方法<code>org.apache.ibatis.executor.resultset.ResultSetWrapper#getTypeHandler</code>中定义了一系列的获取<code>TypeHandler</code>的策略,总结如下顺序</p>
+<ol>
+<li>根据返回参数类型+jdbc类型</li>
+<li>根据返回参数类型</li>
+<li>根据jdbc类型<br>具体就不展开讨论了.</li>
+</ol>
+<h3 id="制作通用的枚举类处理器"><a href="#制作通用的枚举类处理器" class="headerlink" title="制作通用的枚举类处理器"></a>制作通用的枚举类处理器</h3><p>依照上述分析,如果想让枚举类的处理和基本类型一样的不需要显示的在mapper.xml上指定一些属性,几乎是不可能的一件事情,不过可以大大简化其使用方式,首先分析下对于枚举类两处的处理.</p>
+<ol>
+<li>参数设置时,mapper.xml中的sql字段什么都不指定直接#{value},那么最终会使用该value的<strong>class名称</strong>去获取到对应的typeHandler.</li>
+<li>结果映射时,由上述优先级顺序可以得知对于枚举类会使用方式2<strong>根据返回参数类型,也就是class名称</strong>获取对应的typeHandler.</li>
+</ol>
+<p>那么通用转换器的实现思路很简单了,要做的就是把对应枚举类的名称-&gt;typehandler初始化时注入到<code>TypeHandlerRegistry</code>中.首先定义一个枚举类所使用的接口,然后编写通用处理,这里能实现还一个原因就是Class对象有<code>type.getEnumConstants()</code>方法可以获取到其所有枚举对象,也就是可以把数字映射为指定结果了,需要注意的是这里把每个枚举类都注入到<code>TypeHandlerRegistry</code>使用的是<code>@MappedTypes</code>注解,该注解生效是需要配置<code>mybatis.type-handlers-package</code>以包的形式扫,否则不生效.</p>
+<p>下面的代码是copy自github,本文算是对其原理分析了一遍.<a target="_blank" rel="noopener" href="https://github.com/mybatis/mybatis-3/issues/42">https://github.com/mybatis/mybatis-3/issues/42</a><br><strong>EnumHasValue</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">EnumHasValue</span> &#123;</span><br><span class="line">  <span class="type">int</span> <span class="title function_">getValue</span><span class="params">()</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>EnumValueTypeHandler</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@MappedTypes(&#123;UserIdentifyType.class, UserRoleType.class&#125;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EnumValueTypeHandler</span>&lt;E <span class="keyword">extends</span> <span class="title class_">Enum</span>&lt;E&gt; &amp; EnumHasValue&gt; <span class="keyword">extends</span> <span class="title class_">BaseTypeHandler</span>&lt;E&gt;&#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> Class&lt;E&gt; type;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">final</span> E[] enums;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="title function_">EnumValueTypeHandler</span><span class="params">(Class&lt;E&gt; type)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (type == <span class="literal">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;Type argument cannot be null&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">this</span>.type = type;</span><br><span class="line">    <span class="built_in">this</span>.enums = type.getEnumConstants();</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.enums == <span class="literal">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(type.getSimpleName() + <span class="string">&quot; does not represent an enum type.&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setNonNullParameter</span><span class="params">(PreparedStatement ps, <span class="type">int</span> i, E parameter, JdbcType jdbcType)</span> <span class="keyword">throws</span> SQLException &#123;</span><br><span class="line">    ps.setInt(i,parameter.getValue());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> E <span class="title function_">getNullableResult</span><span class="params">(ResultSet rs, String columnName)</span> <span class="keyword">throws</span> SQLException &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">value</span> <span class="operator">=</span> rs.getInt(columnName);</span><br><span class="line">    <span class="keyword">if</span> (rs.wasNull()) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (E enm : enums) &#123;</span><br><span class="line">      <span class="keyword">if</span> (value == enm.getValue()) &#123;</span><br><span class="line">        <span class="keyword">return</span> enm;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;Cannot convert &quot;</span> + value + <span class="string">&quot; to &quot;</span> + type.getSimpleName());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> E <span class="title function_">getNullableResult</span><span class="params">(ResultSet rs, <span class="type">int</span> columnIndex)</span> <span class="keyword">throws</span> SQLException &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">value</span> <span class="operator">=</span> rs.getInt(columnIndex);</span><br><span class="line">    <span class="keyword">if</span> (rs.wasNull()) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (E enm : enums) &#123;</span><br><span class="line">      <span class="keyword">if</span> (value == enm.getValue()) &#123;</span><br><span class="line">        <span class="keyword">return</span> enm;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;Cannot convert &quot;</span> + value + <span class="string">&quot; to &quot;</span> + type.getSimpleName());</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> E <span class="title function_">getNullableResult</span><span class="params">(CallableStatement cs, <span class="type">int</span> columnIndex)</span> <span class="keyword">throws</span> SQLException &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">value</span> <span class="operator">=</span> cs.getInt(columnIndex);</span><br><span class="line">    <span class="keyword">if</span> (cs.wasNull()) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (E enm : enums) &#123;</span><br><span class="line">      <span class="keyword">if</span> (value == enm.getValue()) &#123;</span><br><span class="line">        <span class="keyword">return</span> enm;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;Cannot convert &quot;</span> + value + <span class="string">&quot; to &quot;</span> + type.getSimpleName());</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="备注"><a href="#备注" class="headerlink" title="备注"></a>备注</h3><p>以上内容基于 <code>mybatis-spring-boot-starter</code>:1.3.0,其<code>mybatis</code>版本3.4.4</p>
+<p>参考文章: <a target="_blank" rel="noopener" href="http://www.mybatis.org/mybatis-3/zh/configuration.html#typeHandlers">http://www.mybatis.org/mybatis-3/zh/configuration.html#typeHandlers</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-mybatis-type-handler.html">Mybatis源码分析(四)--TypeHandler的解析</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-mybatis-type-handler.html">https://mrdear.cn/posts/framework-mybatis-type-handler.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/java_classloader.html" title="Java学习记录--委派模型与类加载器"><i class="iconfont icon-prev"></i>Java学习记录--委派模型与类加载器</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-mybatis-result-set-handler.html" title="Mybatis源码分析(五)--ResultSetHandler分析">Mybatis源码分析(五)--ResultSetHandler分析<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0%E5%89%8D%E7%9A%84%E7%96%91%E9%97%AE"><span class="toc-number">1.</span> <span class="toc-text">学习前的疑问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TypeHandler%E7%9A%84%E4%B8%BB%E8%A6%81%E5%8A%9F%E8%83%BD%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">2.</span> <span class="toc-text">TypeHandler的主要功能是什么?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TypeHandler%E5%A6%82%E4%BD%95%E9%85%8D%E7%BD%AE"><span class="toc-number">3.</span> <span class="toc-text">TypeHandler如何配置?</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E7%B3%BB%E7%BB%9F%E9%BB%98%E8%AE%A4%E8%BD%AC%E6%8D%A2%E5%99%A8"><span class="toc-number">3.1.</span> <span class="toc-text">1.系统默认转换器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-mybatis-type-handlers-package%E8%BD%AC%E6%8D%A2%E5%99%A8"><span class="toc-number">3.2.</span> <span class="toc-text">2.mybatis.type-handlers-package转换器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-Mapper%E4%B8%AD%E5%AE%9A%E4%B9%89%E7%9A%84TypeHandler"><span class="toc-number">3.3.</span> <span class="toc-text">3.Mapper中定义的TypeHandler</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8TypeHandler%E8%AE%BE%E7%BD%AE%E5%88%B0sql%E4%B8%AD"><span class="toc-number">4.</span> <span class="toc-text">参数如何使用TypeHandler设置到sql中?</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#UnknownTypeHandler%E5%B9%B6%E4%B8%8DUnknow"><span class="toc-number">4.1.</span> <span class="toc-text">UnknownTypeHandler并不Unknow</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E6%9E%9C%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8TypeHandler%E8%AE%BE%E7%BD%AE%E5%88%B0%E7%BB%93%E6%9E%9C%E9%9B%86%E4%B8%AD"><span class="toc-number">5.</span> <span class="toc-text">结果如何使用TypeHandler设置到结果集中?</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%B6%E4%BD%9C%E9%80%9A%E7%94%A8%E7%9A%84%E6%9E%9A%E4%B8%BE%E7%B1%BB%E5%A4%84%E7%90%86%E5%99%A8"><span class="toc-number">6.</span> <span class="toc-text">制作通用的枚举类处理器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%87%E6%B3%A8"><span class="toc-number">7.</span> <span class="toc-text">备注</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

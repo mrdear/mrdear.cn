@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>实践 -- 二进制与位运算案例 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/work-design-binary.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- 二进制与位运算案例">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">实践 -- 二进制与位运算案例</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2020-08-21</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>二进制以及位运算在编程中很少被使用到，但往往使用到的地方都是很巧妙的设计，本文列举了常见的二进制使用案例，希望对你编程设计有所启发。</p>
+<h2 id="二进制操作"><a href="#二进制操作" class="headerlink" title="二进制操作"></a>二进制操作</h2><p>无论什么语言，二进制操作一般都支持以下指令：</p>
+<ul>
+<li>按位与</li>
+<li>按位或</li>
+<li>左移</li>
+<li>右移(带符号&#x2F;不带符号)</li>
+</ul>
+<p>以下案例均是这些操作的组合。</p>
+<h2 id="枚举类包含与非包含"><a href="#枚举类包含与非包含" class="headerlink" title="枚举类包含与非包含"></a>枚举类包含与非包含</h2><p>枚举场景下，使用二进制能够快速判断当前对象是否拥有该枚举状态，举个例子：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">enum</span></span><br><span class="line">	<span class="bullet">-</span> <span class="string">A=1</span> <span class="string">(1)</span></span><br><span class="line">	<span class="bullet">-</span> <span class="string">B=2</span> <span class="string">(10)</span></span><br><span class="line">	<span class="bullet">-</span> <span class="string">C=4</span> <span class="string">(100)</span></span><br><span class="line">	<span class="bullet">-</span> <span class="string">D=8</span> <span class="string">(1000)</span></span><br><span class="line"><span class="string">persion</span></span><br><span class="line">	<span class="bullet">-</span> <span class="string">小明拥有AB</span> <span class="string">=</span> <span class="number">1</span><span class="string">|2</span> <span class="string">=</span> <span class="number">3</span></span><br><span class="line">	<span class="bullet">-</span> <span class="string">小红拥有BCD</span> <span class="string">=</span> <span class="number">2</span><span class="string">|4|8=14</span></span><br></pre></td></tr></table></figure>
+
+<p>当判断用户是否有哪几个权限时，使用<code>X &amp; U = X</code>，其中X代表要判断的权限，U代表用户当前权限，举个例子：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">判断小明是否拥有B：2</span> <span class="string">&amp;</span> <span class="number">3</span> <span class="string">=</span> <span class="number">2</span>  <span class="string">拥有</span></span><br><span class="line"><span class="string">判断小红是否拥有BC：(2|4)&amp;14=6=(2|4)</span> <span class="string">拥有</span></span><br><span class="line"><span class="string">判断小红是否拥有ABC：(1|2|4)&amp;14=6！=(1|2|4)</span> <span class="string">因此不拥有</span></span><br></pre></td></tr></table></figure>
+
+<p>该案例引申下，可以在任意有限数据基础上判断包含以及不包含，解决相应业务问题。</p>
+<h2 id="分布式ID生成"><a href="#分布式ID生成" class="headerlink" title="分布式ID生成"></a>分布式ID生成</h2><p>分布式ID，即在分布式系统下生成不重复且有序增长的ID序列。已Snowflake算法为例，该算法将64个bit位的Long类型数据进行拆分。首位是符号位，不用，中间41位时间戳，接着是10位的机器id，最后是12位序列号，因此每毫秒最大能产生2的12次方，即4096个序列号。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20200821154427528.png-default" alt="image-20200821154427528"></p>
+<p>那么回到二进制上，对应bit位的数据该怎么填充？这里填充的实现主要依赖与<strong>位移</strong>操作。举个例子：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">时间戳：1000000000 (1597996131000-1596996131000)</span><br><span class="line">机器ID：10</span><br><span class="line">序列号：2048</span><br><span class="line"></span><br><span class="line">那么填充过程如下：</span><br><span class="line">long id = 0L；</span><br><span class="line">id &lt;&lt; 22 | 10 &lt;&lt; 12 | 2048 = 4194304000043008L  ID生成完毕</span><br><span class="line"></span><br><span class="line">拆解下 4194304000043008L</span><br><span class="line"></span><br><span class="line">111011100110101100101000000000 0000001010 100000000000</span><br><span class="line">1000000000                         10          2048</span><br></pre></td></tr></table></figure>
+
+<p>使用位移以及|操作完成了数据的拼接。这种想法除了分布式ID外，也可以在业务中很高性能的生成各种ID。博主曾经在设计事件系统ID生成逻辑时，使用过类似方案：<code>1bits + 8bits(ip最后一位) + 12bits(事件码编号) + 2bits(时戳类型，毫秒，秒，分钟) + 41bits(时间戳，简单去重可自定义)</code>，因为系统压力不大，所以去重也不需要考虑很复杂，可以说很实用了。</p>
+<h2 id="Java-ReentrantReadWriteLock设计"><a href="#Java-ReentrantReadWriteLock设计" class="headerlink" title="Java ReentrantReadWriteLock设计"></a>Java ReentrantReadWriteLock设计</h2><p>Java的ReentrantReadWriteLock是一个可重入读写锁，即写锁，读锁可以多次被获取，且拥有读读不互斥，读写互斥，写写互斥等特性，实现这些特性则需要标记当前写锁获取次数，读锁获取次数。JDK在这里的实现巧妙的使用了32位INT类型数据，其中高16位标识读写数量，低16位标识写锁数量。比如下图，由于写锁存在，所以必然有一个线程获取到了该锁，并且写锁重入2次，读锁也被获取，且重入1次。</p>
+<p><img src="http://res.mrdear.cn/1529281211.png" alt="img"></p>
+<p>按照这种形式定下来后，JDK需要提供一些快速执行四则运算的方法，如下所示，位移以及位运算结合。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">int</span> <span class="string">state</span> <span class="string">=</span> <span class="string">xxx</span> <span class="string">,标识当前锁状态</span></span><br><span class="line"></span><br><span class="line"><span class="string">获取读锁数量：state</span> <span class="string">&gt;&gt;&gt;</span> <span class="number">16</span></span><br><span class="line"><span class="string">获取写锁数量:</span> <span class="string">state</span> <span class="string">&amp;</span> <span class="string">(ob1111111111111111)</span></span><br><span class="line"><span class="string">写锁+1</span> <span class="string">：</span> <span class="string">state</span> <span class="string">+</span> <span class="number">1</span></span><br><span class="line"><span class="string">读锁+1</span> <span class="string">：state</span> <span class="string">+</span> <span class="string">(ob10000000000000000)</span></span><br></pre></td></tr></table></figure>
+
+<p>JDK线程池里面也有类似做法，这种有点黑科技的感觉，业务代码还是不要学习这种写法，业务追求的是简单，好理解。</p>
+<h2 id="Bloom-Filter"><a href="#Bloom-Filter" class="headerlink" title="Bloom Filter"></a>Bloom Filter</h2><p>Bloom Filter是利用二进制0，1两个真假属性来判断对应值是否包含的一种策略。以下图为例，key1经过三个不同hash函数(f,g,h)分别映射到三个bit槽，key2同样也是。因为hash冲突以及计算bit槽时取余操作，所以Bloom Filter存在不一定真的存在，但不存在则一定不存在，利用该特性可以实现白名单，黑名单等业务需求，并且存在判断也可以作为一些底层存储的前置拦截，减少穿透请求。</p>
+<p><img src="http://res.mrdear.cn/1552347090.png" alt="img"></p>
+<p>不过这些都不是今天讨论的内容，Bloom Filter给二进制操作上带来的问题是如何构造超长的bit位？这个需要我们了解下。</p>
+<h3 id="JDK-BitSet"><a href="#JDK-BitSet" class="headerlink" title="JDK BitSet"></a>JDK BitSet</h3><p>JDK的做法使用long[]数组来标识bit set，每一个long位64个bit位，那么一个BitSet初始化后，就是N*64长度，通过取余定操作可以先定位到对应long位置，然后再使用位运算修改bit位。</p>
+<h3 id="Redis-BitMap"><a href="#Redis-BitMap" class="headerlink" title="Redis BitMap"></a>Redis BitMap</h3><p>Redis与Java实现类似，不过内部使用的是char[]数组，在C语言中一个char占一个字节，相当于8bit。每一段变小，会造成全遍历统计时数据量庞大，比如统计一共多少个1，Redis在此基础上做了个优化，将对应char[]数组分组，加入128个char一组进行遍历，大大提高了统计效率。</p>
+<p>上述两种做法一般应对于数据经常变化的场景，因为要涉及旧数据的更新操作，不过当使用场景下数据比较稀疏时，还是会造成内存的浪费，因此使用时合理选择映射到bit位的id能够节省不少内存消耗。</p>
+<h2 id="倒排索引"><a href="#倒排索引" class="headerlink" title="倒排索引"></a>倒排索引</h2><p>倒排索引中，倒排表一般会使用跳表或者bitset实现，这里只分析bitset实现方式遇到的挑战以及解法。以ElasticSearch为例，当倒排索引建立后，假设结构如下所示：其中termA,termB,termC为分词之后的词典表，倒排表0则代表当前id不存在，1则代表存在，因此termA有文档4，5，6，7；termB有文档1，2；termC有文档1，4，5。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">termA</span> <span class="string">:[0,0,0,1,1,1,1]</span></span><br><span class="line"><span class="string">termB：[1,1,0,0,0,0,0]</span></span><br><span class="line"><span class="string">termC：[1,0,0,1,1,0,0]</span></span><br></pre></td></tr></table></figure>
+
+<p>那么要解决的第一个问题，数据怎么存？</p>
+<p>倒排索引不同与上述Bloom Filter场景，在ES中数据往往是以亿位单位的，因此倒排表会非常大，倒排词典数据量一多，磁盘占用就会飞速上涨，另外ES底层使用的Luence是写入后不再变更，也就不存在更新场景，因此使得数据压缩有了很好的前置条件。</p>
+<p>压缩的思路很简单，100个0存储(100，0)即可，而不是真实的存储100个0。Luence在存储中，使用的是位图压缩结构(Roaring Bitmap)来实现优化。如下图所示：</p>
+<p><img src="http://res.mrdear.cn/uPic/1595688058469-08e83c05-fff2-49ad-880d-bb34f44e1096.png-default" alt="image.png"></p>
+<p>如上图所示这一结构以65536为一块区域，进行分块存储，每一块最多标识65536个文档，当文档数小于4096时，Lucene会使用short[]数组存储，short占的空间：2bytes（65535 &#x3D; 2^16-1  是2bytes 能表示的最大数），当超过4096时，则使用bitmap 占的空间: 65536&#x2F;8 &#x3D; 8192bytes，换句话说一个块最大占用内存8192bytes，也就是8kb。</p>
+<p>同样一亿数据量，bitmap结构，必须保存1亿个bit位，但往往这一亿中存在大量不命中的文档id，也就是存在很多个0，此时该算法就能起到很好的压缩效果了。</p>
+<p>第二个问题是<strong>快速取交集</strong>，由于是倒排表是对齐的bit操作，因此可以直接使用&amp;|指令快速求的交集或者并集。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以上内容是对工作至今遇到的案例进行总结，如有错误或者遗漏，欢迎留言指正。</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/work-design-binary.html">实践 -- 二进制与位运算案例</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/work-design-binary.html">https://mrdear.cn/posts/work-design-binary.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/osx_app_switcher.html" title="OSX--OSX应用快速切换方案"><i class="iconfont icon-prev"></i>OSX--OSX应用快速切换方案</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/java_metaspace.html" title="Java -- MetaSpace线上问题排查">Java -- MetaSpace线上问题排查<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%93%8D%E4%BD%9C"><span class="toc-number">1.</span> <span class="toc-text">二进制操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9E%9A%E4%B8%BE%E7%B1%BB%E5%8C%85%E5%90%AB%E4%B8%8E%E9%9D%9E%E5%8C%85%E5%90%AB"><span class="toc-number">2.</span> <span class="toc-text">枚举类包含与非包含</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8FID%E7%94%9F%E6%88%90"><span class="toc-number">3.</span> <span class="toc-text">分布式ID生成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java-ReentrantReadWriteLock%E8%AE%BE%E8%AE%A1"><span class="toc-number">4.</span> <span class="toc-text">Java ReentrantReadWriteLock设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Bloom-Filter"><span class="toc-number">5.</span> <span class="toc-text">Bloom Filter</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#JDK-BitSet"><span class="toc-number">5.1.</span> <span class="toc-text">JDK BitSet</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Redis-BitMap"><span class="toc-number">5.2.</span> <span class="toc-text">Redis BitMap</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%80%92%E6%8E%92%E7%B4%A2%E5%BC%95"><span class="toc-number">6.</span> <span class="toc-text">倒排索引</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">7.</span> <span class="toc-text">总结</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

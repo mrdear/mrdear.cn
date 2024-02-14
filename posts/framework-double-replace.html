@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Dubbo -- 关于老项目替换dubbo的一点经验 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-double-replace.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/dubbo.png" alt="Dubbo -- 关于老项目替换dubbo的一点经验">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Dubbo -- 关于老项目替换dubbo的一点经验</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2017-07-23</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Dubbo/">Dubbo</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>公司一直以来使用内部编写的一个rpc框架,简称old_rpc这套RPC框架,由于历史原因,old_rpc存在如下缺点.</p>
+<ol>
+<li>old_rpc已经很久没人维护了,因此出了错误很难定位到具体的原因.</li>
+<li>old_rpc本身只是RPC框架,随着项目的增多各个项目之间的依赖关系已经很复杂了,需要一套支持服务治理的解决方案.</li>
+<li>old_rpc缺乏监控平台,对于动态部署,增加机器或者减少机器都比较麻烦.</li>
+<li>…<br>这些缺点已经严重影响到线上稳定性,本文就dubbox替换掉old_rpc方案做的一个调研,对工作量,替换后的稳定性做一个评估,以供大家参考.</li>
+</ol>
+<h3 id="替换要求"><a href="#替换要求" class="headerlink" title="替换要求"></a>替换要求</h3><ol>
+<li>支持平滑上线,也就是说替换后依然支持现有的测试系统,发布系统.</li>
+<li>替换必须尽可能小的缩小对业务的影响,代码层面上来看就是业务处理代码中不应该有替换的代码</li>
+<li>短期内需要支持dubbox与old_rpc两套方案,并且两套方案可以快速切换,防止替换后线上出现不可预料的问题.</li>
+</ol>
+<h3 id="替换思路"><a href="#替换思路" class="headerlink" title="替换思路"></a>替换思路</h3><ol>
+<li>saturn作为服务提供者,替换比较简单,只需要在原有基础上,增加dubbo协议的Service.</li>
+<li>vienna作为消费者,使用dubbo协议引入dubbo的service</li>
+<li>vienna增加断路器配置,对于repo层引入的service,dubbox作为主service,old_rpc作为备份service,当主service调用失败则自动切换到备份service进行重试,此过程需要有监控.</li>
+</ol>
+<h3 id="dubbox"><a href="#dubbox" class="headerlink" title="dubbox"></a>dubbox</h3><ul>
+<li>github: <a target="_blank" rel="noopener" href="https://github.com/dangdangdotcom/dubbox">https://github.com/dangdangdotcom/dubbox</a><br>clone下来后使用<code>mvn package -DskipTests</code>,会打包该项目,生成主要的<strong>dubbo.jar</strong>,以及管理平台<strong>dubbo-admin.war</strong>,监控平台<strong>dubbo-simple-monitor.tar.gz</strong>.我已经把相关jar,deploy到公司的nexus上了.mvn的pom中直接引入如下依赖,这里需要去除Spring依赖,dubbox是基于Spring3开发的,强制引入会与现有项目产生冲突.<br>另外dubbox添加了kryo和FST序列化支持,以及多种新特性,使用的话均需要引入相应的jar,具体参考项目的github.<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">           &lt;groupId&gt;com.alibaba&lt;/groupId&gt;</span><br><span class="line">           &lt;artifactId&gt;dubbo&lt;/artifactId&gt;</span><br><span class="line">           &lt;version&gt;2.8.4&lt;/version&gt;</span><br><span class="line">           &lt;exclusions&gt;</span><br><span class="line">               &lt;exclusion&gt;</span><br><span class="line">                   &lt;groupId&gt;org.springframework&lt;/groupId&gt;</span><br><span class="line">                   &lt;artifactId&gt;*&lt;/artifactId&gt;</span><br><span class="line">               &lt;/exclusion&gt;</span><br><span class="line">           &lt;/exclusions&gt;</span><br><span class="line">       &lt;/dependency&gt;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="zk注册中心"><a href="#zk注册中心" class="headerlink" title="zk注册中心"></a>zk注册中心</h4><p>dubbo的注册如下所示:<br><img src="http://res.mrdear.cn/1500736706.png"><br>实际操作下来,第三层还会有<code>routers</code>,<code>configurators</code>节点,当在dubbo-admin平台操作该service时,比如倍权,该操作会存在在这些节点中.</p>
+<h4 id="服务提供者saturn"><a href="#服务提供者saturn" class="headerlink" title="服务提供者saturn"></a>服务提供者saturn</h4><p>saturn作为服务提供者,其任务是抛出新的dubbo服务RPC接口.在引入上述pom后,需要做少量的配置.</p>
+<h5 id="dubbo基本配置"><a href="#dubbo基本配置" class="headerlink" title="dubbo基本配置"></a>dubbo基本配置</h5><p>因此demo只测试能否实现,每一个配置的详细内容并未研究,详细可以参考官方文档配置.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DubboConfig</span> &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 注册中心配置</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> RegistryConfig <span class="title function_">registry</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">RegistryConfig</span> <span class="variable">registryConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">RegistryConfig</span>();</span><br><span class="line">    registryConfig.setAddress(<span class="string">&quot;115.159.185.14:2181&quot;</span>);</span><br><span class="line">    registryConfig.setProtocol(<span class="string">&quot;zookeeper&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> registryConfig;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 当前应用配置</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> ApplicationConfig <span class="title function_">application</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ApplicationConfig</span> <span class="variable">applicationConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ApplicationConfig</span>();</span><br><span class="line">    applicationConfig.setName(<span class="string">&quot;saturn&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> applicationConfig;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 监控配置,监控需要dubbo-monitor</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> MonitorConfig <span class="title function_">monitorConfig</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">MonitorConfig</span> <span class="variable">mc</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MonitorConfig</span>();</span><br><span class="line">    mc.setProtocol(<span class="string">&quot;registry&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> mc;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 提供者监控服务</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> ProviderConfig <span class="title function_">provider</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ProviderConfig</span> <span class="variable">providerConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ProviderConfig</span>();</span><br><span class="line">    providerConfig.setMonitor(monitorConfig());</span><br><span class="line">    <span class="keyword">return</span> providerConfig;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 消费者监控</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> ReferenceConfig <span class="title function_">referenceConfig</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ReferenceConfig</span> <span class="variable">rc</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ReferenceConfig</span>();</span><br><span class="line">    rc.setMonitor(monitorConfig());</span><br><span class="line">    <span class="keyword">return</span> rc;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * RPC协议配置</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> ProtocolConfig <span class="title function_">protocol</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ProtocolConfig</span> <span class="variable">protocolConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ProtocolConfig</span>();</span><br><span class="line">    protocolConfig.setPort(<span class="number">20880</span>);</span><br><span class="line">    <span class="keyword">return</span> protocolConfig;</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h5 id="提供服务"><a href="#提供服务" class="headerlink" title="提供服务"></a>提供服务</h5><p>服务的提供利用的是<code>ServiceBean</code>包裹,形成该bean的代理类,可以写一个通用的配置函数</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 通用service配置类</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> saturnService 对应服务</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> dubbo服务</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> &lt;T&gt; ServiceBean&lt;T&gt; <span class="title function_">configService</span><span class="params">(T saturnService)</span> &#123;</span><br><span class="line">  ServiceBean&lt;T&gt; serviceBean = <span class="keyword">new</span> <span class="title class_">ServiceBean</span>&lt;&gt;();</span><br><span class="line">  serviceBean.setProxy(<span class="string">&quot;javassist&quot;</span>);</span><br><span class="line">  serviceBean.setVersion(<span class="string">&quot;1.0&quot;</span>);</span><br><span class="line">  serviceBean.setInterface(saturnService.getClass().getInterfaces()[<span class="number">0</span>].getName());</span><br><span class="line">  serviceBean.setRef(saturnService);</span><br><span class="line">  serviceBean.setTimeout(<span class="number">2000</span>);</span><br><span class="line">  serviceBean.setRetries(<span class="number">3</span>);</span><br><span class="line">  <span class="keyword">return</span> serviceBean;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么我想要抛出IUserService这个服务,只需要如下几行代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="keyword">public</span> ServiceBean&lt;IUserService&gt; <span class="title function_">userServiceExport</span><span class="params">(IUserService userService)</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> configService(userService);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到此提供者配置完毕.</p>
+<h4 id="服务消费者vienna-无断路器版本"><a href="#服务消费者vienna-无断路器版本" class="headerlink" title="服务消费者vienna(无断路器版本)"></a>服务消费者vienna(无断路器版本)</h4><p>vienna作为服务消费者与提供者一样也需要基本的dubbo配置,两者配置几乎一模一样.</p>
+<h5 id="dubbo基本配置-1"><a href="#dubbo基本配置-1" class="headerlink" title="dubbo基本配置"></a>dubbo基本配置</h5><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@EnableAspectJAutoProxy</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DubboConfig</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 注册中心</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> RegistryConfig <span class="title function_">registry</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">RegistryConfig</span> <span class="variable">registryConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">RegistryConfig</span>();</span><br><span class="line">    registryConfig.setAddress(<span class="string">&quot;115.159.185.14:2181&quot;</span>);</span><br><span class="line">    registryConfig.setProtocol(<span class="string">&quot;zookeeper&quot;</span>);</span><br><span class="line">    registryConfig.setTimeout(<span class="number">60000</span>);<span class="comment">// vienna不知道为什么链接zk很慢</span></span><br><span class="line">    <span class="keyword">return</span> registryConfig;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 应用信息,计算依赖关系</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> ApplicationConfig <span class="title function_">application</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ApplicationConfig</span> <span class="variable">applicationConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ApplicationConfig</span>();</span><br><span class="line">    applicationConfig.setName(<span class="string">&quot;vienna&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> applicationConfig;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 监控中心地址</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> MonitorConfig <span class="title function_">monitorConfig</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">MonitorConfig</span> <span class="variable">mc</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MonitorConfig</span>();</span><br><span class="line">    mc.setProtocol(<span class="string">&quot;registry&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> mc;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 提供者监控服务</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> ProviderConfig <span class="title function_">provider</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ProviderConfig</span> <span class="variable">providerConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ProviderConfig</span>();</span><br><span class="line">    providerConfig.setMonitor(monitorConfig());</span><br><span class="line">    <span class="keyword">return</span> providerConfig;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 消费者监控</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> ReferenceConfig <span class="title function_">referenceConfig</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ReferenceConfig</span> <span class="variable">rc</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ReferenceConfig</span>();</span><br><span class="line">    rc.setMonitor(monitorConfig());</span><br><span class="line">    <span class="keyword">return</span> rc;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 协议配置,自身无提供者的话可以不配置</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="meta">@Bean</span></span><br><span class="line">  <span class="keyword">public</span> ProtocolConfig <span class="title function_">protocol</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">ProtocolConfig</span> <span class="variable">protocolConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ProtocolConfig</span>();</span><br><span class="line">    protocolConfig.setPort(<span class="number">20880</span>);</span><br><span class="line">    <span class="keyword">return</span> protocolConfig;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h5 id="配置消费者"><a href="#配置消费者" class="headerlink" title="配置消费者"></a>配置消费者</h5><p>消费者是用<code>ReferenceBean</code>类来代理的,可以像提供者那样写一个通用的处理方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 基本配置类</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> serviceReference 接口</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> &lt;T&gt; ReferenceBean&lt;T&gt; <span class="title function_">configReference</span><span class="params">(Class&lt;T&gt; serviceReference)</span> &#123;</span><br><span class="line">  ReferenceBean&lt;T&gt; ref = <span class="keyword">new</span> <span class="title class_">ReferenceBean</span>&lt;&gt;();</span><br><span class="line">  ref.setVersion(<span class="string">&quot;1.0&quot;</span>);</span><br><span class="line">  ref.setInterface(serviceReference);</span><br><span class="line">  ref.setTimeout(<span class="number">2000</span>);</span><br><span class="line">  ref.setRetries(<span class="number">3</span>);</span><br><span class="line">  ref.setCheck(<span class="literal">false</span>);</span><br><span class="line">  ref.setLoadbalance(<span class="string">&quot;roundrobin&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> ref;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么引用服务也就只需要几行代码即可,为了更好的与old_rpc服务区分对于dubbo引入的服务都加上dubbo前缀命名.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean(name = &quot;dubboUserService&quot;)</span></span><br><span class="line"><span class="keyword">public</span> ReferenceBean&lt;IUserService&gt; <span class="title function_">userService</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> configReference(IUserService.class);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h5 id="替换old-rpc"><a href="#替换old-rpc" class="headerlink" title="替换old_rpc"></a>替换old_rpc</h5><p>无断路器版本替换就很简单了,找到引用该服务的地方,在Spring注入时为其选择注入dubbo服务即可.问题是一旦该服务出现了问题,那么需要手动切换回old_rpc服务.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Resource</span></span><br><span class="line"> <span class="keyword">private</span> IUserService dubboUserService;</span><br></pre></td></tr></table></figure>
+
+<h4 id="服务消费者vienna-断路器版本"><a href="#服务消费者vienna-断路器版本" class="headerlink" title="服务消费者vienna(断路器版本)"></a>服务消费者vienna(断路器版本)</h4><p>断路器本身是做服务降级,防止系统因一个服务出问题而产生雪崩效应,对于当前系统的两套RPC方案可以利用这一点把要替换掉的old_rpc作为降级服务,当dubboService出现异常时可以立即去调取old_rpc的服务,从而保证系统的健壮性.</p>
+<h5 id="断路器要求"><a href="#断路器要求" class="headerlink" title="断路器要求"></a>断路器要求</h5><ol>
+<li>业务代码无侵入,可以使用方法级别的注解控制该方法是否走断路器.稳定后可以直接删除,不留痕迹.</li>
+<li>支持自动熔断,自动恢复</li>
+<li>有支持集群的监控服务,方便排查出现问题的服务.</li>
+</ol>
+<h5 id="断路器依赖"><a href="#断路器依赖" class="headerlink" title="断路器依赖"></a>断路器依赖</h5><p>对于上述要求,符合条件,又经得起生产考验的大概只有hystrix了,github地址为 <a target="_blank" rel="noopener" href="https://github.com/Netflix/Hystrix">https://github.com/Netflix/Hystrix</a>,pom依赖如下,主要是核心服务包,注解包,监控包.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">        &lt;groupId&gt;com.netflix.hystrix&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;hystrix-javanica&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;<span class="number">1.5</span><span class="number">.12</span>&lt;/version&gt;</span><br><span class="line">    &lt;/dependency&gt;</span><br><span class="line">    &lt;dependency&gt;</span><br><span class="line">        &lt;groupId&gt;com.netflix.hystrix&lt;/groupId&gt;</span><br><span class="line">        &lt;artifactId&gt;hystrix-metrics-event-stream&lt;/artifactId&gt;</span><br><span class="line">        &lt;version&gt;<span class="number">1.5</span><span class="number">.12</span>&lt;/version&gt;</span><br><span class="line">    &lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<h5 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h5><p>实现思路与feign对hystrix的包装很相像,以UserRepo为例,UserRepo中引入了userService服务,那么要自动切换则需要两个UserRepo,一个是引用了dubbox的dubboUserService,一个是引用了old_rpc的old_rpcUserService.断路器是方法级别的监控,使用AOP可以轻松地拦截UserRepo中每一个方法的执行,在执行时使用hystrix包装,执行失败时再使用另一个UserRepo重新执行该方法.<br>上述流程有几个要点:</p>
+<ol>
+<li>需要通过引用dubbo服务的UserRepo获取到引入old_rpc的UserRepo</li>
+<li>需要获取到UserRepo中全部的public方法,方便二次调用.</li>
+<li>可以从UserRepo中得到断路器的配置,比如分组,线程池等信息.</li>
+</ol>
+<h5 id="增强Repo功能"><a href="#增强Repo功能" class="headerlink" title="增强Repo功能"></a>增强Repo功能</h5><p>上述的几个要点需要在UserRepo中附加的功能使用一个接口来抽象.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">IDubboRepoProxy</span> <span class="keyword">extends</span> <span class="title class_">InitializingBean</span>,ApplicationContextAware &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 获取使用dubbo服务调用的Repo</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  IDubboRepoProxy <span class="title function_">getDubboRepo</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 获取当前类所有的public方法</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@return</span> 键与值都是该方法</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  Map&lt;Method, Method&gt; <span class="title function_">getAllPublicMethods</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 得到断路器的配置</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  HystrixCommand.Setter <span class="title function_">getHystrixSetter</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>为了让实现类更少的写代码,再为其定义一个抽象类,该抽象类主要负责接口功能的实现,其中<code>initOtherRepo</code>作为抽象方法,需要子类来实现,也就是初始化备份的Repo.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">DubboRepoProxyImpl</span>&lt;T <span class="keyword">extends</span> <span class="title class_">IDubboRepoProxy</span>&gt; <span class="keyword">implements</span> <span class="title class_">IDubboRepoProxy</span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Getter</span></span><br><span class="line">  <span class="keyword">private</span> ApplicationContext context;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Setter</span></span><br><span class="line">  <span class="keyword">private</span> T otherRepo;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> Map&lt;Method, Method&gt; publicMethodMap = Maps.newHashMap();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> HystrixCommand.Setter setter;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> IDubboRepoProxy <span class="title function_">getDubboRepo</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> otherRepo;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> Map&lt;Method, Method&gt; <span class="title function_">getAllPublicMethods</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> publicMethodMap;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> HystrixCommand.Setter <span class="title function_">getHystrixSetter</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> setter;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">afterPropertiesSet</span><span class="params">()</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">    <span class="comment">//init repo</span></span><br><span class="line">    initOtherRepo();</span><br><span class="line">    <span class="comment">//init method</span></span><br><span class="line">    Class&lt;? <span class="keyword">extends</span> <span class="title class_">IDubboRepoProxy</span>&gt; old_rpcClass = <span class="built_in">this</span>.otherRepo.getClass();</span><br><span class="line">    <span class="keyword">for</span> (Method method : old_rpcClass.getDeclaredMethods()) &#123;</span><br><span class="line">      publicMethodMap.put(method, method);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//init setter</span></span><br><span class="line">    setter = HystrixCommand.Setter</span><br><span class="line">        .withGroupKey(HystrixCommandGroupKey.Factory.asKey(<span class="built_in">this</span>.getClass().getName()))</span><br><span class="line">        .andCommandKey(HystrixCommandKey.Factory.asKey(<span class="built_in">this</span>.getClass().getSimpleName()));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title function_">initOtherRepo</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Override</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setApplicationContext</span><span class="params">(ApplicationContext applicationContext)</span> <span class="keyword">throws</span> BeansException &#123;</span><br><span class="line">    <span class="built_in">this</span>.context = applicationContext;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h5 id="使用AOP动态切换"><a href="#使用AOP动态切换" class="headerlink" title="使用AOP动态切换"></a>使用AOP动态切换</h5><p>上述接口与抽象类会赋予UserRepo我们想要的功能.接下来就是AOP拦截.因为断路器是方法级别的操作,因此该AOP只拦截方法,为了更好的配置增加一个AOP专用注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//该注解修饰的方法会被AOP拦截</span></span><br><span class="line"><span class="meta">@Target(ElementType.METHOD)</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> AutoDubboAspect &#123;&#125;</span><br></pre></td></tr></table></figure>
+<p>然后写具体的拦截器.该拦截器责任就是按部就班的执行之前的思路.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">AutoDubboAspectImpl</span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="type">Logger</span> <span class="variable">logger</span> <span class="operator">=</span> LoggerFactory.getLogger(AutoDubboAspectImpl.class);</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Pointcut(&quot;@annotation(com.duitang.context.dubbo.AutoDubboAspect)&quot;)</span></span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">autoDubboAspect</span><span class="params">()</span> &#123;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">//环绕通知</span></span><br><span class="line">  <span class="meta">@Around(&quot;autoDubboAspect()&quot;)</span></span><br><span class="line">  <span class="keyword">public</span> Object <span class="title function_">autoCheck</span><span class="params">(ProceedingJoinPoint pjp)</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">    <span class="comment">//要执行的主repo</span></span><br><span class="line">    <span class="type">IDubboRepoProxy</span> <span class="variable">target</span> <span class="operator">=</span> (IDubboRepoProxy) pjp.getTarget();</span><br><span class="line">    <span class="comment">//备用repo</span></span><br><span class="line">    <span class="type">IDubboRepoProxy</span> <span class="variable">otherRepo</span> <span class="operator">=</span> target.getDubboRepo();</span><br><span class="line">    <span class="comment">//该repo中所有方法</span></span><br><span class="line">    Map&lt;Method, Method&gt; methods = target.getAllPublicMethods();</span><br><span class="line">    <span class="comment">//断路器执行</span></span><br><span class="line">    HystrixCommand&lt;Object&gt; hystrixCommand = <span class="keyword">new</span> <span class="title class_">HystrixCommand</span>&lt;Object&gt;(</span><br><span class="line">        target.getHystrixSetter()) &#123;</span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="keyword">protected</span> Object <span class="title function_">run</span><span class="params">()</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="keyword">return</span> pjp.proceed();</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable throwable) &#123;</span><br><span class="line">          <span class="comment">//异常直接抛出</span></span><br><span class="line">          <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(throwable);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="comment">/**</span></span><br><span class="line"><span class="comment">       * 备用降级方案</span></span><br><span class="line"><span class="comment">       */</span></span><br><span class="line">      <span class="meta">@Override</span></span><br><span class="line">      <span class="keyword">protected</span> Object <span class="title function_">getFallback</span><span class="params">()</span> &#123;</span><br><span class="line">        logger.error(<span class="string">&quot;start getFallback,this exception is &#123;&#125;&quot;</span>, <span class="built_in">this</span>.getFailedExecutionException());</span><br><span class="line">        logger.error(<span class="string">&quot;start getFallback&quot;</span>, pjp.getSignature().toLongString());</span><br><span class="line">        <span class="type">MethodSignature</span> <span class="variable">signature</span> <span class="operator">=</span> (MethodSignature) pjp.getSignature();</span><br><span class="line">        <span class="comment">//获取执行方法</span></span><br><span class="line">        <span class="type">Method</span> <span class="variable">method</span> <span class="operator">=</span> methods.get(signature.getMethod());</span><br><span class="line">        <span class="keyword">if</span> (method == <span class="literal">null</span>) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="comment">//使用备用repo执行该方法</span></span><br><span class="line">          <span class="keyword">return</span> method.invoke(otherRepo, pjp.getArgs());</span><br><span class="line">        &#125; <span class="keyword">catch</span> (IllegalAccessException | InvocationTargetException e) &#123;</span><br><span class="line">          logger.error(<span class="string">&quot;getFallback error,&#123;&#125;&quot;</span>,e);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="keyword">return</span> hystrixCommand.execute();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>到此准备工作算是结束,下面是真正的替换.</p>
+<h5 id="开始替换old-rpc服务"><a href="#开始替换old-rpc服务" class="headerlink" title="开始替换old_rpc服务"></a>开始替换old_rpc服务</h5><p>因为准备的充分,那么替换就变得相当简单了.首先为UserRepo增强功能,也就是继承抽象类<code>DubboRepoProxyImpl</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">public class UserRepo extends DubboRepoProxyImpl&lt;UserRepo&gt;</span><br></pre></td></tr></table></figure>
+<p>然后实现<code>initOtherRepo</code>方法,该方法主要是从Spring容器中获取到old_rpc的服务,然后再初始化一个UserRepo.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"> <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">initOtherRepo</span><span class="params">()</span> &#123;</span><br><span class="line">   <span class="keyword">if</span> (<span class="literal">null</span> != getContext()) &#123;</span><br><span class="line">     <span class="type">IUserService</span> <span class="variable">userService</span> <span class="operator">=</span> getContext().getBean(<span class="string">&quot;userService&quot;</span>, IUserService.class);</span><br><span class="line">     <span class="type">IRelationshipService</span> <span class="variable">relationshipService</span> <span class="operator">=</span> getContext().getBean(<span class="string">&quot;relationshipService&quot;</span>,</span><br><span class="line">         IRelationshipService.class);</span><br><span class="line">     <span class="type">IUserInterestsService</span> <span class="variable">userInterestsService</span> <span class="operator">=</span> getContext().getBean(<span class="string">&quot;userInterestsService&quot;</span>,</span><br><span class="line">         IUserInterestsService.class);</span><br><span class="line">     <span class="type">IFriendRecomendService</span> <span class="variable">friendRecomendService</span> <span class="operator">=</span> getContext().getBean(<span class="string">&quot;friendRecomendService&quot;</span>,</span><br><span class="line">         IFriendRecomendService.class);</span><br><span class="line">     <span class="comment">//备用old_rpc服务</span></span><br><span class="line">     <span class="type">UserRepo</span> <span class="variable">userRepo</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UserRepo</span>(userService, <span class="built_in">this</span>.appealAccountService, <span class="built_in">this</span>.datasourceService,</span><br><span class="line">         relationshipService, <span class="built_in">this</span>.lifeArtistService, userInterestsService, <span class="built_in">this</span>.jedisPersist, friendRecomendService);</span><br><span class="line">     <span class="built_in">this</span>.setOtherRepo(userRepo);</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>最后为想要实现短路功能的方法加上注解.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@AutoDubboAspect</span></span><br><span class="line"><span class="keyword">public</span> BaseUser <span class="title function_">findBasicInfo</span><span class="params">(<span class="type">long</span> userId)</span> &#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><h4 id="消费者无法从zk中获取提供者信息"><a href="#消费者无法从zk中获取提供者信息" class="headerlink" title="消费者无法从zk中获取提供者信息?"></a>消费者无法从zk中获取提供者信息?</h4><p>这种情况大多数都是因为配置时两方信息不一致导致,可以去dubbo-admin平台检查提供者完整的url,再与日志中消费者引用的url做个比较,定位到问题.</p>
+<h4 id="zk连接超时"><a href="#zk连接超时" class="headerlink" title="zk连接超时"></a>zk连接超时</h4><p>zk是我在自己服务器上部署的,在vienna项目中配置了外网地址,在prism环境中启动后总是出现zk连接超时,后来测试要连上zk大概需要20秒左右,索性把超时时间配置为60秒,解决,具体原因未知.</p>
+<h4 id="saturn中配置zk注册服务后测试案例无法跑通"><a href="#saturn中配置zk注册服务后测试案例无法跑通" class="headerlink" title="saturn中配置zk注册服务后测试案例无法跑通"></a>saturn中配置zk注册服务后测试案例无法跑通</h4><p>这个问题是我在saturn配置了测试环境的zk,</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="keyword">public</span> RegistryConfig <span class="title function_">registry</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="type">RegistryConfig</span> <span class="variable">registryConfig</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">RegistryConfig</span>();</span><br><span class="line">  registryConfig.setAddress(<span class="string">&quot;10.1.4.10:2181&quot;</span>);</span><br><span class="line">  registryConfig.setProtocol(<span class="string">&quot;zookeeper&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> registryConfig;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>但是jenkins打包时,测试案例一直失败,大概要打包10多分钟,问题有点莫名其妙,在测试时避免Spring引入该bean即可解决.</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>整体过程是比较顺利的,下篇再记录dubbo-admin与dubbo-monitor,以及hystrix-dashborad的搭建.</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-double-replace.html">Dubbo -- 关于老项目替换dubbo的一点经验</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-double-replace.html">https://mrdear.cn/posts/framework-double-replace.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/java_stream2.html" title="Java8 Lambda（二）-Stream原理"><i class="iconfont icon-prev"></i>Java8 Lambda（二）-Stream原理</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/anime_recommed.html" title="动漫推荐">动漫推荐<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%83%8C%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">背景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%BF%E6%8D%A2%E8%A6%81%E6%B1%82"><span class="toc-number">2.</span> <span class="toc-text">替换要求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%BF%E6%8D%A2%E6%80%9D%E8%B7%AF"><span class="toc-number">3.</span> <span class="toc-text">替换思路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#dubbox"><span class="toc-number">4.</span> <span class="toc-text">dubbox</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#zk%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83"><span class="toc-number">4.1.</span> <span class="toc-text">zk注册中心</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%8F%90%E4%BE%9B%E8%80%85saturn"><span class="toc-number">4.2.</span> <span class="toc-text">服务提供者saturn</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#dubbo%E5%9F%BA%E6%9C%AC%E9%85%8D%E7%BD%AE"><span class="toc-number">4.2.1.</span> <span class="toc-text">dubbo基本配置</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%8F%90%E4%BE%9B%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.2.2.</span> <span class="toc-text">提供服务</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%B6%88%E8%B4%B9%E8%80%85vienna-%E6%97%A0%E6%96%AD%E8%B7%AF%E5%99%A8%E7%89%88%E6%9C%AC"><span class="toc-number">4.3.</span> <span class="toc-text">服务消费者vienna(无断路器版本)</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#dubbo%E5%9F%BA%E6%9C%AC%E9%85%8D%E7%BD%AE-1"><span class="toc-number">4.3.1.</span> <span class="toc-text">dubbo基本配置</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E6%B6%88%E8%B4%B9%E8%80%85"><span class="toc-number">4.3.2.</span> <span class="toc-text">配置消费者</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%9B%BF%E6%8D%A2old-rpc"><span class="toc-number">4.3.3.</span> <span class="toc-text">替换old_rpc</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E6%B6%88%E8%B4%B9%E8%80%85vienna-%E6%96%AD%E8%B7%AF%E5%99%A8%E7%89%88%E6%9C%AC"><span class="toc-number">4.4.</span> <span class="toc-text">服务消费者vienna(断路器版本)</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%AD%E8%B7%AF%E5%99%A8%E8%A6%81%E6%B1%82"><span class="toc-number">4.4.1.</span> <span class="toc-text">断路器要求</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%AD%E8%B7%AF%E5%99%A8%E4%BE%9D%E8%B5%96"><span class="toc-number">4.4.2.</span> <span class="toc-text">断路器依赖</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E6%80%9D%E8%B7%AF"><span class="toc-number">4.4.3.</span> <span class="toc-text">实现思路</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%A2%9E%E5%BC%BARepo%E5%8A%9F%E8%83%BD"><span class="toc-number">4.4.4.</span> <span class="toc-text">增强Repo功能</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8AOP%E5%8A%A8%E6%80%81%E5%88%87%E6%8D%A2"><span class="toc-number">4.4.5.</span> <span class="toc-text">使用AOP动态切换</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%BC%80%E5%A7%8B%E6%9B%BF%E6%8D%A2old-rpc%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.4.6.</span> <span class="toc-text">开始替换old_rpc服务</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="toc-number">5.</span> <span class="toc-text">注意事项</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B6%88%E8%B4%B9%E8%80%85%E6%97%A0%E6%B3%95%E4%BB%8Ezk%E4%B8%AD%E8%8E%B7%E5%8F%96%E6%8F%90%E4%BE%9B%E8%80%85%E4%BF%A1%E6%81%AF"><span class="toc-number">5.1.</span> <span class="toc-text">消费者无法从zk中获取提供者信息?</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#zk%E8%BF%9E%E6%8E%A5%E8%B6%85%E6%97%B6"><span class="toc-number">5.2.</span> <span class="toc-text">zk连接超时</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#saturn%E4%B8%AD%E9%85%8D%E7%BD%AEzk%E6%B3%A8%E5%86%8C%E6%9C%8D%E5%8A%A1%E5%90%8E%E6%B5%8B%E8%AF%95%E6%A1%88%E4%BE%8B%E6%97%A0%E6%B3%95%E8%B7%91%E9%80%9A"><span class="toc-number">5.3.</span> <span class="toc-text">saturn中配置zk注册服务后测试案例无法跑通</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

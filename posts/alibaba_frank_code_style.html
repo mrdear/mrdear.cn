@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>(转)你写的代码,是别人的噩梦吗 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/alibaba_frank_code_style.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/1520910683.png" alt="(转)你写的代码,是别人的噩梦吗">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">(转)你写的代码,是别人的噩梦吗</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">Frank</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-03-13</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>自从工作后写了大半年代码了,公司由于历史原因项目中充斥着各种不合理设计,写着写着就很容易烦躁,影响心情,写代码本来是快乐而富有创造的事情,面对这样的噩梦需要找到解决方案,那么方案就是这篇文章.</p>
+<hr>
+<blockquote>
+<p>Frank，是来自阿里国际技术事业部的高级技术专家，从业十年，也是一位英语说到飞起的型男。今天他将与大家聊聊关于企业应用架构实践的话题。</p>
+</blockquote>
+<p><img src="http://res.mrdear.cn/1520910556.png" alt="阿里高级技术专家Frank"><br>从业这么多年，接触过银行的应用，Apple的应用，eBay的应用和现在阿里的应用，虽然分属于不同的公司，使用了不同的架构，但有一个共同点就是都很复杂。导致复杂性的原因有很多，如果从架构的层面看，主要有两点，一个是架构设计过于复杂，层次太多能把人绕晕。另一个是根本就没架构，ServiceImpl作为上帝类包揽一切，一杆捅到DAO（就简单场景而言，这种Transaction Script也还凑合，至少实现上手都快），这种人为的复杂性导致系统越来越臃肿，越来越难维护，酱缸的老代码发出一阵阵恶臭，新来的同学，往往要捂着鼻子抠几天甚至几个月，才能理清系统和业务脉络，然后又一头扎进各种bug fix，业务修补的恶性循环中，暗无天日！<br><img src="http://res.mrdear.cn/1520910594.png"><br>CRM作为阿里最老的应用系统，自然也逃不过这样的宿命。不甘如此的我们开始反思到底是什么造成了系统复杂性？我们到底能不能通过架构来治理这种复杂性？基于这个出发点，我们团队开始了一段非常有意义的架构重构之旅（Redefine theArch），期间我们参考了SalesForce，TMF2.0，汇金和盒马的架构，从他们那里汲取了很多有价值的输入，再结合我们自己的思考最终形成了我们自己现在的基于扩展点+元数据+CQRS+DDD的应用架构。该架构的特点是可扩展性好，很好的贯彻了OO思想，有一套完整的规范标准，并采用了CQRS和领域建模技术，在很大程度上可以降低应用的复杂度。本文主要阐述了我们的思考过程和架构实现，希望能对在路上的你有所帮助。</p>
+<h2 id="复杂性来自哪里？"><a href="#复杂性来自哪里？" class="headerlink" title="复杂性来自哪里？"></a>复杂性来自哪里？</h2><p>经过我们分析、讨论，发现造成现在系统异常复杂的罪魁祸首主要来自以下四个方面： </p>
+<h3 id="可扩展性差"><a href="#可扩展性差" class="headerlink" title="可扩展性差"></a>可扩展性差</h3><p>对于只有一个业务的简单场景，并不需要扩展，问题也不突出，这也是为什么这个点经常被忽略的原因，因为我们大部分的系统都是从单一业务开始的。但是随着支持的业务越来越多，代码里面开始出现大量的if-else逻辑，这个时候代码开始有坏味道，没闻到的同学就这么继续往上堆，闻到的同学会重构一下，但因为系统没有统一的可扩展架构，重构的技法也各不相同，这种代码的不一致性也是一种理解上的复杂度。久而久之，系统就变得复杂难维护。</p>
+<p>像我们CRM应用，有N个业务方，每个业务方又有N个租户，如果都要用if-else判断业务差异，那简直就是惨绝人寰。其实这种扩展点（ExtensionPoint），或者叫插件（Plug-in）的设计在架构设计中是非常普遍的。比较成功的案例有eclipse的plug-in机制，集团的TMF2.0架构。还有一个扩展性需求就是字段扩展，这一点对SaaS应用尤为重要，因为有很多客户定制化需求，但是我们很多系统也没有统一的字段扩展方案。</p>
+<h3 id="面向过程"><a href="#面向过程" class="headerlink" title="面向过程"></a>面向过程</h3><p>是的，不管你承认与否，很多时候，我们都是操着面向对象的语言干着面向过程的勾当。面向对象不仅是一个语言，更是一种思维方式。在我们追逐云计算、深度学习、区块链这些技术热点的时候，静下心来问问自己我们是不是真的掌握了OOD；在我们强调工程师要具备业务Sense，产品Sense，数据Sense，算法Sense，XXSense的时候，是不是忽略了对工程能力的要求。</p>
+<p>据我观察大部分工程师（包括我自己）的OO能力还远没有达到精通的程度，这种OO思想的缺乏主要体现在两个方面，一个是很多同学不了解SOLID原则，不懂设计模式，不会画UML图，或者只是知道，但从来不会运用到实践中；另一个是不会进行领域建模，关于领域建模争论已经很多了，我的观点是DDD很好，但不是银弹，用和不用取决于场景。但不管怎样，请你抛开偏见，好好的研读一下EricEvans的《领域驱动设计》，如果有认知升级的感悟，恭喜你，你进阶了。</p>
+<p>我个人认为DDD最大的好处是将业务语义显现化，把原先晦涩难懂的业务算法逻辑，通过领域对象（Domain Object），统一语言（Ubiquitous Language）将领域概念清晰的显性化表达出来。相信我，这种表达带来的代码可读性的提升，会让接手你代码的人对你心怀感恩的。借用Abelson的一句话是</p>
+<blockquote>
+<p>Programs must be written for people to read, and only incidentally for machines to execute.</p>
+</blockquote>
+<p>所以强烈谴责那些不顾他人感受的编码行为。<br><img src="http://res.mrdear.cn/1520910683.png"></p>
+<h3 id="分层不合理"><a href="#分层不合理" class="headerlink" title="分层不合理"></a>分层不合理</h3><p>俗话说的好，All problemsin computer science can be solved by another level of indirection（计算机科学领域的任何问题都可以通过增加一个间接的中间层来解决），怎样？是不是感受到间接层的强大了。分层最大的好处就是分离关注点，让每一层只解决该层关注的问题，从而将复杂的问题简化，起到分而治之的作用。我们平时看到的MVC，pipeline，以及各种valve的模式，都是这个道理。</p>
+<p>好吧，那是不是层次越多越好，越灵活呢。当然不是，就像我开篇说的，过多的层次不仅不能带来好处，反而会增加系统的复杂性和降低系统性能。就拿ISO的网络七层协议来说，你这个七层分的很清楚，很好，但也很繁琐，四层就够了嘛。再比如我前面提到的过度设计的例子，如果没记错的话应该是Apple的Directory Service应用，整个系统有7层之多，把什么validator，assembler都当成一个层次来对待，能不复杂么。所以分层太多和没有分层都会导致系统复杂度的上升，因此我们的原则是不可以没有分层，但是只分有必要的层。</p>
+<h3 id="随心所欲"><a href="#随心所欲" class="headerlink" title="随心所欲"></a>随心所欲</h3><p>随心所欲是因为缺少规范和约束。这个规范非常非常非常的重要（重要事情说三遍），但也是最容易被无视的点，其结果就是架构的consistency被严重破坏，代码的可维护性将急剧下降，国将不国，架构将形同虚设。有同学会说不就是个naming的问题么，不就是个分包的问题么，不就是2个module还是3个module的问题么，只要功能能跑起来，这些问题都是小问题。是的，对于这些同学，我再丢给你一句名言“Just because you can, doesn’t mean you should”。就拿package来说，它不仅仅是一个放一堆类的地方，更是一种表达机制，当你将一些类放到Package中时，相当于告诉下一位看到你设计的开发人员要把这些类放在一起考虑。</p>
+<p>理想很丰满，现实很骨感，规范的执行是个大问题，最好能在架构层面进行约束，例如在我们架构中，扩展点必须以ExtPt结尾，扩展实现必须以Ext结尾，你不这么写就会给你抛异常。但是架构的约束毕竟有限，更多的还是要靠Code Review，暂时没想到什么更好的办法。这种对架构约束的近似严苛follow，确保了系统的consistency，最终形成了一个规整的收纳箱（如下图所示），就像我和团队说的，我们在评估代码改动点时，应该可以像Hash查找一样，直接定位到对应的module，对应的package里面对应的class。而不是到“一锅粥”里去慢慢抠。<br><img src="http://res.mrdear.cn/1520910731.png"><br>本章节最后，上一张我们老系统中比较典型的代码，也许你可以从中看到你自己应用的影子。<br><img src="http://res.mrdear.cn/1520910892.png" alt="复杂性应对之道"><br>知道了问题所在，接下来看下我们是如何一个个解决这些问题的。回头站在山顶再看这些解决方案时，每个都不足为奇，但当你还“身在此山中”的时候，这个拨开层层迷雾，看到山的全貌的过程，并不是想象的那么容易。庆幸的是我团队在艰难跋涉之后，终有所收获。</p>
+<h2 id="1、扩展点设计"><a href="#1、扩展点设计" class="headerlink" title="1、扩展点设计"></a>1、扩展点设计</h2><p>扩展点的设计思想主要得益于TMF2.0的启发，其实这种设计思想也一直在用，但都是在局部的代码重构和优化，比如基于Strategy Pattern的扩展，但是一直没有找到一个很好的固化到框架中的方法。直到毗卢到团队分享，给了我们两个关键的提示，一个是业务身份识别，用他的话说，如果当时TMF1.0如果有身份识别的话，就没有TMF2.0什么事了；另一个是抽象的扩展点机制。 </p>
+<h3 id="身份识别"><a href="#身份识别" class="headerlink" title="身份识别"></a>身份识别</h3><p>业务身份识别在我们的应用中非常重要，因为我们的CRM系统要服务不同的业务方，而且每个业务方又有多个租户。比如中供销售，中供拍档，中供商家都是不同的业务方，而拍档下的每个公司，中供商家下的每个供应商又是不同的租户。所以传统的基于多租户（TenantId）的业务身份识别还不能满足我们的要求，于是在此基础上我们又引入了业务码（BizCode）来标识业务。</p>
+<p>所以我们的业务身份实际上是（BizCode，TenantId）二元组。在每一个业务身份下面，又可以有多个扩展点（ExtensionPoint），所以一个扩展点实现（Extension）实际上是一个三维空间中的向量。借鉴Maven Coordinate的概念我给它起了个名字叫扩展坐标（Extension Coordinate），这个坐标可以用（ExtensionPoint，BizCode，TenantId）来唯一标识。<br><img src="http://res.mrdear.cn/1520911038.png"></p>
+<h3 id="扩展点"><a href="#扩展点" class="headerlink" title="扩展点"></a>扩展点</h3><p>扩展点的设计是这样的，所有的扩展点（ExtensionPoint）必须通过接口申明，扩展实现（Extension）是通过Annotation的方式标注的，Extension里面使用BizCode和TenantId两个属性用来标识身份，框架的Bootstrap类会在Spring启动的时候做类扫描，进行Extension注册，在Runtime的时候，通过TenantContext来选择要使用的Extension。TenantContext是通过Interceptor在调用业务逻辑之前进行初始化的。整个过程如下图所示：<br><img src="http://res.mrdear.cn/1520911573.png"></p>
+<h2 id="2、面向对象"><a href="#2、面向对象" class="headerlink" title="2、面向对象"></a>2、面向对象</h2><h3 id="领域建模"><a href="#领域建模" class="headerlink" title="领域建模"></a>领域建模</h3><p>准确的说DDD不是一个架构，而是思想和方法论。所以在架构层面我们并没有强制约束要使用DDD，但对于像我们这样的复杂业务场景，我们强烈建议使用DDD代替事务脚本（TS: Transaction Script）。因为TS的贫血模式，里面只有数据结构，完全没有对象（数据+行为）的概念，这也是为什么我们叫它是面向过程的原因。然而DDD是面向对象的，是一种知识丰富的设计（Knowledge Rich Design），怎么理解？，就是通过领域对象（Domain Object），领域语言（Ubiquitous Language）将核心的领域概念通过代码的形式表达出来，从而增加代码的可理解性。这里的领域核心不仅仅是业务里的“名词”，所有的业务活动和规则如同实体一样，都需要明确的表达出来。</p>
+<p>例如前面典型代码图中所展示的，分配策略（DistributionPolicy）你把它隐藏在一堆业务逻辑中，没有人知道它是干什么的，也不会把它当成一个重要的领域概念去重视。但是你把它抽出来，凸显出来，给它一个合理的命名叫DistributionPolicy，后面的人一看就明白了，哦，这是一个分配策略，这样理解和使用起来就容易的多了，添加新的策略也更方便，不需要改原来的代码了。</p>
+<p>所以说好的代码不仅要让程序员能读懂，还要能让领域专家也能读懂。再比如在CRM领域中，公海和私海是非常重要领域概念，是用来做领地（Territory）划分的，每个销售人员只能销售私海（自己领地）内的客户，不能越界。但是在我们的代码中却没有这两个实体（Entity），也没有相应的语言和其对应，这就导致了领域专家描述的，和我们日常沟通的，以及我们模型和代码呈现的都是相互割裂的，没有关联性。这就给后面系统维护的同学造成了极大的困扰，因为所有关于公海私海的操作，都是散落着各处的repeat itself的逻辑代码，导致看不懂也没办法维护。</p>
+<p>所以当尚学把这两个领域概念抽象成实体之后，整个模型和代码都一下子变清晰很多。在加上上面介绍的把业务规则显现化，极大的提升了代码的可读性和可扩展性。用尚学的话说，用DDD写代码，他找到了创作的感觉，而不仅仅是码农式Coding。下图是销售域的简要领域模型，但基本上能表达出销售域的核心领域概念。<br><img src="http://res.mrdear.cn/1520912884.png"><br>关于CQRS简要说一下，我们只使用了Command，Query分离的概念，并没有使用Event Sourcing，原因很简单—不需要。关于Command的实现我们使用了命令模式，因此以前的ServiceImpl的职责就只是一个Facade，所有的处理逻辑都在CommandExecutor里面。</p>
+<h3 id="SOLID"><a href="#SOLID" class="headerlink" title="SOLID"></a>SOLID</h3><p>SOLID是单一职责原则(SRP)，开闭原则(OCP)，里氏替换原则(LSP)，接口隔离原则(ISP)和依赖倒置原则(DIP)的缩写，原则是要比模式（Design Pattern）更基础更重要的指导准则，是面向对象设计的Bible。深入理解后，会极大的提升我们的OOD能力和代码质量。比如我在开篇提到的ServiceImpl上帝类的例子，很明显就是违背了单一职责，你一个类把所有事情都做了，把不是你的功能也往自己身上揽，所以你的内聚性就会很差，内聚性差将导致代码很难被复用，不能复用，只能复制（Repeat Yourself），其结果就是一团乱麻。<br><img src="http://res.mrdear.cn/1520912916.png"><br>再比如在java应用中使用logger框架有很多选择，什么log4j，logback，common logging等，每个logger的API和用法都稍有不同，有的需要用isLoggable()来进行预判断以便提高性能，有的则不需要。对于要切换不同的logger框架的情形，就更是头疼了，有可能要改动很多地方。产生这些不便的原因是我们直接依赖了logger框架，应用和框架的耦合性很高。</p>
+<p>怎么破？ 遵循下依赖倒置原则就能很容易解决，依赖倒置就是你不要直接依赖我，你和我都同时依赖一个接口（所以有时候也叫面向接口的编程），这样我们之间就解耦了，依赖和被依赖方都可以自由改动了。<br><img src="http://res.mrdear.cn/1520912931.png"><br>在我们的框架设计中，这种对SOLID的遵循也是随处可见，Service Facade设计思想来自于单一职责SRP；扩展点设计符合关闭原则OCP；日志设计，以及Repository和Tunnel的交互就用到了依赖倒置DIP原则，这样的点还有很多，就不一一枚举了。当然了，SOLID不是OO的全部。抽象能力，设计模式，架构模式，UML，以及阅读优秀框架源码（我们的Command设计就是参考了Activiti的Command）也都很重要。只是SOLID更基础，更重要，所以我在这里重点拿出来讲一下，希望能得到大家的重视。</p>
+<h2 id="3、分层设计"><a href="#3、分层设计" class="headerlink" title="3、分层设计"></a>3、分层设计</h2><p>这一块的设计比较直观，整个应用层划分为三个大的层次，分别是App层，Domain层和Repostiory层。</p>
+<p>1.App层主要负责获取输入，组装context，做输入校验，发送消息给领域层做业务处理，监听确认消息，如果需要的话使用MetaQ进行消息通知；</p>
+<p>2.Domain层主要是通过领域服务（Domain     Service），领域对象（Domain Object）的交互，对上层提供业务逻辑的处理，然后调用下层Repository做持久化处理；</p>
+<p>3.Repository层主要负责数据的CRUD操作，这里我们借用了盒马的数据通道（Tunnel）的概念，通过Tunnel的抽象概念来屏蔽具体的数据来源，来源可以是MySQL，NoSql，Search，甚至是HSF等。<br><img src="http://res.mrdear.cn/1520912963.png"><br>这里需要注意的是从其他系统获取的数据是有界上下文（Bounded Context）下的数据，为了弥合Bounded     Context下的语义Gap，通常有两种方式，一个是用大领域（Big Domain）把两边的差异都合起来，另一个是增加防腐层（Anticorruption     Layer）做转换。什么是Bounded Context？ 简单阐述一下，就是我们的领域概念是有作用范围的（Context）的，例如摇头这个动作，在中国的Context下表示NO，但是在印度的Context下却是YES。</p>
+<h2 id="4、规范设计"><a href="#4、规范设计" class="headerlink" title="4、规范设计"></a>4、规范设计</h2><p>我们规范设计主要是要满足收纳原则的两个约束：放对位置东西不要乱放，我们的每一个组件（Module），每一个包（Package）都有明确的职责定义和范围，不可以放错，例如extension包就只是用来放扩展实现的，不允许放其他东西，而Interceptor包就只是放拦截器的，validator包就只是放校验器的。我们的主要构件如下图所示：<br><img src="http://res.mrdear.cn/1520912993.png"></p>
+<h3 id="贴好标签"><a href="#贴好标签" class="headerlink" title="贴好标签"></a>贴好标签</h3><p>东西放在合适位置后还要贴上合适的标签，也就是要按照规范合理命名，例如我们架构里面和数据有关的Object，主要有Client Object，Domain Object和Data Object，Client Object是放在二方库中和外部交互使用的DTO，其命名必须以CO结尾，相应的Data Object主要是持久层使用的，命名必须以DO结尾。这个类名应该是自明的（self-evident)，也就是看到类名就知道里面是干了什么事，这也就反向要求我们的类也必须是单一职责的（Single Responsibility）的，如果你做的事情不单纯，自然也就很难自明了。如果我们Class Name是自明的，Package Name是自明的，Module Name也是自明的，那么我们整个应用系统就会很容易被理解，看起来就会很舒服，维护效率会提高很多。我们的命名规则如下图所示：<br><img src="http://res.mrdear.cn/1520913021.png" alt="GTS应用架构"><br>经过上面的长篇大论，我希望我把我们的架构理念阐述清楚了，最后再从整体上看下我们的架构吧。如果觉得不错，也可以把framework code拉下来自己玩一下。</p>
+<h3 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h3><p>我们的架构原则很简单，即在高内聚，低耦合，可扩展，易理解大的指导思想下，尽可能的贯彻OO的设计思想和原则。我们最终形成的架构是集成了扩展点+元数据+CQRS+DDD的思想，关于元数据前面没怎么提到，这里稍微说一下，对于字段扩展，简单一点的解决方案就是预留扩展字段，复杂一点的就是使用元数据引擎。</p>
+<p>使用元数据的好处是不仅能支持字段扩展，还提供了丰富的字段描述，等于是为以后的SaaS化配置提供了可能性，所以我们选择了使用元数据引擎。和DDD一样，元数据也是可选的，如果对没有字段扩展的需求，就不要用。最后的整体架构图如下：<br><img src="http://res.mrdear.cn/1520913063.png" alt="-END-"></p>
+<h2 id="备注"><a href="#备注" class="headerlink" title="备注"></a>备注</h2><p>没找到<code>framework code</code>的下载地址,哎,有代码的希望分享下.</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/alibaba_frank_code_style.html">(转)你写的代码,是别人的噩梦吗</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/alibaba_frank_code_style.html">https://mrdear.cn/posts/alibaba_frank_code_style.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/java_enum.html" title="Java--Enum的思考"><i class="iconfont icon-prev"></i>Java--Enum的思考</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/design-patterns-adapter.html" title="设计模式--适配器模式的思考">设计模式--适配器模式的思考<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E6%9D%82%E6%80%A7%E6%9D%A5%E8%87%AA%E5%93%AA%E9%87%8C%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">复杂性来自哪里？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7%E5%B7%AE"><span class="toc-number">1.1.</span> <span class="toc-text">可扩展性差</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9D%A2%E5%90%91%E8%BF%87%E7%A8%8B"><span class="toc-number">1.2.</span> <span class="toc-text">面向过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E5%B1%82%E4%B8%8D%E5%90%88%E7%90%86"><span class="toc-number">1.3.</span> <span class="toc-text">分层不合理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9A%8F%E5%BF%83%E6%89%80%E6%AC%B2"><span class="toc-number">1.4.</span> <span class="toc-text">随心所欲</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1%E3%80%81%E6%89%A9%E5%B1%95%E7%82%B9%E8%AE%BE%E8%AE%A1"><span class="toc-number">2.</span> <span class="toc-text">1、扩展点设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BA%AB%E4%BB%BD%E8%AF%86%E5%88%AB"><span class="toc-number">2.1.</span> <span class="toc-text">身份识别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%A9%E5%B1%95%E7%82%B9"><span class="toc-number">2.2.</span> <span class="toc-text">扩展点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2%E3%80%81%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1"><span class="toc-number">3.</span> <span class="toc-text">2、面向对象</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%86%E5%9F%9F%E5%BB%BA%E6%A8%A1"><span class="toc-number">3.1.</span> <span class="toc-text">领域建模</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SOLID"><span class="toc-number">3.2.</span> <span class="toc-text">SOLID</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3%E3%80%81%E5%88%86%E5%B1%82%E8%AE%BE%E8%AE%A1"><span class="toc-number">4.</span> <span class="toc-text">3、分层设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4%E3%80%81%E8%A7%84%E8%8C%83%E8%AE%BE%E8%AE%A1"><span class="toc-number">5.</span> <span class="toc-text">4、规范设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B4%B4%E5%A5%BD%E6%A0%87%E7%AD%BE"><span class="toc-number">5.1.</span> <span class="toc-text">贴好标签</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84"><span class="toc-number">5.2.</span> <span class="toc-text">整体架构</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%87%E6%B3%A8"><span class="toc-number">6.</span> <span class="toc-text">备注</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

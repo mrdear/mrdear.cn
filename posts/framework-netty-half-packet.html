@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Netty -- 粘包与半包详解 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-netty-half-packet.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/blog-netty.png" alt="Netty -- 粘包与半包详解">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Netty -- 粘包与半包详解</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2020-12-19</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Netty/">Netty</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>粘包与半包在中文网络上争议很大，有些人认为这是中式伪概念，对于一个流式协议来说本身没有包概念，何来粘包与半包说法，这种说法是对流式协议理解不到位才会导致这样的翻译，博主认为这样理解也没多大问题，粘包与半包是应用层出现的问题，但不能只揪住这一点，因为该问题确确实实存在，分析清楚然后解决它才是目地。博主希望大家理性看待，少一些争论。</p>
+<h2 id="什么是粘包和半包"><a href="#什么是粘包和半包" class="headerlink" title="什么是粘包和半包"></a>什么是粘包和半包</h2><p>粘包与半包是应用层协议在对接TCP&#x2F;IP网络协议时，对所遇到的对接问题定义的概念，所以在使用Netty编写网络通信框架时，这一概念经常被提起。那么什么是粘包和半包问题呢？</p>
+<p>在网络编程中，客户端往服务端发送消息是以消息为单位，TCP&#x2F;IP传输时，消息会被拆分为多个数据包，该层是以数据包为单位，接着三次握手之后，服务端通过accept()函数获取到该连接，然后开始读取数据，读取的是一个个数据包，此时客户端的消息相当于失真，需要服务端将这些数据包还原成对应的消息，在还原过程中就可能出现如下情况：</p>
+<p>在Time1时刻，服务端只拿到了数据包1，此时并不能完整的还原出消息A，这种现象被称为<strong>半包</strong>，对于服务端的影响是需要判断一个包是否完整，从而才能决定是否反序列化成应用层消息体。</p>
+<p>在Time2时刻，服务端又拿到了数据包2，但数据包2中除了消息A还有消息B的部分内容，这种现象称为<strong>粘包</strong>，对服务端的影响是需要感知消息A的结束，以及消息B的起始位置。</p>
+<p>本文接下来会从整个链路角度，来详细解释产生这种问题的本质原因，以及介绍一些经典应用层协议的优秀解法。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201212143540829_1607754940.png-default" alt="image-20201212143540829"></p>
+<h2 id="TCP-IP协议为什么会粘包-半包？"><a href="#TCP-IP协议为什么会粘包-半包？" class="headerlink" title="TCP&#x2F;IP协议为什么会粘包&#x2F;半包？"></a>TCP&#x2F;IP协议为什么会粘包&#x2F;半包？</h2><p>粘包&#x2F;半包现象与TCP关联最多，要详细了解产生这类问题的本质原因，需要对整个链路传输情况有个大致的了解，关键点是每个阶段其认为的消息传输最小单位是什么，这个最小单位决定了该层对消息将如何拆分。</p>
+<h3 id="应用层传输"><a href="#应用层传输" class="headerlink" title="应用层传输"></a>应用层传输</h3><p>应用层是面向业务的一层，以浏览器访问百度为例，会发送如下HTTP协议完整消息，包含起始行，头部，空行(CRLF)，实体(payload)，那么完整的HTTP协议请求格式是该层认为的最小传输单位。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">curl &#x27;https://www.baidu.com/&#x27; \</span><br><span class="line">  -H &#x27;Connection: keep-alive&#x27; \</span><br><span class="line">  -H &#x27;Pragma: no-cache&#x27; \</span><br><span class="line">  -H &#x27;Cache-Control: no-cache&#x27; \</span><br><span class="line">  -H &#x27;Upgrade-Insecure-Requests: 1&#x27; \</span><br><span class="line">  -H &#x27;User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.67 Safari/537.36 Edg/87.0.664.55&#x27; \</span><br><span class="line">  -H &#x27;Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9&#x27; \</span><br><span class="line">  -H &#x27;Sec-Fetch-Site: cross-site&#x27; \</span><br><span class="line">  -H &#x27;Sec-Fetch-Mode: navigate&#x27; \</span><br><span class="line">  -H &#x27;Sec-Fetch-User: ?1&#x27; \</span><br><span class="line">  -H &#x27;Sec-Fetch-Dest: document&#x27; \</span><br><span class="line">  -H &#x27;Referer: https://www.dogedoge.com/&#x27; \</span><br><span class="line">  -H &#x27;Accept-Language: zh-Hans-CN,zh-CN;q=0.9,zh;q=0.8,en;q=0.7,en-GB;q=0.6,en-US;q=0.5,zh-TW;q=0.4,pl;q=0.3,ja;q=0.2&#x27; \</span><br><span class="line">  -H &#x27;Cookie: xxxxxxxxxxx&#x27; \</span><br><span class="line">  --compressed</span><br></pre></td></tr></table></figure>
+
+<p><img src="http://res.mrdear.cn/uPic/image-20201213102222625_1607826142.png-default" alt="image-20201213102222625"></p>
+<h3 id="TCP层传输"><a href="#TCP层传输" class="headerlink" title="TCP层传输"></a>TCP层传输</h3><p>应用层到达TCP层后，TCP并不关心对应的业务，在TCP看来要发送的数据就是一定长度的二进制序列而已。数据提交过来时，会先进入到一个发送缓冲区，而不是立马发送，因为TCP不知道应用层是一次性写入还是分多段写入。那么TCP什么时候开始发送呢？</p>
+<p>TCP会根据MSS大小进行判断，MSS到底多大，受限于MTU，MTU表示一个网络包的最大长度，是数据链路层的限制，在网卡处可以设置，路由器处也可以设置，一般为1500字节，MSS是一般为1460 (MTU(1500) - IP头部(20) - TCP头部(20))。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201213095903320_1607824743.png-default" alt="image-20201213095903320"></p>
+<p>在三次握手时，通讯双方为了最大效率会协商MSS大小，确定最优MSS，一般是最小的一个值，就像木桶效应一样，盛水量取决于最短的一块木板。当TCP收到的数据长度超过或者接近MSS时，再发送数据，避免大量小包问题，从而提高网络效率。</p>
+<p>正是因为这样，所以应用层的消息到TCP层后，如下图所示会拆分成多个数据段，每个数据段长度小于或者等于MSS，数据块 + TCP头部，组成了TCP层的数据段，因此数据段是TCP层数据传输的最小单位。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201213104229881_1607827349.png-default" alt="image-20201213104229881"></p>
+<h3 id="IP层传输"><a href="#IP层传输" class="headerlink" title="IP层传输"></a>IP层传输</h3><p>IP层主要与数据链路层打交道，也就是路由器的端口，由于路由器的端口对接不同线路，每个线路最大传输包长度不尽相同，遇到这种情况需要IP层的定义的分片功能对较大的数据段进行拆分。</p>
+<p>分片的过程首先是获取MTU，也就是最大网络包长度限制，MTU一般是物理端口支持最大包长度(1518) - MAC头部(14) - 尾部校验+FCS(4) &#x3D; 1500，知道MTU后，拆包就按照MTU长度拆即可，拆出来的小包不需要有TCP头了，直接附属上IP头即可，如下图所示，数据块1被拆分为数据包1.1和数据包1.2，其中1.2部分只需要IP头部即可，因此数据包是IP层的最小传输单位。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201213104242456_1607827362.png-default" alt="image-20201213104242456"></p>
+<h3 id="粘包原因以及长连接短连接"><a href="#粘包原因以及长连接短连接" class="headerlink" title="粘包原因以及长连接短连接"></a>粘包原因以及长连接短连接</h3><p>经过上面的分析，应用层一个请求传输过程中，会被两次拆分，其中第一次TCP拆分时，通过MSS参数尽量避免IP层而二次拆分，即使IP层数据拆分后，在服务端IP层也会将数据合并起来，完整的将数据段交给TCP层，然后转交给应用层，那么粘包与半包自然而然就是TCP分段传输带来的问题了。</p>
+<p>具体分析半包，半包是由于应用层数据太大，到TCP层后会被分段传输，到达服务端，应用层看到的是一段一段的数据，此时需要服务端等待全部数据到达后，才能还原出具体的应用层消息，也因此无论长连接还是短连接，都会出现半包问题。</p>
+<p>具体分析粘包，粘包的发生是因为应用层使用同一个TCP连接传输了消息A和消息B，也就是长连接情况下会发生的问题，长连接下，TCP通道会被复用，顺序传输多次请求，由于TCP发送缓存队列存在，就会导致两个请求在一个数据段中。短链接情况下，每一次建立连接只会传输一个请求，传输完毕就关闭连接，这种情况下自然不存在粘包现象。</p>
+<h2 id="UDP-IP为什么不会粘包？"><a href="#UDP-IP为什么不会粘包？" class="headerlink" title="UDP&#x2F;IP为什么不会粘包？"></a>UDP&#x2F;IP为什么不会粘包？</h2><p>UDP是仅仅是为了传输开发的协议，UDP在接收到应用层消息体后，是直接将全部消息体丢给IP层，依赖IP层的分片，自身传输仍然是以消息为单位，那么服务端接收到的自然也是IP层重组合并之后的消息，因此不会出现粘包以及半包现象。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201213123059614_1607833859.png-default" alt="image-20201213123059614"></p>
+<h2 id="粘包与半包常见解决方案"><a href="#粘包与半包常见解决方案" class="headerlink" title="粘包与半包常见解决方案"></a>粘包与半包常见解决方案</h2><p>TCP只是在保证可靠性的前提下，尽可能提高网络利用率，粘包与半包是应用层需要解决的问题，解决方案的主要思路是增加消息边界描述，应用层在解析时能够感知到消息边界，具体做法则有很多黑科技可以讨论了，接下来分析下一些主流协议使用的解决方案。</p>
+<h3 id="HTTP-1-1"><a href="#HTTP-1-1" class="headerlink" title="HTTP&#x2F;1.1"></a>HTTP&#x2F;1.1</h3><p>HTTP&#x2F;1.1目前仍然在广泛使用，在HTTP&#x2F;1.1当中，开启keep-alive后，TCP连接会被复用，也就是长连接，此时粘包和半包问题都会出现，为了解决类似问题，HTTP对于消息格式有一个强制性要求，借用极客时间的图，第一行是请求行，三个字段使用空格分割，以CRLF结尾，中间部分是请求头，以：号分割，CRLF结尾，以单独一个空行CRLF标识请求头结束，接着是请求体内容。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201213142451806_1607840691.png-default" alt="image-20201213142451806"></p>
+<p>服务端解析时，针对请求行和请求头则逐个字节扫描，当发现是LF标识结尾时，即可解析已读取内容，当检测到CRLF之后又一个CRLF则标识请求头解析完毕，接着解析请求体。请求体解析有两种形式，第一种是已知请求体长度，在表单请求中比较常见，其会在Header中声明Content-Length，服务端根据该字段确定接下来再读取多少个字节作为请求体。第二种是不知道请求体长度，比如文件上传，HTTP提供了<code>Transfer-Encoding: chunked</code>这一header标识，开启之后，HTTP会分块传输数据，每一块大小是指定的，终止块是一个长度为0的块。有了这些标准，在粘包以及半包情况下，服务端就知道是该拆分还是该等待。</p>
+<p>举个实际案例，在Netty的<code>io.netty.handler.codec.http.HttpObjectDecoder</code>中，Netty定义了一套状态机流转方式来解析HTTP消息，博主画了一个图，基本模式就是先读取请求行，然后解析请求头，在解析请求头的过程中，判断接下来状态是读取payload还是直接结束，其中黄色框的读取完后，会重置状态，解析下一个HTTP消息，有兴趣的可以翻阅相关源代码查阅。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201219104653989_1608346014.png-default" alt="image-20201219104653989"></p>
+<p>简单总结一下，本质上还是使用那个CRLF这一特殊标识定义了消息在各种状态的结束符号，服务端在解析流程中，根据结束符号进行状态流转。</p>
+<h3 id="HTTP-2-0"><a href="#HTTP-2-0" class="headerlink" title="HTTP&#x2F;2.0"></a>HTTP&#x2F;2.0</h3><p>HTTP&#x2F;2.0相比1.1版本，增加了HTTP连接的多路复用，怎么理解呢？在HTTP1.1时期，虽然有<code>keep-alive</code>机制的长连接，但浏览器在获取一个资源时，会独占一个HTTP请求，只有当该资源获取完毕后，该HTTP才能给其他的资源获取使用。但是HTTP2.0时代，<strong>一个HTTP请求可以同时获取多个资源</strong>，HTTP层面资源不再排队等待，极大的提升了网络利用率。在这种模式下，HTTP协议是怎么解决粘包和半包问题的呢？</p>
+<p>在HTTP2中为了支持多路复用，引入了Stream Frame这一结构，当多个HTTP请求使用同一个连接时，HTTP2会给每一个请求分配一个ID，然后将请求数据包装成一个个Stream Frame，丢给TCP连接传输。对于服务端，同一个HTTP请求的数据还是顺序传输的，当接收到一个Stream Frame后，根据头部的Length判断该包的大小，当读取结束时，开始进行整个包的解析。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201219115329530_1608350009.png-default" alt="image-20201219115329530"></p>
+<p>那么还有个问题，怎么判断一个HTTP请求数据发送完毕了呢？该问题分为两部分，一是解析Header结束，二是整个请求结束，针对这种情况，Stream Frame的flag属性针对Header结束定义了<strong>END_HEADERS</strong>标识，针对整个流则特别定义了一个<strong>END_STREAM</strong>，因此服务端根据flag标识，能够确定下一步是该读取payload还是结束数据解析。</p>
+<p>也简单总结下，因为是定长结构，处理简单了许多，当半包出现时，等就好了，当粘包出现时，因为长度存在也不会导致读错包，服务端接收到多个Stream Frame后，按照id将对应请求的数据进行合并，当接收到结束帧时，完成整个HTTP请求解析，应用链路可以继续往下调用进行。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>实际上只要基于TCP&#x2F;IP实现应用层协议，不可避免的都会遇到应用层数据被拆分现象，粘包与半包的概念提出是为了解决这个问题，让人比较容易理解，我倒是觉得这两个词相当形象得描绘了这一问题，没必要过度反感与抵制。</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-netty-half-packet.html">Netty -- 粘包与半包详解</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-netty-half-packet.html">https://mrdear.cn/posts/framework-netty-half-packet.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/java_threadlocal.html" title="Java -- ThreadLocal问题分析"><i class="iconfont icon-prev"></i>Java -- ThreadLocal问题分析</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/java_threadpool_completablefuture.html" title="Java -- 线程池使用不当引发的死锁">Java -- 线程池使用不当引发的死锁<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E7%B2%98%E5%8C%85%E5%92%8C%E5%8D%8A%E5%8C%85"><span class="toc-number">1.</span> <span class="toc-text">什么是粘包和半包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TCP-IP%E5%8D%8F%E8%AE%AE%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E7%B2%98%E5%8C%85-%E5%8D%8A%E5%8C%85%EF%BC%9F"><span class="toc-number">2.</span> <span class="toc-text">TCP&#x2F;IP协议为什么会粘包&#x2F;半包？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%B1%82%E4%BC%A0%E8%BE%93"><span class="toc-number">2.1.</span> <span class="toc-text">应用层传输</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#TCP%E5%B1%82%E4%BC%A0%E8%BE%93"><span class="toc-number">2.2.</span> <span class="toc-text">TCP层传输</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#IP%E5%B1%82%E4%BC%A0%E8%BE%93"><span class="toc-number">2.3.</span> <span class="toc-text">IP层传输</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%98%E5%8C%85%E5%8E%9F%E5%9B%A0%E4%BB%A5%E5%8F%8A%E9%95%BF%E8%BF%9E%E6%8E%A5%E7%9F%AD%E8%BF%9E%E6%8E%A5"><span class="toc-number">2.4.</span> <span class="toc-text">粘包原因以及长连接短连接</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UDP-IP%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E4%BC%9A%E7%B2%98%E5%8C%85%EF%BC%9F"><span class="toc-number">3.</span> <span class="toc-text">UDP&#x2F;IP为什么不会粘包？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%B2%98%E5%8C%85%E4%B8%8E%E5%8D%8A%E5%8C%85%E5%B8%B8%E8%A7%81%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-number">4.</span> <span class="toc-text">粘包与半包常见解决方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTP-1-1"><span class="toc-number">4.1.</span> <span class="toc-text">HTTP&#x2F;1.1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#HTTP-2-0"><span class="toc-number">4.2.</span> <span class="toc-text">HTTP&#x2F;2.0</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

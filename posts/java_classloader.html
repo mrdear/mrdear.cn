@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Java学习记录--委派模型与类加载器 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/java_classloader.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/javastudy.png" alt="Java学习记录--委派模型与类加载器">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Java学习记录--委派模型与类加载器</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2017-11-13</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Java/">Java</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <!-- toc -->
+<hr>
+<p>最近在读许令波的<code>深入分析Java Web技术内幕</code>一书,对于学习Java以来一直有的几个疑惑得到了解答,遂记录下来.</p>
+<h2 id="我的疑问"><a href="#我的疑问" class="headerlink" title="我的疑问"></a>我的疑问</h2><ol>
+<li>双亲委派模型(实际上是一个翻译错误,英文为parent delegation,只是一个父委托模型)是什么?如何实现?为什么这样实现?</li>
+<li>热加载的技术原理是什么?</li>
+<li>ClassLoader如何实现动态加载jar,实现插件模式系统?<br>下面跟着教程来寻找这些答案.</li>
+</ol>
+<h2 id="ClassLoader与委派模型"><a href="#ClassLoader与委派模型" class="headerlink" title="ClassLoader与委派模型"></a>ClassLoader与委派模型</h2><h3 id="ClassLoader体系"><a href="#ClassLoader体系" class="headerlink" title="ClassLoader体系"></a>ClassLoader体系</h3><p><code>ClassLoader</code>顾名思义是类加载器(准确来说为JVM平台类加载器抽象父类),主要功能负责将Class加载到JVM中,其所使用的加载策略叫做双亲委派模型.其主要有如下方法</p>
+<ol>
+<li><strong>defineClass</strong>  负责把class文件从字节流解析为JVM能够识别的Class对象,这意味着只要能拿到对应的Class字节流就可以完成对象实例化,注意该Class对象在使用前必须resolve.(这种加载方式也是动态代理实现的基础,直接从内存中生成的class二进制流制造出来一个类)</li>
+<li><strong>findClass</strong>  自定义规则时复写的方法,通常与defineClass一起使用,找到一个class文件,然后defineClass解析后生成Class对象,</li>
+<li><strong>loadClass</strong>  JVM所调用的加载方法,该方法会在findLoadedClass,loadClass(String)都没找到时调用findClass寻找Class对象,然后根据resolve的flag来决定是否链接.</li>
+<li><strong>resolveClass​​​</strong>  链接一个Class对象,在这个操作之后才可以使用该Class对象</li>
+</ol>
+<p>JVM平台提供三个ClassLoader:</p>
+<ul>
+<li><strong>Bootstrap ClassLoader</strong>,由C++实现的ClassLoader,不属于JVM平台,由JVM自己控制,主要加载JVM自己工作所需要的类,当类加载器的parent为null时会使用Bootstrap ClassLoader​去加载,其也不再双亲委派模型中承担角色.</li>
+<li><strong>ExtClassLoader</strong>,JVM在sun.misc.Launcher中主动实例化的类加载器,主要加载System.getProperty(“java.ext.dirs”)对应的目录下的文件(具体源码中可以看到),同时也是AppClassLoader的父类</li>
+<li><strong>AppClassLoader</strong>,由ExtClassLoader为parent创建出来的,同样为sun.misc.Launcher的内部类,主要加载System.getProperty(“java.class.path”)下的类,这个目录就是我们经常用到的classpath,包括当前应用以及jre相关jar包路径.</li>
+</ul>
+<p>那么不算<code>Bootstrap ClassLoader</code>,JVM体系的ClassLoader结构如下<br><img src="http://res.mrdear.cn/1521300341.png"><br>ClassLoader作为抽象父类其实是一装饰者模式中的Decorator角色,AppClassLoader本质上是对ExtClassLoader的增强处理,再看初始化方式可以简化为</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Launcher.AppClassLoader.getAppClassLoader(Launcher.ExtClassLoader.getExtClassLoader())</span><br></pre></td></tr></table></figure>
+<p>是不是和IO套用初始化很像?其实双亲委派按照我的理解本质上就是装饰者模式的应用,使用组合代替了继承只不过这个被装饰者叫做parent,思想上一致只是用法的不同.<br>另外这张图也说明如果想要实现自己的ClassLoader,只需要继承<code>java.net.URLClassLoader</code>,然后自定义加载逻辑即可.</p>
+<h3 id="加载流程"><a href="#加载流程" class="headerlink" title="加载流程"></a>加载流程</h3><h4 id="加载"><a href="#加载" class="headerlink" title="加载"></a>加载</h4><p>查找Class字节流，然后根据这个创建Java类的过程，这里要注意<strong>对于数组来说并没有对应的字节流，是由JVM直接生成</strong>，因此加载只适用于数组以外的Class文件流。<br>接下来重点看<code>loadClass()</code>方法,该方法为加载class二进制文件的核心方法.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> Class&lt;?&gt; loadClass(String name, <span class="type">boolean</span> resolve) <span class="keyword">throws</span> ClassNotFoundException</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (getClassLoadingLock(name)) &#123;</span><br><span class="line">            <span class="comment">// First, check if the class has already been loaded</span></span><br><span class="line">            Class&lt;?&gt; c = findLoadedClass(name);</span><br><span class="line">            <span class="keyword">if</span> (c == <span class="literal">null</span>) &#123;</span><br><span class="line">                <span class="type">long</span> <span class="variable">t0</span> <span class="operator">=</span> System.nanoTime();</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="comment">//当父加载器不存在的时候会尝试使用BootStrapClassLoader作为父类</span></span><br><span class="line">                    <span class="keyword">if</span> (parent != <span class="literal">null</span>) &#123;</span><br><span class="line">                        c = parent.loadClass(name, <span class="literal">false</span>);</span><br><span class="line">                    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                        c = findBootstrapClassOrNull(name);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">catch</span> (ClassNotFoundException e) &#123;</span><br><span class="line">                    <span class="comment">// ClassNotFoundException thrown if class not found</span></span><br><span class="line">                    <span class="comment">// from the non-null parent class loader</span></span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">//c为null则证明父加载器没有加载到,进而使用子类本身的加载策略`findClass()`方法</span></span><br><span class="line">                <span class="keyword">if</span> (c == <span class="literal">null</span>) &#123;</span><br><span class="line">                    <span class="comment">// If still not found, then invoke findClass in order</span></span><br><span class="line">                    <span class="comment">// to find the class.</span></span><br><span class="line">                    <span class="type">long</span> <span class="variable">t1</span> <span class="operator">=</span> System.nanoTime();</span><br><span class="line">                    c = findClass(name);</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// this is the defining class loader; record the stats</span></span><br><span class="line">                    sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);</span><br><span class="line">                    sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);</span><br><span class="line">                    sun.misc.PerfCounter.getFindClasses().increment();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (resolve) &#123;</span><br><span class="line">                resolveClass(c);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> c;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>当父类不存在时调用<code>java.lang.ClassLoader#findBootstrapClass</code>使用BootStrapClass加载,该方法是一个native方法,也进一步说明了<code>Bootstrap Classloader</code>与JVM体系的ClassLoader没什么父子类关系.完全独立.</p>
+<h4 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h4><p>链接的目的是把上述加载的类合并到JVM当中，使之可以运行，链接过程又分为<code>验证 -&gt; 准备 -&gt; 解析</code>三个流程.<br><code>验证</code>主要是确保加载的流符合JVM所定义的规范.<br><code>准备</code>阶段主要是为静态字段分配内存，以及一些额外的预处理，<br><code>解析</code>阶段主要是把编译期生成的符号引用变成转换为实际引用，所谓的符号引用是由于编译期无法确定其他类是否被加载，因此当该类使用外部类的字段或者方法时，是预先生成符号引用存放在Class文件的常量池中，如果对应符号引用的类还未被加载，那么会触发其加载流程，但不一定会触发其解析流程。</p>
+<h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><p>类加载过程的初始化主要针对静态字段，因为一个类只能被初始化一次，因此也确保了静态字段只被初始化一次，具体流程如下：</p>
+<ol>
+<li>final修饰的静态基本变量以及字符串：JVM会直接将其标记为常量值，直接完成初始化。</li>
+<li>其他静态对象以及静态代码块：JVM会将其抽取到 <code>&lt;cinit&gt;</code>方法中，然后执行该方法初始化静态字段。这是类的初始化流程。</li>
+</ol>
+<p>另外JVM规定以下情况会触发类的初始化：</p>
+<ol>
+<li>虚拟机启动时初始化用户的主类</li>
+<li>使用new指令时，初始化对应的类</li>
+<li>调用静态方法时，初始化静态方法所在的类</li>
+<li>调用静态字段时，初始化静态字段所在的类</li>
+<li>子类初始化会触发父类初始化</li>
+<li>一个接口定义了default方法，那么直接或者间接实现该方法的类初始化会触发接口的初始化</li>
+<li>使用反射API调用时，初始化这个类</li>
+<li>初次调用MethodHandle时，初始化MethodHandle所在的类，这个是lambda延迟执行的原理。</li>
+</ol>
+<h3 id="类加载中异常"><a href="#类加载中异常" class="headerlink" title="类加载中异常"></a>类加载中异常</h3><ul>
+<li>ClassNotFoundException：一般是反射调用类，触发类加载时找不到相关的类抛出异常。</li>
+<li>NoClassDefFoundError：一般显示引用一个类，比如new关键词，但是类却加载不到导致的异常。一般是由于ClassNotFoundException类加载找不到但又显示引用了该类触发该异常。与ClassNotFoundException的区别就是是否显示引用了该类</li>
+</ul>
+<h3 id="提问解答"><a href="#提问解答" class="headerlink" title="提问解答"></a>提问解答</h3><p>那么开始回答问题<br><strong>1. 双亲委派模型是什么?</strong><br>上述加载流程是 <code>使用parent加载器加载类</code> -&gt; <code>parent不存在使用BootStrapClassLoader加载</code> -&gt; <code>加载不到则使用子类的加载策略</code>,这里要注意<code>BootStrapClassLoader</code>是由C++实现的JVM内部的加载工具,其没有对应的Java对象,因此不在这个委派体系中,类加载器本质上是装饰者模式组合思想的应用.</p>
+<p>那么双亲是什么?  <strong>看ClassLoader的注释就能发现这只是个翻译问题parent-&gt;双亲</strong>,明明是单亲委派,装饰者模式是单类增强委托.<br><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/27192923">RednaxelaFX关于这点的证实</a><br><img src="http://res.mrdear.cn/1521301442.png"></p>
+<p><strong>2. 委派模型如何实现?</strong><br>委派模型从设计模式角度来看是一种组合设计，双亲委派这里更像是使用桥接模式实现的委托机制，由继承图可以发现<code>ExtClassloader</code>与<code>AppClassloader</code>处于同一层级，其内部又可以通过持有对应的<code>private final ClassLoader parent</code>达到桥接委派的目的。</p>
+<p><strong>3. 为什么使用委派模型?</strong><br>回答这个问题要先了解Java中是如何判定两个类是同一个类状况,如下段官方所说,也就是全类名(包括包名)相同并且他们的类加载器相同,那么两个对象才是等价的.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">At run time, several reference types with the same binary name may be loaded simultaneously by different <span class="keyword">class</span> <span class="title class_">loaders</span>. </span><br><span class="line">These types may or may not represent the same type declaration. </span><br><span class="line">Even <span class="keyword">if</span> two such types <span class="keyword">do</span> represent the same type declaration, they are considered distinct.</span><br></pre></td></tr></table></figure>
+<p>对于Object类因为父加载器先加载所以能保证对于所有Object的子类其所对应的Object都是由同一个ClassLoader所加载,也就保证了对象相等. 简单来说委托类优先模式保证了加载器的优先级问题,让优先级高的ClassLoader先加载,然后轮到优先级低的.</p>
+<h2 id="热加载的技术原理"><a href="#热加载的技术原理" class="headerlink" title="热加载的技术原理"></a>热加载的技术原理</h2><p>热部署对于开发阶段的实用性极高,利用Jrebel等工具可以极大的节省应用调试时间.关于热加载技术可以参考文章<a target="_blank" rel="noopener" href="http://www.hollischuang.com/archives/606">http://www.hollischuang.com/archives/606</a>,<br>对于一个被ClassLoader加载到内存的类来说,再次加载的时候就会被<code>findLoadedClass()</code>方法所拦截,其判断该类已加载,则不会再次加载,那么热加载的技术本质是要替换到已加载的类.</p>
+<p>对于Spring Boot devtools的restart技术,其是使用了两个ClassLoader,对于开发者所写的类使用自定义的ClassLoader,对于第三方包则使用默认加载器,那么每当代码有改动需要热加载时,丢弃自定义的ClassLoader所加载的类,然后重新使用其加载,如此做到了热部署.</p>
+<p>对于Jrebel使用的貌似是修改类的字节码方式,具体不是很懂也就不讨论了.</p>
+<p>对于Tomcat,其热部署技术是每次清理之前的引用,然后创建一个新的ClassLoader<code>WebClassLoader</code>来重新加载应用,这个加载使得永久代中对象增多,那么清理要求是full GC,这个是不可控的,所以也就导致了Tomcat热部署频繁会触发<code>java.lang.OutOfMemoryErrorPermGen space</code>这个bug.</p>
+<h2 id="ClassLoader如何实现动态加载jar-实现插件模式系统"><a href="#ClassLoader如何实现动态加载jar-实现插件模式系统" class="headerlink" title="ClassLoader如何实现动态加载jar,实现插件模式系统?"></a>ClassLoader如何实现动态加载jar,实现插件模式系统?</h2><p>ClassLoader的委派模型使得很容易扩展自定义的类加载器,那么基本步骤 <code>定义自己的类加载器</code> -&gt; <code>加载指定jar</code> -&gt; <code>创建所需要的应用实例</code>,大概代码如下.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">jarPath</span> <span class="operator">=</span> <span class="string">&quot;/Users/niuli/workspace/quding-git/quding-study/helloworld/target/hello-world-1.0-SNAPSHOT.jar&quot;</span>;</span><br><span class="line">    <span class="type">URL</span> <span class="variable">jarUrl</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">File</span>(jarPath).toURI().toURL();</span><br><span class="line">    <span class="comment">//加载该jar</span></span><br><span class="line">    <span class="type">URLClassLoader</span> <span class="variable">loader</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">URLClassLoader</span>(<span class="keyword">new</span> <span class="title class_">URL</span>[]&#123;jarUrl&#125;,Thread.currentThread().getContextClassLoader());</span><br><span class="line">    <span class="comment">//获取插件Class对象</span></span><br><span class="line">    <span class="type">Class</span> <span class="variable">helloClass</span> <span class="operator">=</span> loader.loadClass(<span class="string">&quot;com.itoolshub.hello.HelloWorld&quot;</span>);</span><br><span class="line">    <span class="comment">//创建该对象</span></span><br><span class="line">    <span class="type">IHelloWorldService</span> <span class="variable">helloWorldService</span> <span class="operator">=</span> (IHelloWorldService) helloClass.newInstance();</span><br><span class="line">    <span class="comment">//调用方法</span></span><br><span class="line">    helloWorldService.sayHello();</span><br></pre></td></tr></table></figure>
+<p>另外插件模式的话一般还会有一些配置文件plugin.xml,告诉系统主要对外提供服务的类是什么以及一些默认配置等.不过大概思路都是大同小异.</p>
+<p>另外既然有装载也就有卸载,卸载的必要条件是以下三个外,另外类是装载在永久代,那么卸载的触发也就是full GC才会去清理永久代中没有被强引用指向的类.</p>
+<ol>
+<li>该类所有的实例都已经被GC。</li>
+<li>加载该类的ClassLoader实例已经被GC。</li>
+<li>该类的java.lang.Class对象没有在任何地方被引用。</li>
+</ol>
+<h2 id="补充题目"><a href="#补充题目" class="headerlink" title="补充题目"></a>补充题目</h2><p><strong>双亲委派模型中，从顶层到底层，都是哪些类加载器，分别加载哪些类？</strong><br>Bootstrap ClassLoader: JVM自身需要的一些类,当Classloader中parent为null时执行该加载器尝试加载<br>ExtClassLoader: 主要加载java.ext.dirs<br>AppClassLoader; 主要加载java.class.path下的类,包括用户定义的类<br>纠正双亲委派模型,实际上就是装饰者模式应用.</p>
+<p><strong>双亲委派模型破坏举例</strong><br>1.双亲委派模型是JDK1.2发布的模式,在这之前开发者是重写loadClass()这个方法实现自定义加载逻辑,该方法中又是双亲委派模型的关键算法,那么重写完全可以破坏该模型.<br>2.Java的SPI机制</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;S&gt; ServiceLoader&lt;S&gt; <span class="title function_">load</span><span class="params">(Class&lt;S&gt; service)</span> &#123;</span><br><span class="line">      <span class="type">ClassLoader</span> <span class="variable">cl</span> <span class="operator">=</span> Thread.currentThread().getContextClassLoader();</span><br><span class="line">      <span class="keyword">return</span> ServiceLoader.load(service, cl);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>SPI一些官方接口是定义在rt.jar中的,那么其所使用的是BootstrapClassloader,然而我们引入的第三方实现却是AppClassloader所管理,那么这里的问题就是BootstrapClassloader无法加载AppClassloader所管理的内容,也就是双亲委派无法逆序执行.那么想要逆序就需要破坏这一约束.利用Thread中上下文加载器来实现,如果创建线程时还未设置，它将会从父线程中继承一个；如果在应用程序的全局范围内都没有设置过，那么这个类加载器默认就是<code>AppClassloader</code>,那么在<code>BootstrapClassloader</code>使用SPI加载时,则会利用线程上下文加载器委托<code>AppClassloader</code>加载其实现类,那么这一过程与双亲委派相反,是破坏双亲委派原则的一种做法.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">     <span class="built_in">this</span>.loader = Launcher.AppClassLoader.getAppClassLoader(var1);</span><br><span class="line">   &#125; <span class="keyword">catch</span> (IOException var9) &#123;</span><br><span class="line">     <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">InternalError</span>(<span class="string">&quot;Could not create application class loader&quot;</span>, var9);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 设置为AppClassloader</span></span><br><span class="line">   Thread.currentThread().setContextClassLoader(<span class="built_in">this</span>.loader);</span><br></pre></td></tr></table></figure>
+
+<p>3.热部署,热加载技术等都是破坏了双亲委派模型.</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/java_classloader.html">Java学习记录--委派模型与类加载器</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/java_classloader.html">https://mrdear.cn/posts/java_classloader.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/java_reference.html" title="Java--Java中的四种引用"><i class="iconfont icon-prev"></i>Java--Java中的四种引用</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-mybatis-type-handler.html" title="Mybatis源码分析(四)--TypeHandler的解析">Mybatis源码分析(四)--TypeHandler的解析<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E7%9A%84%E7%96%91%E9%97%AE"><span class="toc-number">1.</span> <span class="toc-text">我的疑问</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ClassLoader%E4%B8%8E%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text">ClassLoader与委派模型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ClassLoader%E4%BD%93%E7%B3%BB"><span class="toc-number">2.1.</span> <span class="toc-text">ClassLoader体系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B"><span class="toc-number">2.2.</span> <span class="toc-text">加载流程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8A%A0%E8%BD%BD"><span class="toc-number">2.2.1.</span> <span class="toc-text">加载</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5"><span class="toc-number">2.2.2.</span> <span class="toc-text">链接</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-number">2.2.3.</span> <span class="toc-text">初始化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E4%B8%AD%E5%BC%82%E5%B8%B8"><span class="toc-number">2.3.</span> <span class="toc-text">类加载中异常</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%90%E9%97%AE%E8%A7%A3%E7%AD%94"><span class="toc-number">2.4.</span> <span class="toc-text">提问解答</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%83%AD%E5%8A%A0%E8%BD%BD%E7%9A%84%E6%8A%80%E6%9C%AF%E5%8E%9F%E7%90%86"><span class="toc-number">3.</span> <span class="toc-text">热加载的技术原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ClassLoader%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E5%8A%A8%E6%80%81%E5%8A%A0%E8%BD%BDjar-%E5%AE%9E%E7%8E%B0%E6%8F%92%E4%BB%B6%E6%A8%A1%E5%BC%8F%E7%B3%BB%E7%BB%9F"><span class="toc-number">4.</span> <span class="toc-text">ClassLoader如何实现动态加载jar,实现插件模式系统?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%A5%E5%85%85%E9%A2%98%E7%9B%AE"><span class="toc-number">5.</span> <span class="toc-text">补充题目</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

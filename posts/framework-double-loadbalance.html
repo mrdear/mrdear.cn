@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Dubbo --常见负载均衡算法分析 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-double-loadbalance.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/dubbo.png" alt="Dubbo --常见负载均衡算法分析">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Dubbo --常见负载均衡算法分析</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-05-29</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Dubbo/">Dubbo</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>最近看Dubbo源码时，看到了<code>LoadBanlance</code>相关算法，以此为问题出发点，总结下这方面相关的常见算法。（<strong>本文和Dubbo源码并没有太大的关系，只是属于这个系列中遇到的知识总结</strong>）</p>
+<hr>
+<h2 id="负载均衡的目的是什么？"><a href="#负载均衡的目的是什么？" class="headerlink" title="负载均衡的目的是什么？"></a>负载均衡的目的是什么？</h2><p>讨论负载均衡，那么归根结底其要解决的问题是什么？当一台服务器的承受能力达到上限时，那么就需要多台服务器来组成集群，提升应用整体的吞吐量，那么这个时候就涉及到如何合理分配客户端请求到集群中不同的机器，这个过程就叫做负载均衡，当然这也是负载均衡要解决的问题。</p>
+<p>由于服务器之间的处理能力差异，因此每台服务器需要有自己的权重比例，为了更好的描述后面所涉及到的算法，因此抽象出一个<code>Server</code>类，代表集群中的服务器。<code>LoadBalance</code>接口代表负载均衡算法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Server</span> &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 服务器地址</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">private</span> String address;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 服务器权重</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">private</span> Integer weight;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">LoadBalance</span> &#123;</span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 根据负载均衡算法选择最合适的一个Server</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param</span> servers 客户端集合</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@return</span> result</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  Server <span class="title function_">select</span><span class="params">(List&lt;Server&gt; servers)</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="权重随机算法"><a href="#权重随机算法" class="headerlink" title="权重随机算法"></a>权重随机算法</h2><p>单纯的随机算法通过伪随机数来保证请求均匀的分布到对应的Server上，但是其忽略了每一个服务器处理能力的差异，这样就导致处理能力差的服务可能因为这种绝对的均衡策略而崩掉，改进策略就是根据权重占比随机。算法很简单，就是一根数轴。然后利用伪随机数产生点，确定点落在了哪个区域从而选择对应的<code>Server</code>。</p>
+<p><strong>清单1： 权重随机算法</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Server <span class="title function_">select</span><span class="params">(List&lt;Server&gt; servers)</span> &#123;</span><br><span class="line">  <span class="type">ThreadLocalRandom</span> <span class="variable">localRandom</span> <span class="operator">=</span> ThreadLocalRandom.current();</span><br><span class="line">  <span class="comment">// 计算总比重</span></span><br><span class="line">  <span class="type">int</span> <span class="variable">totalWeight</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">for</span> (Server server : servers) &#123;</span><br><span class="line">    totalWeight += server.getWeight();</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 按照权重选择</span></span><br><span class="line">  <span class="type">int</span> <span class="variable">randomWeight</span> <span class="operator">=</span> localRandom.nextInt(totalWeight);</span><br><span class="line">  <span class="keyword">for</span> (Server server : servers) &#123;</span><br><span class="line">    randomWeight -= server.getWeight();</span><br><span class="line">    <span class="keyword">if</span> (randomWeight &lt; <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> server;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// default</span></span><br><span class="line">  <span class="type">int</span> <span class="variable">length</span> <span class="operator">=</span> servers.size();</span><br><span class="line">  <span class="keyword">return</span> servers.get(localRandom.nextInt(length));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>算法的关键点是如何高效的确定点落在的区域，其流程是这样，假设<code>&#123; a:5 , b:2 ,c:3&#125;</code>在数轴上如下排列。<br><img src="http://res.mrdear.cn/1527518852.png"></p>
+<ol>
+<li>置随机数，随机数范围即数轴的总长度，假设得到的值为6</li>
+<li>用该值依次减去数轴上的每一个区域，直到第一次小于0时，那么就属于那个区域。<code>6-5-2 &lt; 0</code>，因此6会落在b区域。</li>
+</ol>
+<h2 id="非平滑权重轮询算法"><a href="#非平滑权重轮询算法" class="headerlink" title="非平滑权重轮询算法"></a>非平滑权重轮询算法</h2><p>轮询算法是指依次访问可用服务器列表，其和随机本质是一样的处理，在<strong>无权重因素</strong>下，轮询只是在选数轴上的点时采取自增对长度取余方式。有<strong>权重因素</strong>下依然自增取余，再看选取的点落在了哪个区域。依旧使用上图，举个例子：<br><img src="http://res.mrdear.cn/1527518852.png"><br>无权重的轮询得到的结果为：<code>&#123; a b c a b c a b c ....&#125;</code><br>有权重的轮询得到的结果为：<code>&#123; a a a a a b b c c c ...&#125;</code>.</p>
+<p>算法的关键点是每次如何选择下一个，其流程是这样的，定义一个全局的自增变量（需要线程安全），在Java中可以使用<code>AtomXX</code>原子类，然后每次选择前线自增，然后利用结果与该数轴取余，再计算余数落在的区域，即被选中的节点。</p>
+<h2 id="平滑权重轮询算法"><a href="#平滑权重轮询算法" class="headerlink" title="平滑权重轮询算法"></a>平滑权重轮询算法</h2><p>对于<code>&#123;a:5, b:1, c:3)</code>这三个服务实例，权重轮询会得到<code>&#123; a a a a a b c &#125;</code>这样的访问顺序，这种情况其权重差过大，对于服务器<code>a</code>来说依然存在集中访问，为了解决这个问题，Nginx实现了一种平滑的轮询算法，所谓的平滑，是需要打乱集中访问的顺序节点，对于上述权重实例，Nginx的算法得出的访问顺序为<code>&#123; a, a, b, a, c, a, a &#125;</code>，这样的分布显然比直接轮询合理的多。</p>
+<p><strong>清单二：平滑权重轮询算法</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ConcurrentMap&lt;Server, AtomicInteger&gt; ServerMap = <span class="keyword">new</span> <span class="title class_">ConcurrentHashMap</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Server <span class="title function_">select</span><span class="params">(List&lt;Server&gt; servers)</span> &#123;</span><br><span class="line">  <span class="type">Server</span> <span class="variable">best</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">  <span class="type">int</span> <span class="variable">totalWeight</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (Server server : servers) &#123;</span><br><span class="line">    <span class="type">AtomicInteger</span> <span class="variable">weightServer</span> <span class="operator">=</span> ServerMap.get(server);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">null</span> == weightServer) &#123;</span><br><span class="line">      weightServer = <span class="keyword">new</span> <span class="title class_">AtomicInteger</span>(<span class="number">0</span>);</span><br><span class="line">      ServerMap.putIfAbsent(server, weightServer);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> <span class="variable">weight</span> <span class="operator">=</span> server.getWeight();</span><br><span class="line">    <span class="comment">// 加权</span></span><br><span class="line">    weightServer.addAndGet(weight);</span><br><span class="line"></span><br><span class="line">    totalWeight += weight;</span><br><span class="line">    <span class="comment">// 根据权选择</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">null</span> == best || weightServer.get() &gt; ServerMap.get(best).get()) &#123;</span><br><span class="line">      best = server;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="literal">null</span> == best) &#123;</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalStateException</span>(<span class="string">&quot;can&#x27;t select client&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 降权</span></span><br><span class="line">  <span class="type">AtomicInteger</span> <span class="variable">bestWeightServer</span> <span class="operator">=</span> ServerMap.get(best);</span><br><span class="line">  bestWeightServer.set(totalWeight - bestWeightServer.get());</span><br><span class="line"></span><br><span class="line">  printSorts(servers);</span><br><span class="line">  <span class="keyword">return</span> best;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>整个实现算法非常巧妙，大概思想是每一个<code>Server</code>的权重都是动态可改变的，在遍历过程中对每一个<code>Server</code>的权重做累加，然后选出权重最高的作为best，选中后<strong>再对best做降权</strong>，利用降权操作实现平滑的目的。<br>以<code>&#123;a:5, b:2, c:3)</code>作为输入，选择10次，其输出结果为<code>&#123; a a c a b a c a b a &#125;</code>，下面是部分详情，帮助理解加权与降权的流程。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 初始化</span></span><br><span class="line">server name: a weight: <span class="number">5</span> effective: <span class="number">5</span> current: <span class="number">0</span></span><br><span class="line">server name: b weight: <span class="number">2</span> effective: <span class="number">2</span> current: <span class="number">0</span></span><br><span class="line">server name: c weight: <span class="number">3</span> effective: <span class="number">3</span> current: <span class="number">0</span></span><br><span class="line">  </span><br><span class="line"><span class="comment">// 第一次选择,以及选择后数据</span></span><br><span class="line">Server(address=a, weight=<span class="number">5</span>)</span><br><span class="line">server name: a weight: <span class="number">5</span> effective: <span class="number">5</span> current: <span class="number">10</span> - (<span class="number">0</span>+<span class="number">5</span>)=<span class="number">5</span></span><br><span class="line">server name: b weight: <span class="number">2</span> effective: <span class="number">2</span> current: <span class="number">0</span>+<span class="number">2</span></span><br><span class="line">server name: c weight: <span class="number">3</span> effective: <span class="number">3</span> current: <span class="number">0</span>+<span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 第二次选择,以及选择后数据</span></span><br><span class="line">Server(address=a, weight=<span class="number">5</span>) </span><br><span class="line">server name: a weight: <span class="number">5</span> effective: <span class="number">5</span> current: <span class="number">10</span> - (<span class="number">5</span>+<span class="number">5</span>)=<span class="number">0</span></span><br><span class="line">server name: b weight: <span class="number">2</span> effective: <span class="number">2</span> current: <span class="number">2</span>+<span class="number">2</span></span><br><span class="line">server name: c weight: <span class="number">3</span> effective: <span class="number">3</span> current: <span class="number">3</span>+<span class="number">3</span></span><br><span class="line">  </span><br><span class="line"><span class="comment">// 第三次选择,以及选择后数据</span></span><br><span class="line">Server(address=c, weight=<span class="number">5</span>) </span><br><span class="line">server name: a weight: <span class="number">5</span> effective: <span class="number">5</span> current: <span class="number">0</span>+<span class="number">5</span></span><br><span class="line">server name: b weight: <span class="number">2</span> effective: <span class="number">2</span> current: <span class="number">4</span>+<span class="number">2</span></span><br><span class="line">server name: c weight: <span class="number">3</span> effective: <span class="number">3</span> current: <span class="number">10</span>- (<span class="number">6</span>+<span class="number">3</span>)=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 第四次选择,以及选择后数据</span></span><br><span class="line">Server(address=a, weight=<span class="number">3</span>) </span><br><span class="line">server name: a weight: <span class="number">5</span> effective: <span class="number">5</span> current: <span class="number">10</span>-(<span class="number">5</span>+<span class="number">5</span>)= <span class="number">0</span></span><br><span class="line">server name: b weight: <span class="number">2</span> effective: <span class="number">2</span> current: <span class="number">6</span>+<span class="number">2</span></span><br><span class="line">server name: c weight: <span class="number">3</span> effective: <span class="number">3</span> current: <span class="number">1</span>+<span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 第五次选择,以及选择后数据</span></span><br><span class="line">Server(address=b, weight=<span class="number">5</span>) </span><br><span class="line">server name: a weight: <span class="number">5</span> effective: <span class="number">5</span> current: <span class="number">0</span>+<span class="number">5</span></span><br><span class="line">server name: b weight: <span class="number">2</span> effective: <span class="number">2</span> current: <span class="number">10</span>-(<span class="number">8</span>+<span class="number">2</span>)=<span class="number">0</span></span><br><span class="line">server name: c weight: <span class="number">3</span> effective: <span class="number">3</span> current: <span class="number">4</span>+<span class="number">3</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="ip-hash算法"><a href="#ip-hash算法" class="headerlink" title="ip hash算法"></a>ip hash算法</h2><p>ip hash算法又叫<code>源地址哈希算法</code>，其根据客户端的ip计算hash值，再利用该hash值对服务器个数取余，从而定位到具体的某一台服务器上，该算法的好处是只要客户端ip不变，那么他的请求总是到同一台服务器，对于缓存等是比较友好的。然而这也是该算法的缺点，动态调整服务器会导致这个hash分布被重新分配，然而在集群中服务器的上下线是经常变动的，因此该算法一般不是很实用，其解决方案是接下来要说的<code>一致性Hash负载均衡算法</code>。</p>
+<h2 id="一致性Hash负载均衡算法"><a href="#一致性Hash负载均衡算法" class="headerlink" title="一致性Hash负载均衡算法"></a>一致性Hash负载均衡算法</h2><p>无论是随机还是轮询算法，对于一个客户端的多次请求，每次落到的<code>Server</code>很大可能是不同的，如果这是一台缓存服务器，那么这就对缓存同步带来了很大的挑战，当系统繁忙时，主从延迟带来的同步缓慢，可能就造成了同一客户端两次访问得到不同的结果。解决方案是利用hash算法定位到对应的服务器。</p>
+<ol>
+<li><strong>普通的Hash</strong>：当客户端请求到达是则使用 hash(client) % N,其中N是服务器数量，利用这个表达式计算出该客户端对应的Server处理，因为客户端总是同一个那么对应的Server也总是同一个。该算法致命的问题是增减服务器，也就是<code>N +/- 1</code>,该操作会导致取余的结果变化，重新分配所有的Client，为了解决这个问题，一致性Hash算法诞生了。</li>
+<li><strong>一致性Hash</strong>：一致性Hash是把服务器分布变成一个环形，每一个hash(clinet)的结果会在该环上顺时针寻找第一个与其邻的<code>Server</code>节点，具体可以参考 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/34969168">负载均衡–一致性hash算法</a>，里面的几幅图描述的很形象。</li>
+</ol>
+<p>在<strong>不考虑权重</strong>的条件下，对于<code>&#123;a:5, b:1, c:1)</code>三个Server，其组成的数轴首尾相连组成一个环。对于这个环，其规则如下：</p>
+<ol>
+<li>计算<code>hash(client) % 3</code>，如果该点落在了a-b之前，则找顺时针的邻接点，也就是a。</li>
+<li>计算<code>hash(client) % 3</code>，如果该点落在了a-c之前，则找顺时针的邻接点，也就是c。</li>
+<li>计算<code>hash(client) % 3</code>，如果该点落在了a-b之前，则找顺时针的邻接点，也就是b。</li>
+</ol>
+<p><img src="http://res.mrdear.cn/1527575932.png"><br>因为对于<code>Client</code>来说其hash结果是固定的，因此能保证每一个Client总是能落到唯一确定的一个<code>Server</code>上。考虑到特殊情况，当<code>N +/-   1</code>,也就是服务器增加或者减少，比如服务器<code>b</code>宕机了，那么整个环只剩<code>a</code>和<code>c</code>，那么原本落在<code>a</code>,<code>c</code>上的client依然会落到其上，只有原本落在<code>b</code>节点上的client才会重新选择Server。反之增加节点也是如此，尽可能的降低重新hash分配的client数量。</p>
+<p><strong>考虑权重</strong>的话，所期望的图应该是按照一定比例设置，那么对应的落点计算变为<code>hash(client) % TotalWeight</code>。<br><img src="http://res.mrdear.cn/1527576790.png"><br><code>a</code>因为权重是5所以其占了圆的一半，因此点落到b-a区间的概率为0.5。<br>还有一种做法是利用虚拟节点（给<code>a</code>创建5个hash值不同的副本），思路是把圆分成等分为10分（a，b，c权重之和为10），然后分配5个<code>a</code>，2个<code>b</code>，3个<code>c</code>，这样增大了hash到<code>a</code>区域的几率，也就实现了权重。</p>
+<p>在Java中，得益于<code>NavigableMap</code>数据结构的强大，其中<code>tailMap</code>方法可以直接得到某一个key之后的元素，对应于环中操作就是很容易获取到某一点的相邻点。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment">  * 表示一致性Hash算法中的环</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"> <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ConcurrentSkipListMap&lt;Long, Server&gt; ServerMap = <span class="keyword">new</span> <span class="title class_">ConcurrentSkipListMap</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line"> <span class="keyword">public</span> Server <span class="title function_">select</span><span class="params">(List&lt;Server&gt; servers, String clientIdentify)</span> &#123;</span><br><span class="line">   <span class="comment">// 放入环中</span></span><br><span class="line">   <span class="keyword">for</span> (Server server : servers) &#123;</span><br><span class="line">     <span class="type">Long</span> <span class="variable">hash</span> <span class="operator">=</span> hash(server.getAddress());</span><br><span class="line">     <span class="keyword">if</span> (!ServerMap.containsKey(hash)) &#123;</span><br><span class="line">       addServer(hash,server);</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 计算client</span></span><br><span class="line">   <span class="type">Long</span> <span class="variable">hash</span> <span class="operator">=</span> hash(clientIdentify);</span><br><span class="line">   <span class="comment">// 定位到其后面的元素</span></span><br><span class="line">   ConcurrentNavigableMap&lt;Long, Server&gt; tailMap = ServerMap.tailMap(hash);</span><br><span class="line">   <span class="keyword">if</span> (<span class="literal">null</span> == tailMap.firstEntry()) &#123;</span><br><span class="line">     tailMap = ServerMap.headMap(hash);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="comment">// 获取到邻近的Server</span></span><br><span class="line">   <span class="keyword">return</span> tailMap.firstEntry().getValue();</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="http://colobu.com/2016/12/04/smooth-weighted-round-robin-algorithm/">平滑的基于权重的轮询算法</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-double-loadbalance.html">Dubbo --常见负载均衡算法分析</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-double-loadbalance.html">https://mrdear.cn/posts/framework-double-loadbalance.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/design-patterns-thread-specific-storge.html" title="并行设计模式--Thread Specific Storge模式"><i class="iconfont icon-prev"></i>并行设计模式--Thread Specific Storge模式</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-double-extension.html" title="Dubbo -- 扩展机制实现原理">Dubbo -- 扩展机制实现原理<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%9A%84%E7%9B%AE%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">负载均衡的目的是什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9D%83%E9%87%8D%E9%9A%8F%E6%9C%BA%E7%AE%97%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">权重随机算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%9E%E5%B9%B3%E6%BB%91%E6%9D%83%E9%87%8D%E8%BD%AE%E8%AF%A2%E7%AE%97%E6%B3%95"><span class="toc-number">3.</span> <span class="toc-text">非平滑权重轮询算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B9%B3%E6%BB%91%E6%9D%83%E9%87%8D%E8%BD%AE%E8%AF%A2%E7%AE%97%E6%B3%95"><span class="toc-number">4.</span> <span class="toc-text">平滑权重轮询算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ip-hash%E7%AE%97%E6%B3%95"><span class="toc-number">5.</span> <span class="toc-text">ip hash算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7Hash%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AE%97%E6%B3%95"><span class="toc-number">6.</span> <span class="toc-text">一致性Hash负载均衡算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

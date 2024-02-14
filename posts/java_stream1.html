@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Java8 Lambda（一）-函数式接口 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/java_stream1.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/javastudy.png" alt="Java8 Lambda（一）-函数式接口">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Java8 Lambda（一）-函数式接口</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2017-05-18</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Java/">Java</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>实习前只是粗略的看了下Java8的一些基本语法,但是没有系统的学习过.在使用一段时间后决定系统的对其进行一次分析,加深对Java8函数式编程的理解,提高自己的编码技巧.另外kotlin崛起,感兴趣的朋友尝试下混编也未尝不可.</p>
+<hr>
+<h3 id="函数式接口"><a href="#函数式接口" class="headerlink" title="函数式接口"></a>函数式接口</h3><p>函数式接口,对于Java来说就是接口内只有一个公开方法的接口,因为使用lanbda表达式,例如<code>() -&gt; user.getName()</code>对应的调用则可能是<code>func.get()</code>,编译器会根据接口推断所属于的方法,如果有两个则无法推断.Java8提供了很多函数式接口,一般都使用注解<code>@FunctionalInterface</code>声明,有必要了解如下一些函数式接口.</p>
+<table>
+<thead>
+<tr>
+<th>函数式接口</th>
+<th>参数类型</th>
+<th>返回类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Supplier<T></td>
+<td>无</td>
+<td>T</td>
+<td>接收一个T类型的值</td>
+</tr>
+<tr>
+<td>Consumer<T></td>
+<td>T</td>
+<td>无</td>
+<td>处理一个T类型的值</td>
+</tr>
+<tr>
+<td>BiConsumer&lt;T, U&gt;</td>
+<td>T,U</td>
+<td>无</td>
+<td>处理T类型和U类型的值</td>
+</tr>
+<tr>
+<td>Predicate<T></td>
+<td>T</td>
+<td>boolean</td>
+<td>处理T类型的值,并返回true或者false.</td>
+</tr>
+<tr>
+<td>ToIntFunction<T></td>
+<td>T</td>
+<td>int</td>
+<td>处理T类型的值,并返回int值</td>
+</tr>
+<tr>
+<td>ToLongFunction<T></td>
+<td>T</td>
+<td>long</td>
+<td>处理T类型的值,并返回long值</td>
+</tr>
+<tr>
+<td>ToDoubleFunction<T></td>
+<td>T</td>
+<td>double</td>
+<td>处理T类型的值,并返回double值</td>
+</tr>
+<tr>
+<td>Function&lt;T, R&gt;</td>
+<td>T</td>
+<td>R</td>
+<td>处理T类型的值,并返回R类型值</td>
+</tr>
+<tr>
+<td>BiFunction&lt;T, U, R&gt;</td>
+<td>T,U</td>
+<td>R</td>
+<td>处理T类型和U类型的值,并返回R类型值</td>
+</tr>
+<tr>
+<td>BiFunction&lt;T, U, R&gt;</td>
+<td>T,U</td>
+<td>R</td>
+<td>处理T类型和U类型的值,并返回R类型值</td>
+</tr>
+<tr>
+<td>UnaryOperator<T></td>
+<td>T</td>
+<td>T</td>
+<td>处理T类型值,并返回T类型值,</td>
+</tr>
+<tr>
+<td>BinaryOperator<T></td>
+<td>T,T</td>
+<td>T</td>
+<td>处理T类型值,并返回T类型值</td>
+</tr>
+</tbody></table>
+<p>以上的函数每一个代表的都是一种基本的操作,操作之间可以自由组合,所以才有了stream这些灵活的操作.</p>
+<h3 id="Stream操作"><a href="#Stream操作" class="headerlink" title="Stream操作"></a>Stream操作</h3><p>Stream的操作是建立在函数式接口的组合上的,最好的学习方法是看Stream接口来学习.下面举一些例子来分析,假设有这样的一些初始数据.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">List&lt;String&gt; testData = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;String&gt;();</span><br><span class="line">    testData.add(<span class="string">&quot;张三&quot;</span>);</span><br><span class="line">    testData.add(<span class="string">&quot;李四&quot;</span>);</span><br><span class="line">    testData.add(<span class="string">&quot;王二&quot;</span>);</span><br><span class="line">    testData.add(<span class="string">&quot;麻子&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p><strong>filter</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Stream&lt;T&gt; <span class="title function_">filter</span><span class="params">(Predicate&lt;? <span class="built_in">super</span> T&gt; predicate)</span>;</span><br></pre></td></tr></table></figure>
+<p>filter接收predicate函数,predicate是接收T值,返回boolean值,那么对应的引用就可以写成如下形式,意思是取集合中以’张’开头的名字.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">testData.stream()</span><br><span class="line">        .filter(x -&gt; x.startsWith(<span class="string">&quot;张&quot;</span>))</span><br></pre></td></tr></table></figure>
+<p><strong>map</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;R&gt; Stream&lt;R&gt; <span class="title function_">map</span><span class="params">(Function&lt;? <span class="built_in">super</span> T, ? extends R&gt; mapper)</span>;</span><br></pre></td></tr></table></figure>
+<p>map操作接收的是Function接口,对于Function接收T值返回R值,那map的作用就很明显是转换用的,比如下面代码,转换名称为对应的名称长度,也就是从输入String数据返回int数据.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">testData.stream()</span><br><span class="line">        .map(x -&gt; x.length())</span><br></pre></td></tr></table></figure>
+<p><strong>flatMap</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;R&gt; Stream&lt;R&gt; <span class="title function_">flatMap</span><span class="params">(Function&lt;? <span class="built_in">super</span> T, ? extends Stream&lt;? extends R&gt;&gt; mapper)</span>;</span><br></pre></td></tr></table></figure>
+<p>flatMap和map都是使用Function接口,不同的是返回值flatMap限定为Stream类型.所以flatMap可以作为合并流使用,如以下代码,提取出所有的字符.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">testData.stream()</span><br><span class="line">        .flatMap(x -&gt; Stream.of(x.split(<span class="string">&quot;&quot;</span>)))</span><br><span class="line">        .collect(Collectors.toList());</span><br><span class="line">        <span class="comment">//输出  [张, 三, 李, 四, 王, 二, 麻, 子]</span></span><br></pre></td></tr></table></figure>
+<p><strong>peek</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Stream&lt;T&gt; <span class="title function_">peek</span><span class="params">(Consumer&lt;? <span class="built_in">super</span> T&gt; action)</span>;</span><br></pre></td></tr></table></figure>
+<p>peek参数为Consumer,Consumer接收T值,无返回,那么该方法就可以作为调试不影响stream中内容的一些操作,不过由于对象都是地址引用,你再此做一些对象内容操作也是可以的.<br><strong>reduce</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;U&gt; U <span class="title function_">reduce</span><span class="params">(U identity, BiFunction&lt;U, ? <span class="built_in">super</span> T, U&gt; accumulator, BinaryOperator&lt;U&gt; combiner)</span>;</span><br></pre></td></tr></table></figure>
+<p>Reduce比较复杂的一个接口,属于归纳性操作,看参数,第一个是U泛型,也就是输入类型的参数,最为初始值,第二个BiFunction,接收T,U参数,返回U类型参数,BinaryOperator接收U,U类型,并返回U类型.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"> <span class="type">StringBuilder</span> <span class="variable">identity</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuilder</span>();</span><br><span class="line"> <span class="type">StringBuilder</span> <span class="variable">reduce</span> <span class="operator">=</span> testData.stream()</span><br><span class="line">     .flatMap(x -&gt; Stream.of(x.split(<span class="string">&quot;&quot;</span>)))</span><br><span class="line">     .reduce(identity, (r, x) -&gt; &#123;</span><br><span class="line">       r.append(x);</span><br><span class="line">       <span class="keyword">return</span> r;</span><br><span class="line">     &#125;, StringBuilder::append);</span><br><span class="line"> System.out.println(identity == reduce);</span><br><span class="line"> System.out.println(reduce.toString());</span><br><span class="line"> <span class="comment">//输出 true</span></span><br><span class="line"><span class="comment">//  张三李四王二麻子</span></span><br></pre></td></tr></table></figure>
+<p>首先提供一个基本容器identity,然后两个参数r即是identity,x为每次输入参数,最后一个StringBuilder::append是并发下多个identity的合并策略.<br>再举个例子,既然reduce属于归纳性操作,那么也可以当成collect使用,如下:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">ArrayList&lt;String&gt; identity = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">   ArrayList&lt;String&gt; result = testData.stream()</span><br><span class="line">       .flatMap(x -&gt; Stream.of(x.split(<span class="string">&quot;&quot;</span>)))</span><br><span class="line">       .reduce(identity, (r, x) -&gt; &#123;</span><br><span class="line">         r.add(x);</span><br><span class="line">         <span class="keyword">return</span> r;</span><br><span class="line">       &#125;,(r1,r2) -&gt; &#123;</span><br><span class="line">         r1.addAll(r2);</span><br><span class="line">         <span class="keyword">return</span> r1;</span><br><span class="line">       &#125;);</span><br><span class="line">   System.out.println(identity == result);</span><br><span class="line">   System.out.println(result);</span><br><span class="line">   <span class="comment">//输出 true</span></span><br><span class="line">   <span class="comment">//[张, 三, 李, 四, 王, 二, 麻, 子]</span></span><br></pre></td></tr></table></figure>
+<h3 id="强大的collect"><a href="#强大的collect" class="headerlink" title="强大的collect"></a>强大的collect</h3><p>collect无疑是stream中最强大的操作,掌握了collect操作才能说掌握了stream.为了便于使用者,Java提供了<code>Collectors</code>类,该类提供了很多便捷的collect操作,如<code>Collector&lt;T, ?, List&lt;T&gt;&gt; toList()</code>,<code>Collector&lt;T, ?, Set&lt;T&gt;&gt; toSet()</code>等操作.这些操作最终都会调用如下构造函数构造出collector对象,因此掌握该本质是最佳的学习方式.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">CollectorImpl(Supplier&lt;A&gt; supplier,</span><br><span class="line">                      BiConsumer&lt;A, T&gt; accumulator,</span><br><span class="line">                      BinaryOperator&lt;A&gt; combiner,</span><br><span class="line">                      Function&lt;A,R&gt; finisher,</span><br><span class="line">                      Set&lt;Characteristics&gt; characteristics) &#123;</span><br><span class="line">            <span class="built_in">this</span>.supplier = supplier;</span><br><span class="line">            <span class="built_in">this</span>.accumulator = accumulator;</span><br><span class="line">            <span class="built_in">this</span>.combiner = combiner;</span><br><span class="line">            <span class="built_in">this</span>.finisher = finisher;</span><br><span class="line">            <span class="built_in">this</span>.characteristics = characteristics;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>Supplier类似reduce中的u,接收一个元数据,BiConsumer则是操作数据,BinaryOperator并发下聚合,finisher完成时的转换操作,Set<Characteristics>应该按照定义是优化一些操作中的转换.如下面的toList()操作,其finish操作为<code>castingIdentity()</code>.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;T&gt;</span><br><span class="line"> Collector&lt;T, ?, List&lt;T&gt;&gt; toList() &#123;</span><br><span class="line">     <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">CollectorImpl</span>&lt;&gt;((Supplier&lt;List&lt;T&gt;&gt;) ArrayList::<span class="keyword">new</span>, List::add,</span><br><span class="line">                                (left, right) -&gt; &#123; left.addAll(right); <span class="keyword">return</span> left; &#125;,</span><br><span class="line">                                CH_ID);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>再看toMap的实现</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;T, K, U, M <span class="keyword">extends</span> <span class="title class_">Map</span>&lt;K, U&gt;&gt;</span><br><span class="line">Collector&lt;T, ?, M&gt; toMap(Function&lt;? <span class="built_in">super</span> T, ? <span class="keyword">extends</span> <span class="title class_">K</span>&gt; keyMapper,</span><br><span class="line">                            Function&lt;? <span class="built_in">super</span> T, ? <span class="keyword">extends</span> <span class="title class_">U</span>&gt; valueMapper,</span><br><span class="line">                            BinaryOperator&lt;U&gt; mergeFunction,</span><br><span class="line">                            Supplier&lt;M&gt; mapSupplier) &#123;</span><br><span class="line">    BiConsumer&lt;M, T&gt; accumulator</span><br><span class="line">            = (map, element) -&gt; map.merge(keyMapper.apply(element),</span><br><span class="line">                                          valueMapper.apply(element), mergeFunction);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">CollectorImpl</span>&lt;&gt;(mapSupplier, accumulator, mapMerger(mergeFunction), CH_ID);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Function作为转换函数提供了key和value的转换,BinaryOperator提供了重复key合并策略,mapSupplier则表示最终收集到的容器.那么使用就很简单了</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">HashMap&lt;Character, String&gt; map = testData.stream()</span><br><span class="line">        .collect(Collectors.toMap(x -&gt; x.charAt(<span class="number">0</span>), Function.identity()</span><br><span class="line">            , (v1, v2) -&gt; v2, HashMap::<span class="keyword">new</span>));</span><br></pre></td></tr></table></figure>
+
+<p>其他还有很多方法,就不一一叙述,主要是了解这些接口,知道他所拥有的功能,以及组合的意义,即可很好的掌握Java中的函数式编程.</p>
+<blockquote>
+<p>个人博客 <a href="mrdear.cn">mrdear.cn</a> ,欢迎交流</p>
+</blockquote>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/java_stream1.html">Java8 Lambda（一）-函数式接口</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/java_stream1.html">https://mrdear.cn/posts/java_stream1.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/java_serializable.html" title="Java--序列化知识点"><i class="iconfont icon-prev"></i>Java--序列化知识点</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/java_stream2.html" title="Java8 Lambda（二）-Stream原理">Java8 Lambda（二）-Stream原理<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%87%BD%E6%95%B0%E5%BC%8F%E6%8E%A5%E5%8F%A3"><span class="toc-number">1.</span> <span class="toc-text">函数式接口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Stream%E6%93%8D%E4%BD%9C"><span class="toc-number">2.</span> <span class="toc-text">Stream操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%BA%E5%A4%A7%E7%9A%84collect"><span class="toc-number">3.</span> <span class="toc-text">强大的collect</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Spring MVC--请求定位 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-springmvc-request.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/springmvc.png" alt="Spring MVC--请求定位">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Spring MVC--请求定位</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2018-04-16</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Spring/">Spring</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <!-- toc -->
+<hr>
+<p>承接上文,依照上文所说<code>DispatcherServlet</code>拿到请求后所作的第一件事情是定位到具体的<code>HandlerExecutionChain</code>,也就是该请求所需要执行的方法,包括拦截器方法与用户的业务方法,那么本篇来详细描述这个过程.</p>
+<h2 id="Spring-MVC中的URL"><a href="#Spring-MVC中的URL" class="headerlink" title="Spring MVC中的URL"></a>Spring MVC中的URL</h2><p>在分析之前先理解Spring MVC中的URL,对于Spring MVC来说URL分为两类,一种是静态的,一种是动态的.</p>
+<ol>
+<li>静态: 指的是一个方法所对应的URL自初始化就是不变的,比如<code>/api/v1/login/</code></li>
+<li>动态: 指的是一个方法对应的URL有多种形式,比如<code>/api/v1/**</code>,<code>/api/&#123;version&#125;/login/</code>这两种都属于动态的,是没法直接根绝URL定位到需要执行的方法.</li>
+</ol>
+<h2 id="HandlerMapping"><a href="#HandlerMapping" class="headerlink" title="HandlerMapping"></a>HandlerMapping</h2><p><code>HandlerMapping</code>是Spring MVC中定位到具体执行链所使用的类,其所提供的是对外的功能,根据请求拿到具体的执行链.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HandlerExecutionChain <span class="title function_">getHandler</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception;</span><br></pre></td></tr></table></figure>
+<p>在<code>DispatcherServlet</code>中根据请求得到对应的处理链(包括具体执行的方法与拦截器)调的是<code>getHandler</code>方法,该方法对<code>HandlerMappings</code>做了一个循环处理,直到找到第一个符合的<code>HandlerExecutionChain</code>为止,<code>HandlerExecutionChain</code>是方法的执行链,其中包含着Spring MVC的<strong>拦截器</strong>以及用户定于的处理方法<code>HandlerMethod</code>.<br>这里个人觉得可以做个优化,让每一个<code>HandlerMapping</code>持有一个<code>handlerCount</code>字段,每次选中的<code>HandlerMapping</code>处理成功后该<code>handlerCount</code>自增,然后对<code>this.handlerMappings</code>根据<code>handlerCount</code>排序,这样随着服务的运行,会使得这个循环的尽可能的用最少的次数找到最合适的处理器.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> HandlerExecutionChain <span class="title function_">getHandler</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">           <span class="comment">// 对所有的Handler循环,直到找到能够处理的Handler</span></span><br><span class="line">	<span class="keyword">for</span> (HandlerMapping hm : <span class="built_in">this</span>.handlerMappings) &#123;</span><br><span class="line">		<span class="type">HandlerExecutionChain</span> <span class="variable">handler</span> <span class="operator">=</span> hm.getHandler(request);</span><br><span class="line">		<span class="keyword">if</span> (handler != <span class="literal">null</span>) &#123;</span><br><span class="line">			<span class="keyword">return</span> handler;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>HandlerMappings</code>继承结构如下:<br><img src="http://res.mrdear.cn/1523693617.png"><br>从关系图可以得到哪些信息?</p>
+<ol>
+<li>这是一种模板方法设计模式,接口最上层提供对外的能力,抽象类在中间提供代码复用以及把功能拆分到具体的子类中实现,最后实现类则负责实现模板类所给自己提供的小任务的实现.</li>
+<li><code>HandlerMapping</code>分为两种类型,一种是url到方法<code>AbstractHandlerMethodMapping</code>,这种形式比较常用,也是业务开发中主要使用到的形式,一种是url到其他处理器比如Controller,Resource的<code>AbstractUrlHandlerMapping</code>,该类属于Spring3之前常用的类.</li>
+</ol>
+<p>下面按照模板方法设计模式的思路来分析</p>
+<h3 id="模板类AbstractHandlerMapping"><a href="#模板类AbstractHandlerMapping" class="headerlink" title="模板类AbstractHandlerMapping"></a>模板类AbstractHandlerMapping</h3><p>身为模板类的<code>AbstractHandlerMapping</code>,主要功能是实现<code>HandlerMapping</code>的方法,然后<strong>拆解这个方法到更加细小的任务,传递到子类中</strong>,这个也是模板方法设计模式的本质.他的大概流程如下(省略了部分代码):</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> HandlerExecutionChain <span class="title function_">getHandler</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">          <span class="comment">// getHandlerInternal是有模板类延迟到子类的一个方法</span></span><br><span class="line">	<span class="type">Object</span> <span class="variable">handler</span> <span class="operator">=</span> getHandlerInternal(request);</span><br><span class="line">          ......</span><br><span class="line">	<span class="comment">// handler是Spring的话则去获取到具体的Bean</span></span><br><span class="line">	<span class="keyword">if</span> (handler <span class="keyword">instanceof</span> String) &#123;</span><br><span class="line">		<span class="type">String</span> <span class="variable">handlerName</span> <span class="operator">=</span> (String) handler;</span><br><span class="line">		handler = getApplicationContext().getBean(handlerName);</span><br><span class="line">	&#125;</span><br><span class="line">         <span class="comment">// 构造执行链</span></span><br><span class="line">	<span class="type">HandlerExecutionChain</span> <span class="variable">executionChain</span> <span class="operator">=</span> getHandlerExecutionChain(handler, request);</span><br><span class="line">         ....</span><br><span class="line">        <span class="comment">// 返回</span></span><br><span class="line">	<span class="keyword">return</span> executionChain;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">     <span class="comment">// 延迟到子类的方法</span></span><br><span class="line"><span class="keyword">protected</span> <span class="keyword">abstract</span> Object <span class="title function_">getHandlerInternal</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception;</span><br></pre></td></tr></table></figure>
+<p>其中<code>HandlerExecutionChain</code>是一个包含了拦截器与对应的业务方法的包装类,比较简单,就不做分析了.可以看到<code>AbstractHandlerMapping</code>细分了<code>getHandlerInternal()</code>方法交由子类实现,自己则负责整个流程的构建.</p>
+<h4 id="方法映射处理AbstractHandlerMethodMapping"><a href="#方法映射处理AbstractHandlerMethodMapping" class="headerlink" title="方法映射处理AbstractHandlerMethodMapping"></a>方法映射处理AbstractHandlerMethodMapping</h4><p><code>AbstractHandlerMethodMapping</code>自然也是模板类,其承担的责任是根据URL找到具体的方法.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> HandlerMethod <span class="title function_">getHandlerInternal</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">  <span class="comment">// 取出具体的url信息</span></span><br><span class="line">  <span class="type">String</span> <span class="variable">lookupPath</span> <span class="operator">=</span> getUrlPathHelper().getLookupPathForRequest(request);</span><br><span class="line">  <span class="comment">// 获取读锁</span></span><br><span class="line">  <span class="built_in">this</span>.mappingRegistry.acquireReadLock();</span><br><span class="line">  <span class="comment">// 找到对应的方法</span></span><br><span class="line">  <span class="type">HandlerMethod</span> <span class="variable">handlerMethod</span> <span class="operator">=</span> lookupHandlerMethod(lookupPath, request);</span><br><span class="line">  <span class="comment">// 返回对应的处理方法</span></span><br><span class="line">  <span class="keyword">return</span> (handlerMethod != <span class="literal">null</span> ? handlerMethod.createWithResolvedBean() : <span class="literal">null</span>);</span><br><span class="line">  <span class="comment">// 释放读锁</span></span><br><span class="line">  <span class="built_in">this</span>.mappingRegistry.releaseReadLock();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上述流程可以看出,主要的寻找逻辑在<code>lookupHandlerMethod()</code>方法中,等下在分析该方法.在这个查找中有<code>MappingRegistry</code>,它是什么?为什么有需要读锁?<br>按照该类的注释所说,该类是一个路由表,其包含着Spring MVC所管理的所有映射关系,并且运用读写锁提供并发访问能力,之所以需要并发因为<code>MappingRegistry</code>并不是一个线程安全的类,其提供了写入与获取方法,并且共享了一些线程不安全的类,比如<code>HashMap</code>,并且其属于读写比非常大的场景,因此使用读写锁实现高性能访问与并发安全在合适不过了.<br><img src="http://res.mrdear.cn/1523697076.png"></p>
+<p>有了所有的映射关系接下来是匹配流程,也就是<code>lookupHandlerMethod</code>的方法执行逻辑(代码比较长,参考注释观看):</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> HandlerMethod <span class="title function_">lookupHandlerMethod</span><span class="params">(String lookupPath, HttpServletRequest request)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">  List&lt;Match&gt; matches = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;Match&gt;();</span><br><span class="line">  <span class="comment">// 从urlLookup中取出匹配结果,这里是直接匹配</span></span><br><span class="line">  List&lt;T&gt; directPathMatches = <span class="built_in">this</span>.mappingRegistry.getMappingsByUrl(lookupPath);</span><br><span class="line">  <span class="keyword">if</span> (directPathMatches != <span class="literal">null</span>) &#123;</span><br><span class="line">    addMatchingMappings(directPathMatches, matches, request);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 上述直接匹配不到则全部匹配(这里是坑)</span></span><br><span class="line">  <span class="keyword">if</span> (matches.isEmpty()) &#123;</span><br><span class="line">    addMatchingMappings(<span class="built_in">this</span>.mappingRegistry.getMappings().keySet(), matches, request);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 匹配后进行筛选</span></span><br><span class="line">  <span class="keyword">if</span> (!matches.isEmpty()) &#123;</span><br><span class="line">    Comparator&lt;Match&gt; comparator = <span class="keyword">new</span> <span class="title class_">MatchComparator</span>(getMappingComparator(request));</span><br><span class="line">    Collections.sort(matches, comparator);</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 默认排序后第一个为最佳匹配</span></span><br><span class="line">    <span class="type">Match</span> <span class="variable">bestMatch</span> <span class="operator">=</span> matches.get(<span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (matches.size() &gt; <span class="number">1</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (CorsUtils.isPreFlightRequest(request)) &#123;</span><br><span class="line">        <span class="keyword">return</span> PREFLIGHT_AMBIGUOUS_MATCH;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 不允许有两个一样的处理器</span></span><br><span class="line">      <span class="type">Match</span> <span class="variable">secondBestMatch</span> <span class="operator">=</span> matches.get(<span class="number">1</span>);</span><br><span class="line">      <span class="keyword">if</span> (comparator.compare(bestMatch, secondBestMatch) == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="type">Method</span> <span class="variable">m1</span> <span class="operator">=</span> bestMatch.handlerMethod.getMethod();</span><br><span class="line">        <span class="type">Method</span> <span class="variable">m2</span> <span class="operator">=</span> secondBestMatch.handlerMethod.getMethod();</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalStateException</span>(<span class="string">&quot;Ambiguous handler methods mapped for HTTP path &#x27;&quot;</span> +</span><br><span class="line">            request.getRequestURL() + <span class="string">&quot;&#x27;: &#123;&quot;</span> + m1 + <span class="string">&quot;, &quot;</span> + m2 + <span class="string">&quot;&#125;&quot;</span>);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 处理匹配结果</span></span><br><span class="line">    handleMatch(bestMatch.mapping, lookupPath, request);</span><br><span class="line">    <span class="keyword">return</span> bestMatch.handlerMethod;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// 匹配不到的处理一般是找出原因,抛出相应的异常</span></span><br><span class="line">    <span class="keyword">return</span> handleNoMatch(<span class="built_in">this</span>.mappingRegistry.getMappings().keySet(), lookupPath, request);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>有何问题?</strong><br>当<code>directPathMatches</code>匹配不到时,会造成<strong>全量的遍历</strong>,笔者公司一个20w行代码的项目全量匹配是要循环300次,每一个URL方法都要试试匹配,然后再排序,再筛选,并且随着请求量的增加循环次数也在增加,系统负载能力是下降趋势的.那么哪些操作造成全量匹配?</p>
+<p>分析<code>directPathMatches</code>的来源,其是根据URL查找出对应的处理链,然后再逐一判断,换句话说<strong>动态的URL就找不到对应的处理器链,从而造成全量匹配</strong>,对于Spring MVC来说是<code>@PathVariable</code>或者是<code>login/**</code>通配符形式会导致全量匹配.因为这两种情况下链接本身不是固定的,因此无法精确匹配,只能全量搜索查找.<br>如果项目大量使用了类似的写法,解决办法就是定制解析流程,可以参考达达的定制过程<a target="_blank" rel="noopener" href="https://tech.imdada.cn/2015/12/23/springmvc-restful-optimize/">SpringMVC RESTful 性能优化</a></p>
+<h3 id="模板类AbstractUrlHandlerMapping"><a href="#模板类AbstractUrlHandlerMapping" class="headerlink" title="模板类AbstractUrlHandlerMapping"></a>模板类AbstractUrlHandlerMapping</h3><p>该类属于Spring3之前所提供的类,由于笔者对Spring3之前的开发方式不是很清楚,因此不会过多的讨论该类,只从现在角度来分析该类的用处.该类的实现比较简单,其内部拥有一个Map保存了所有的映射关系,可以映射到对应的Controller,也可以映射到其他的Handler.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> Map&lt;String, Object&gt; handlerMap = <span class="keyword">new</span> <span class="title class_">LinkedHashMap</span>&lt;String, Object&gt;();</span><br></pre></td></tr></table></figure>
+<p><strong>有何问题?</strong></p>
+<ol>
+<li><code>LinkedHashMap</code>是一个线程不安全的类,因此对于这种类要求必须再启动时把所有的信息都注入,从而保证再运行时没有put写入的请求,以及扩容的需求,从而达到线程安全.</li>
+<li>该类直接匹配不到同样进行全遍历<br>笔者用Spring Boot写个了Demo后发现该类承担的角色一般是静态资源匹配.也就是以下参数<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">spring.mvc.static-path-pattern=/static/**</span><br></pre></td></tr></table></figure>
+<img src="http://res.mrdear.cn/1523700503.png"><br>由于使用不多,这里就不多研究了.</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Spring MVC请求定位的实现原理就是先获取所有的映射关系,然后拿到请求后的url进行匹配,在匹配结果中筛选最合适的一个进行处理的过程.</p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-springmvc-request.html">Spring MVC--请求定位</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-springmvc-request.html">https://mrdear.cn/posts/framework-springmvc-request.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/framework-springmvc-framework.html" title="Spring MVC--所存在的疑惑"><i class="iconfont icon-prev"></i>Spring MVC--所存在的疑惑</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-spring-mvc-params.html" title="Spring MVC--参数解析与方法执行">Spring MVC--参数解析与方法执行<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Spring-MVC%E4%B8%AD%E7%9A%84URL"><span class="toc-number">1.</span> <span class="toc-text">Spring MVC中的URL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#HandlerMapping"><span class="toc-number">2.</span> <span class="toc-text">HandlerMapping</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A8%A1%E6%9D%BF%E7%B1%BBAbstractHandlerMapping"><span class="toc-number">2.1.</span> <span class="toc-text">模板类AbstractHandlerMapping</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E6%B3%95%E6%98%A0%E5%B0%84%E5%A4%84%E7%90%86AbstractHandlerMethodMapping"><span class="toc-number">2.1.1.</span> <span class="toc-text">方法映射处理AbstractHandlerMethodMapping</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A8%A1%E6%9D%BF%E7%B1%BBAbstractUrlHandlerMapping"><span class="toc-number">2.2.</span> <span class="toc-text">模板类AbstractUrlHandlerMapping</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

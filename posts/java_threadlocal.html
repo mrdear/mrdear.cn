@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Java -- ThreadLocal问题分析 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/java_threadlocal.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/javastudy.png" alt="Java -- ThreadLocal问题分析">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Java -- ThreadLocal问题分析</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2020-11-28</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Java/">Java</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>关于ThreadLocal内存泄漏的问题，网上有很多讨论，比较一致认同的方案是每次使用完ThreadLocal对象后，调用remove方法释放掉该对象，用来防止内存泄漏。乍一听感觉挺有道理，然而使用ThreadLocal除了解决线程不安全问题之外，其另一个目地是复用对象，如果每次都remove，则只应该在线程入口以及出口操作，而不是在任意调用处操作，不然则失去对象复用的意义。然而没有更好的方式了吗？ThreadLocal这种优秀的理念就这么憋屈的使用？本文将探讨下这些，并希望总结出一套合理的ThreadLocal使用方式。</p>
+<h2 id="问题一：内存泄漏"><a href="#问题一：内存泄漏" class="headerlink" title="问题一：内存泄漏"></a>问题一：内存泄漏</h2><h3 id="为什么会内存泄漏"><a href="#为什么会内存泄漏" class="headerlink" title="为什么会内存泄漏"></a>为什么会内存泄漏</h3><p>在讨论之前，需要了解下Java中<code>WeakReference</code>作用，感兴趣的可以参考<a href="https://mrdear.cn/posts/java_reference.html">Java中的四种引用</a>。简单点来说在GC工作时，如果<code>WeakReference</code>对象没有被强引用所关联，那么就会被GC回收，这个回收是ThreadLocal泄漏原因的根源。<br>ThreadLocal主要实现依赖<code>ThreadLocalMap</code>类，该类使用开放地址法解决hash冲突，当put数据时，<code>ThreadLocalMap</code>会将对应的数据封装为<code>java.lang.ThreadLocal.ThreadLocalMap.Entry</code>对象，填充hash槽，该对象是一个<code>WeakReference</code>子类，被跟踪对象则是ThreadLocal本身，如下图所示，其中<code>ThreadLocal</code>标红代表被弱引用所跟踪。</p>
+<p><img src="http://res.mrdear.cn/1588561192.png"></p>
+<p><strong>清单一：Entry对象</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">Entry</span> <span class="keyword">extends</span> <span class="title class_">WeakReference</span>&lt;ThreadLocal&lt;?&gt;&gt; &#123;</span><br><span class="line">       <span class="comment">/** The value associated with this ThreadLocal. */</span></span><br><span class="line">       Object value;</span><br><span class="line"></span><br><span class="line">       Entry(ThreadLocal&lt;?&gt; k, Object v) &#123;</span><br><span class="line">           <span class="built_in">super</span>(k);</span><br><span class="line">           value = v;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<p>当对应的Entry中ThreadLocal被回收后，Entry中value又是强引用，导致此时Entry无法被释放，就会出现内存泄漏，如下图所示。此时Entry对象永远无法被访问到，也无法被回收，但仍然占用着内存。本质问题是生命周期短的对象引用了生命周期长的对象，导致自身无法释放。<br><img src="http://res.mrdear.cn/1588561933.png"></p>
+<h3 id="什么情况下泄漏"><a href="#什么情况下泄漏" class="headerlink" title="什么情况下泄漏"></a>什么情况下泄漏</h3><p>以下内容只考虑日常开发中使用习惯，不过多考虑极端情况。</p>
+<p>泄漏的本质是弱引用被回收，换句话说不让弱引用被回收即可以解决泄漏，这也是日常开发下建议ThreadLocal对象声明为<code>static final</code>全局变量的好处，当这样声明后，关系图如下所示，此时ThreadLocal由于存在强引用，除非对应的ClassLoader被回收，否则不会被GC回收。<br><img src="http://res.mrdear.cn/1588578060.png"></p>
+<p>那么声明为<code>static final</code>可以高枕无忧吗？当然不行，此时虽然不会因为弱引用问题导致内存泄漏，但是会出现一些线程池中线程分配了部分ThreadLocal对象，但却一直没有使用该对象，那么这些分配未使用过的对象则无法回收，一直处于占坑状态，需要等线程生命周期结束后才能释放，这种也算一种内存泄漏。这种没有比较好的解决方案，常见的是调整线程生命周期，避免线程持续时间太长，二是养成开发意识，在对应行为处使用ThreadLocal需要回收对应内存，对于大部分业务中ThreadLocal的使用来说，所幸的是一般不会造成大问题，顶多是耗费多一点内存。</p>
+<p>再者就是合并部署下可能出现内存泄漏，比如Tomcat服务器可以部署多个web应用，这些web应用是共用一套Tomcat的线程池服务，这种情况比较复杂，比如ThreadLocal中引用了webA的类，webA服务下线时，由于强引用存在，导致ClassLoader无法被回收，此时可能造成内存泄漏。在JDK7时代，Tomcat热部署机制就很容易造成 OOM。如今大多数项目都使用Spring Boot单体部署方式，这种内存泄漏越来越少了。</p>
+<h3 id="ThreadLocal怎么解决泄漏"><a href="#ThreadLocal怎么解决泄漏" class="headerlink" title="ThreadLocal怎么解决泄漏"></a>ThreadLocal怎么解决泄漏</h3><p>由于Entry对key是弱引用，当key也就是ThreadLocal本身被回收后，无法通过key访问该hash槽，造成内存泄漏。ThreadLocalMap在<code>java.lang.ThreadLocal.ThreadLocalMap#expungeStaleEntry</code>方法中实现类对该类数据的回收，该方法遍历对应的hash槽，当发现key为null的数据后，回收对应的槽，如清单二所示，然后ThreadLocalMap类在get以及remove等方法中直接或者间接调用了<code>expungeStaleEntry</code>，因此当出现内存泄漏后，大多数情况能够主动回收该部分泄漏内存。</p>
+<p><strong>清单二：ThreadLocal回收key</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="type">int</span> <span class="title function_">expungeStaleEntry</span><span class="params">(<span class="type">int</span> staleSlot)</span> &#123;</span><br><span class="line">        Entry[] tab = table;</span><br><span class="line">        <span class="type">int</span> <span class="variable">len</span> <span class="operator">=</span> tab.length;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 回收当前槽</span></span><br><span class="line">        tab[staleSlot].value = <span class="literal">null</span>;</span><br><span class="line">        tab[staleSlot] = <span class="literal">null</span>;</span><br><span class="line">        size--;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Rehash until we encounter null</span></span><br><span class="line">        Entry e;</span><br><span class="line">        <span class="type">int</span> i;</span><br><span class="line">        <span class="comment">// 遍历,回收key为null的槽</span></span><br><span class="line">        <span class="keyword">for</span> (i = nextIndex(staleSlot, len);(e = tab[i]) != <span class="literal">null</span>;i = nextIndex(i, len)) &#123;</span><br><span class="line">            ThreadLocal&lt;?&gt; k = e.get();</span><br><span class="line">            <span class="keyword">if</span> (k == <span class="literal">null</span>) &#123;</span><br><span class="line">                e.value = <span class="literal">null</span>;</span><br><span class="line">                tab[i] = <span class="literal">null</span>;</span><br><span class="line">                size--;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="type">int</span> <span class="variable">h</span> <span class="operator">=</span> k.threadLocalHashCode &amp; (len - <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (h != i) &#123;</span><br><span class="line">                    tab[i] = <span class="literal">null</span>;</span><br><span class="line">                    <span class="keyword">while</span> (tab[h] != <span class="literal">null</span>)</span><br><span class="line">                        h = nextIndex(h, len);</span><br><span class="line">                    tab[h] = e;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> i;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题二：使用上次值"><a href="#问题二：使用上次值" class="headerlink" title="问题二：使用上次值"></a>问题二：使用上次值</h2><p>问题二就比较常见了，使用了ThreadLocal，却没有清理，导致第二次重用了旧数据。这种错误是ThreadLocal犯的最多，且最致命的问题，举个博主之前写过的bug，场景如下：</p>
+<p>后端提供了一个查询系统所拥有数据的API，由于系统拥有很多不同类型数据，不如枚举信息、用户权限信息、系统状态等，数据都分布在不同的表，因此该接口会并发查询，简略示意图如下，后台使用了策略模式，每一种信息的查询是一个单独的策略接口，前端传入要获取的信息类型，后端根据类型进行<code>parallelStream</code>并发获取。</p>
+<p>博主当时想也没想，就直接把用户权限的获取写成了一个策略实现类，踩了坑。本质问题是获取用户信息的<code>RequestUserHolder</code>本质上是从ThreadLocal中获取，而<code>parallelStream</code>底层实现为forkjoin，会根据当前负载情况拆分任务到CommonPool线程池中执行。由于存在线程复用，因此用户信息在请求线程ThreadLocal，调用到parallelStream后，第一次创建CommonPool线程池时，是能够传递ThreadLocal到子线程，之后线程复用，无法传递ThreadLocal，造成数据混乱使用。</p>
+<p><img src="http://res.mrdear.cn/uPic/image-20201127232939603_1606492904.png-default" alt="image-20201127232939603"></p>
+<h2 id="如何更好的使用ThreadLocal？"><a href="#如何更好的使用ThreadLocal？" class="headerlink" title="如何更好的使用ThreadLocal？"></a>如何更好的使用ThreadLocal？</h2><p>讲了那么多，根据上述缺陷，博主总结了以下使用点：</p>
+<ul>
+<li>使用static final进行修饰，避免因为弱引用回收带来的内存泄漏</li>
+<li>优先使用ThreadLocal对JDK自带的类进行引用，避免多应用部署时，阻塞ClassLoader回收</li>
+<li>对于业务类型的对象，比如用户信息，使用完成后一定要主动清理</li>
+<li>对于容器性质的对象，包装一层重置对象后再提供给其他代码访问，如下StringBuilder复用所示</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> ThreadLocal&lt;StringBuilder&gt; LOCAL = ThreadLocal.withInitial(StringBuilder::<span class="keyword">new</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> StringBuilder <span class="title function_">getBuilder</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="type">StringBuilder</span> <span class="variable">builder</span> <span class="operator">=</span> LOCAL.get();</span><br><span class="line">    <span class="keyword">if</span> (builder.capacity() &gt; <span class="number">1000</span>) &#123;</span><br><span class="line">        builder.setLength(<span class="number">200</span>);</span><br><span class="line">        builder.trimToSize();</span><br><span class="line">    &#125;</span><br><span class="line">    builder.setLength(<span class="number">0</span>);</span><br><span class="line">    <span class="keyword">return</span> builder;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/java_threadlocal.html">Java -- ThreadLocal问题分析</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/java_threadlocal.html">https://mrdear.cn/posts/java_threadlocal.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/java_metaspace.html" title="Java -- MetaSpace线上问题排查"><i class="iconfont icon-prev"></i>Java -- MetaSpace线上问题排查</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-netty-half-packet.html" title="Netty -- 粘包与半包详解">Netty -- 粘包与半包详解<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E4%B8%80%EF%BC%9A%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">问题一：内存泄漏</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F"><span class="toc-number">1.1.</span> <span class="toc-text">为什么会内存泄漏</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%83%85%E5%86%B5%E4%B8%8B%E6%B3%84%E6%BC%8F"><span class="toc-number">1.2.</span> <span class="toc-text">什么情况下泄漏</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ThreadLocal%E6%80%8E%E4%B9%88%E8%A7%A3%E5%86%B3%E6%B3%84%E6%BC%8F"><span class="toc-number">1.3.</span> <span class="toc-text">ThreadLocal怎么解决泄漏</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E4%BA%8C%EF%BC%9A%E4%BD%BF%E7%94%A8%E4%B8%8A%E6%AC%A1%E5%80%BC"><span class="toc-number">2.</span> <span class="toc-text">问题二：使用上次值</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E6%9B%B4%E5%A5%BD%E7%9A%84%E4%BD%BF%E7%94%A8ThreadLocal%EF%BC%9F"><span class="toc-number">3.</span> <span class="toc-text">如何更好的使用ThreadLocal？</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

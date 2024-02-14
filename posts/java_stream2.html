@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Java8 Lambda（二）-Stream原理 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/java_stream2.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/javastudy.png" alt="Java8 Lambda（二）-Stream原理">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Java8 Lambda（二）-Stream原理</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2017-05-20</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Java/">Java</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>推荐一篇博文,很好的介绍了Stream的原理.本文对其进行一些补充更加详细的讲解.</p>
+<blockquote>
+<p>作者: 李豪<br>地址: <a target="_blank" rel="noopener" href="https://github.com/CarpenterLee/JavaLambdaInternals/blob/master/6-Stream%20Pipelines.md">https://github.com/CarpenterLee/JavaLambdaInternals/blob/master/6-Stream%20Pipelines.md</a></p>
+</blockquote>
+<p>需求:</p>
+<blockquote>
+<p>从<code>&quot;张三&quot;,&quot;李四&quot;,&quot;王二&quot;,&quot;张四五&quot;</code>中选出以<code>张</code>开头的名字,然后从再从中选出名字最长的一个,输出其长度.</p>
+</blockquote>
+<h3 id="1-一种直白的实现"><a href="#1-一种直白的实现" class="headerlink" title="1.一种直白的实现"></a>1.一种直白的实现</h3><p><img src="http://res.mrdear.cn/1497141037.png?imageMogr2/thumbnail/!70p"></p>
+<p><strong>缺点</strong>:</p>
+<ol>
+<li>迭代次数过多</li>
+<li>频繁产生中间结果,性能无法接受</li>
+</ol>
+<p><strong>实际想要的效果</strong>:<br>平常的写法:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="variable">longest</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"><span class="keyword">for</span>(String str : strings)&#123;</span><br><span class="line">    <span class="keyword">if</span>(str.startsWith(<span class="string">&quot;张&quot;</span>))&#123;<span class="comment">// 1. filter(), 保留以张开头的字符串</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">len</span> <span class="operator">=</span> str.length();<span class="comment">// 2. mapToInt(), 转换成长度</span></span><br><span class="line">        longest = Math.max(len, longest);<span class="comment">// 3. max(), 保留最长的长度</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">System.out.println(longest);</span><br></pre></td></tr></table></figure>
+<p>Stream的做法:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Stream.of(<span class="string">&quot;张三&quot;</span>,<span class="string">&quot;李四&quot;</span>,<span class="string">&quot;王二&quot;</span>,<span class="string">&quot;张四五&quot;</span>)</span><br><span class="line">      .filter(x -&gt; x.startsWith(<span class="string">&quot;张&quot;</span>))</span><br><span class="line">      .mapToInt(String::length)</span><br><span class="line">      .max()</span><br><span class="line">      .ifPresent(System.out::println);</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-Stream是怎么做到的"><a href="#2-Stream是怎么做到的" class="headerlink" title="2.Stream是怎么做到的?"></a>2.Stream是怎么做到的?</h3><p><strong>Stream的操作分类</strong>:</p>
+<p>中间操作:返回一个新的Stream<br>        - 有状态 sorted(),必须等上一步操作完拿到全部元素后才可操作<br>        - 无状态 filter(),该操作的元素不受上一步操作的影响</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">list.stream().filter(x -&gt; x.startWith(<span class="string">&quot;张&quot;</span>).map(x -&gt; x.length())</span><br><span class="line">list.stream().filter(x -&gt; x.startWith(<span class="string">&quot;张&quot;</span>).sorted().map(x -&gt; x.length())</span><br></pre></td></tr></table></figure>
+<p>终端操作:返回结果<br>        - 短路操作findFirst(),找到一个则返回,也就是break当前的循环<br>        - 非短路操作forEach(),遍历全部元素</p>
+<p>以上操作决定了Stream一定是先构建完毕再执行的特点,也就是延迟执行,当需要结果(终端操作时)开始执行流水线.<br>Stream做到的是对于多次调用合并到一次迭代中处理完所有的调用方式.换句话说就是解决了上述的两个缺点.大概思路是记录下每一步的操作,然后终端操作时对其迭代依次执行每一步的操作,最后再一次循环中处理.</p>
+<p><strong>问题</strong>:</p>
+<ol>
+<li>操作是如何记录下来的?</li>
+<li>操作是如何叠加的?</li>
+<li>叠加完如何执行的?</li>
+<li>执行完如何收集结果的?</li>
+</ol>
+<hr>
+<p>Stream结构示意图:</p>
+<p><img src="http://res.mrdear.cn/1497146463.png?imageMogr2/thumbnail/!70p"></p>
+<p>示例代码:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">List&lt;String&gt; data = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">data.add(<span class="string">&quot;张三&quot;</span>);</span><br><span class="line">data.add(<span class="string">&quot;李四&quot;</span>);</span><br><span class="line">data.add(<span class="string">&quot;王三&quot;</span>);</span><br><span class="line">data.add(<span class="string">&quot;马六&quot;</span>);</span><br><span class="line"></span><br><span class="line">data.stream()</span><br><span class="line">    .filter(x -&gt; x.length() == <span class="number">2</span>)</span><br><span class="line">    .map(x -&gt; x.replace(<span class="string">&quot;三&quot;</span>,<span class="string">&quot;五&quot;</span>))</span><br><span class="line">    .sorted()</span><br><span class="line">    .filter(x -&gt; x.contains(<span class="string">&quot;五&quot;</span>))</span><br><span class="line">    .forEach(System.out::println);</span><br></pre></td></tr></table></figure>
+
+<h4 id="1-操作是如何记录下来的"><a href="#1-操作是如何记录下来的" class="headerlink" title="1. 操作是如何记录下来的?"></a>1. 操作是如何记录下来的?</h4><ol>
+<li>Head记录Stream起始操作</li>
+<li>StatelessOp记录中间操作</li>
+<li>StatefulOp记录有状态的中间操作<br>这三个操作实例化会指向其父类<code>AbstractPipeline</code>,也就是在<code>AbstractPipeline</code>中建立了双向链表</li>
+</ol>
+<p>对于Head</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">AbstractPipeline(Spliterator&lt;?&gt; source,</span><br><span class="line">                 <span class="type">int</span> sourceFlags, <span class="type">boolean</span> parallel) &#123;</span><br><span class="line">    <span class="built_in">this</span>.previousStage = <span class="literal">null</span>; <span class="comment">//首操作上一步为null    </span></span><br><span class="line">    <span class="built_in">this</span>.sourceSpliterator = source; <span class="comment">//数据</span></span><br><span class="line">    <span class="built_in">this</span>.sourceStage = <span class="built_in">this</span>; <span class="comment">//Head操作</span></span><br><span class="line">    <span class="built_in">this</span>.sourceOrOpFlags = sourceFlags &amp; StreamOpFlag.STREAM_MASK;</span><br><span class="line">    <span class="built_in">this</span>.combinedFlags = (~(sourceOrOpFlags &lt;&lt; <span class="number">1</span>)) &amp; StreamOpFlag.INITIAL_OPS_VALUE;</span><br><span class="line">    <span class="built_in">this</span>.depth = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">this</span>.parallel = parallel;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于其他Stage:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">AbstractPipeline(AbstractPipeline&lt;?, E_IN, ?&gt; previousStage, <span class="type">int</span> opFlags) &#123;</span><br><span class="line">    <span class="keyword">if</span> (previousStage.linkedOrConsumed)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalStateException</span>(MSG_STREAM_LINKED);</span><br><span class="line">    previousStage.linkedOrConsumed = <span class="literal">true</span>;</span><br><span class="line">    <span class="comment">//双向链表的建立</span></span><br><span class="line">    previousStage.nextStage = <span class="built_in">this</span>;</span><br><span class="line">    <span class="built_in">this</span>.previousStage = previousStage;</span><br><span class="line">    <span class="built_in">this</span>.sourceStage = previousStage.sourceStage;        </span><br><span class="line">    <span class="built_in">this</span>.depth = previousStage.depth + <span class="number">1</span>;        </span><br><span class="line">    </span><br><span class="line">    <span class="built_in">this</span>.sourceOrOpFlags = opFlags &amp; StreamOpFlag.OP_MASK;</span><br><span class="line">    <span class="built_in">this</span>.combinedFlags = StreamOpFlag.combineOpFlags(opFlags, previousStage.combinedFlags);</span><br><span class="line">    <span class="keyword">if</span> (opIsStateful())</span><br><span class="line">        sourceStage.sourceAnyStateful = <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<img src="http://res.mrdear.cn/1499071580.png?imageMogr2/thumbnail/!60p" height=500 align=right >
+调用过程如此用双向链表串联起来,每一步都得知其上一步与下一步的操作.
+ data.stream()
+ .filter(x -> x.length() == 2)
+ .map(x -> x.replace("三","五"))
+ .sorted()
+ .filter(x -> x.contains("五"))
+ .forEach(System.out::println);
+
+<hr>
+<h4 id="2-操作是如何叠加的"><a href="#2-操作是如何叠加的" class="headerlink" title="2.操作是如何叠加的?"></a>2.操作是如何叠加的?</h4><p><code>Sink&lt;T&gt;</code>接口:</p>
+<ol>
+<li>void begin(long size),循环开始前调用,通知每个Stage做好准备</li>
+<li>void end(),循环结束时调用,依次调用每个Stage的end方法,处理结果</li>
+<li>boolean cancellationRequested(),判断是否可以提前结束循环</li>
+<li>void accept(T value),每一步的处理</li>
+</ol>
+<p>其子类之一ChainedReference:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">ChainedReference</span>&lt;T, E_OUT&gt; <span class="keyword">implements</span> <span class="title class_">Sink</span>&lt;T&gt; &#123;</span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">final</span> Sink&lt;? <span class="built_in">super</span> E_OUT&gt; downstream;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">ChainedReference</span><span class="params">(Sink&lt;? <span class="built_in">super</span> E_OUT&gt; downstream)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.downstream = Objects.requireNonNull(downstream);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">begin</span><span class="params">(<span class="type">long</span> size)</span> &#123;</span><br><span class="line">        downstream.begin(size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">end</span><span class="params">()</span> &#123;</span><br><span class="line">        downstream.end();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">cancellationRequested</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> downstream.cancellationRequested();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>例Filter:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> Stream&lt;P_OUT&gt; <span class="title function_">filter</span><span class="params">(Predicate&lt;? <span class="built_in">super</span> P_OUT&gt; predicate)</span> &#123;</span><br><span class="line">    Objects.requireNonNull(predicate);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">StatelessOp</span>&lt;P_OUT, P_OUT&gt;(<span class="built_in">this</span>, StreamShape.REFERENCE,</span><br><span class="line">                                 StreamOpFlag.NOT_SIZED) &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        Sink&lt;P_OUT&gt; <span class="title function_">opWrapSink</span><span class="params">(<span class="type">int</span> flags, Sink&lt;P_OUT&gt; sink)</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Sink</span>.ChainedReference&lt;P_OUT, P_OUT&gt;(sink) &#123;</span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">begin</span><span class="params">(<span class="type">long</span> size)</span> &#123;</span><br><span class="line">                    downstream.begin(-<span class="number">1</span>);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="meta">@Override</span></span><br><span class="line">                <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">accept</span><span class="params">(P_OUT u)</span> &#123;</span><br><span class="line">                    <span class="comment">//条件成立则传递给下一个操作,也因为如此所以有状态的操作必须放到</span></span><br><span class="line">                    <span class="comment">//end方法里面</span></span><br><span class="line">                    <span class="keyword">if</span> (predicate.test(u))</span><br><span class="line">                        downstream.accept(u);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>再例如sorted():</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">begin</span><span class="params">(<span class="type">long</span> size)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (size &gt;= Nodes.MAX_ARRAY_SIZE)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(Nodes.BAD_SIZE);</span><br><span class="line">    list = (size &gt;= <span class="number">0</span>) ? <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;T&gt;((<span class="type">int</span>) size) : <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;T&gt;();</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">end</span><span class="params">()</span> &#123;</span><br><span class="line">    list.sort(comparator);</span><br><span class="line">    downstream.begin(list.size());</span><br><span class="line">    <span class="keyword">if</span> (!cancellationWasRequested) &#123;</span><br><span class="line">        list.forEach(downstream::accept);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (T t : list) &#123;</span><br><span class="line">            <span class="keyword">if</span> (downstream.cancellationRequested()) <span class="keyword">break</span>;</span><br><span class="line">            downstream.accept(t);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    downstream.end();</span><br><span class="line">    list = <span class="literal">null</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">accept</span><span class="params">(T t)</span> &#123;</span><br><span class="line">    list.add(t);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="http://res.mrdear.cn/1499071806.png?imageMogr2/thumbnail/!70p"></p>
+<h4 id="叠加后如何执行"><a href="#叠加后如何执行" class="headerlink" title="叠加后如何执行?"></a>叠加后如何执行?</h4><p>执行操作是由终端操作来触发的,例如foreach操作</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">forEach</span><span class="params">(Consumer&lt;? <span class="built_in">super</span> P_OUT&gt; action)</span> &#123;</span><br><span class="line">    <span class="comment">//evaluate就是开关,一旦调用就立即执行整个Stream    </span></span><br><span class="line">    evaluate(ForEachOps.makeRef(action, <span class="literal">false</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行前会对操作从末尾到起始反向包裹起来,得到调用链</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Sink <span class="title function_">opWrapSink</span><span class="params">(<span class="type">int</span> flags, Sink&lt;P_OUT&gt; sink)</span> ;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//这个Sink是终端操作所对应的Sink</span></span><br><span class="line"><span class="keyword">final</span> &lt;P_IN&gt; Sink&lt;P_IN&gt; <span class="title function_">wrapSink</span><span class="params">(Sink&lt;E_OUT&gt; sink)</span> &#123;</span><br><span class="line">    Objects.requireNonNull(sink);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> ( AbstractPipeline p=AbstractPipeline.<span class="built_in">this</span>; p.depth &gt; <span class="number">0</span>; p=p.previousStage) &#123;</span><br><span class="line">        sink = p.opWrapSink(p.previousStage.combinedFlags, sink);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> (Sink&lt;P_IN&gt;) sink;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="http://res.mrdear.cn/1499071772.png?imageMogr2/thumbnail/!70p"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">final</span> &lt;P_IN&gt; <span class="keyword">void</span> <span class="title function_">copyInto</span><span class="params">(Sink&lt;P_IN&gt; wrappedSink, Spliterator&lt;P_IN&gt; spliterator)</span> &#123;</span><br><span class="line">    Objects.requireNonNull(wrappedSink);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!StreamOpFlag.SHORT_CIRCUIT.isKnown(getStreamAndOpFlags())) &#123;</span><br><span class="line">        <span class="comment">//依次执行调用链</span></span><br><span class="line">        wrappedSink.begin(spliterator.getExactSizeIfKnown());</span><br><span class="line">        spliterator.forEachRemaining(wrappedSink);</span><br><span class="line">        wrappedSink.end();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        copyIntoWithCancel(wrappedSink, spliterator);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="有状态的中间操作何时执行"><a href="#有状态的中间操作何时执行" class="headerlink" title="有状态的中间操作何时执行?"></a>有状态的中间操作何时执行?</h4><p>例如sorted()操作,其依赖上一次操作的结果集,按照调用链来说结果集必须在accept()调用完才会产生.那也就说明sorted操作需要在end中,然后再重新开启调用链.</p>
+<p><strong>sorted的end方法</strong>:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"> <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">end</span><span class="params">()</span> &#123;</span><br><span class="line">     list.sort(comparator);</span><br><span class="line">     downstream.begin(list.size());</span><br><span class="line">     <span class="keyword">if</span> (!cancellationWasRequested) &#123;</span><br><span class="line">         list.forEach(downstream::accept);</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">else</span> &#123;</span><br><span class="line">         <span class="keyword">for</span> (T t : list) &#123;</span><br><span class="line">             <span class="keyword">if</span> (downstream.cancellationRequested()) <span class="keyword">break</span>;</span><br><span class="line">             downstream.accept(t);</span><br><span class="line">         &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     downstream.end();</span><br><span class="line">     list = <span class="literal">null</span>;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>那么就相当于sorted给原有操作断路了一次,然后又重新接上,再次遍历.<br><img src="http://res.mrdear.cn/1499071708.png?imageMogr2/thumbnail/!70p"></p>
+<h4 id="如何收集到结果"><a href="#如何收集到结果" class="headerlink" title="如何收集到结果?"></a>如何收集到结果?</h4><p>foreach是不需要收集到结果的,但是对于collect这样的操作是需要拿到最终end产生的结果.end产生的结果在最后一个Sink中,这样的操作最终都会提供一个取出数据的get方法.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"> <span class="keyword">public</span> &lt;P_IN&gt; R <span class="title function_">evaluateSequential</span><span class="params">(PipelineHelper&lt;T&gt; helper,</span></span><br><span class="line"><span class="params">                                    Spliterator&lt;P_IN&gt; spliterator)</span> &#123;</span><br><span class="line">     <span class="keyword">return</span> helper.wrapAndCopyInto(makeSink(), spliterator).get();</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>如此拿到数据返回</p>
+<blockquote>
+<p>个人博客 <a href="mrdear.cn">mrdear.cn</a> ,欢迎交流</p>
+</blockquote>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/java_stream2.html">Java8 Lambda（二）-Stream原理</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/java_stream2.html">https://mrdear.cn/posts/java_stream2.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/java_stream1.html" title="Java8 Lambda（一）-函数式接口"><i class="iconfont icon-prev"></i>Java8 Lambda（一）-函数式接口</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-double-replace.html" title="Dubbo -- 关于老项目替换dubbo的一点经验">Dubbo -- 关于老项目替换dubbo的一点经验<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%B8%80%E7%A7%8D%E7%9B%B4%E7%99%BD%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="toc-number">1.</span> <span class="toc-text">1.一种直白的实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Stream%E6%98%AF%E6%80%8E%E4%B9%88%E5%81%9A%E5%88%B0%E7%9A%84"><span class="toc-number">2.</span> <span class="toc-text">2.Stream是怎么做到的?</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E6%93%8D%E4%BD%9C%E6%98%AF%E5%A6%82%E4%BD%95%E8%AE%B0%E5%BD%95%E4%B8%8B%E6%9D%A5%E7%9A%84"><span class="toc-number">2.1.</span> <span class="toc-text">1. 操作是如何记录下来的?</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%93%8D%E4%BD%9C%E6%98%AF%E5%A6%82%E4%BD%95%E5%8F%A0%E5%8A%A0%E7%9A%84"><span class="toc-number">2.2.</span> <span class="toc-text">2.操作是如何叠加的?</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%A0%E5%8A%A0%E5%90%8E%E5%A6%82%E4%BD%95%E6%89%A7%E8%A1%8C"><span class="toc-number">2.3.</span> <span class="toc-text">叠加后如何执行?</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%89%E7%8A%B6%E6%80%81%E7%9A%84%E4%B8%AD%E9%97%B4%E6%93%8D%E4%BD%9C%E4%BD%95%E6%97%B6%E6%89%A7%E8%A1%8C"><span class="toc-number">2.4.</span> <span class="toc-text">有状态的中间操作何时执行?</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E6%94%B6%E9%9B%86%E5%88%B0%E7%BB%93%E6%9E%9C"><span class="toc-number">2.5.</span> <span class="toc-text">如何收集到结果?</span></a></li></ol></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

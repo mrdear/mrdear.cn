@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Mybatis源码分析(三)--动态Sql中的参数解析 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-mybatis-sql-analysis.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/mybatis.png" alt="Mybatis源码分析(三)--动态Sql中的参数解析">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Mybatis源码分析(三)--动态Sql中的参数解析</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2017-09-10</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Mybatis/">Mybatis</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>Mybatis中参数解析对于开发人员来说是至关重要的,不然很容易出小问题,举个例子,假设现在方法为,当然这个是很糟糕的写法,这里只是想要搞清楚参数如何解析,项目中万万不可这样写.</p>
+<h3 id="参数输入解析"><a href="#参数输入解析" class="headerlink" title="参数输入解析"></a>参数输入解析</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">   <span class="comment">//方法</span></span><br><span class="line">   User <span class="title function_">findUser</span><span class="params">(<span class="meta">@Param(&quot;name&quot;)</span> String name,<span class="type">int</span> age,String email)</span></span><br><span class="line">   <span class="comment">//对应xml</span></span><br><span class="line">&lt;select id=<span class="string">&quot;findUser&quot;</span> resultType=<span class="string">&quot;cn.mrdear.users.dao.User&quot;</span>&gt;</span><br><span class="line">	SELECT * FROM user <span class="type">WHERE</span> <span class="variable">username</span> <span class="operator">=</span> #&#123;name&#125; <span class="type">AND</span> <span class="variable">age</span> <span class="operator">=</span> #&#123;age&#125; <span class="type">AND</span> <span class="variable">email</span> <span class="operator">=</span> #&#123;email&#125; </span><br><span class="line">&lt;/select&gt;</span><br><span class="line"><span class="comment">//调用参数</span></span><br><span class="line">   <span class="keyword">final</span> <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> userMapper.findUser(<span class="string">&quot;quding&quot;</span>, <span class="number">18</span>, <span class="string">&quot;qq@mail.com&quot;</span>);</span><br></pre></td></tr></table></figure>
+<p>那么这里Mybatis会怎么解析参数呢?这个xml会构造失败不?首先是<code>MapperMethod</code>中使用<code>ParamNameResolver</code>对输入参数解析,针对上述输入参数会得到下面的结果.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">ParamNameResolver</span><span class="params">(Configuration config, Method method)</span> &#123;</span><br><span class="line">   <span class="keyword">final</span> Class&lt;?&gt;[] paramTypes = method.getParameterTypes();<span class="comment">//获取参数类型,对于上述例子则是String,int,String</span></span><br><span class="line">   <span class="keyword">final</span> Annotation[][] paramAnnotations = method.getParameterAnnotations();<span class="comment">//这里获取到的则是@Param,getParameterAnnotations方法也用到了动态代理.</span></span><br><span class="line">   <span class="keyword">final</span> SortedMap&lt;Integer, String&gt; map = <span class="keyword">new</span> <span class="title class_">TreeMap</span>&lt;Integer, String&gt;();</span><br><span class="line">   <span class="type">int</span> <span class="variable">paramCount</span> <span class="operator">=</span> paramAnnotations.length;</span><br><span class="line">   <span class="comment">// get names from @Param annotations</span></span><br><span class="line">   <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">paramIndex</span> <span class="operator">=</span> <span class="number">0</span>; paramIndex &lt; paramCount; paramIndex++) &#123;</span><br><span class="line">     <span class="keyword">if</span> (isSpecialParameter(paramTypes[paramIndex])) &#123; <span class="comment">//过滤其内部一些特殊类型</span></span><br><span class="line">       <span class="comment">// skip special parameters</span></span><br><span class="line">       <span class="keyword">continue</span>;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="type">String</span> <span class="variable">name</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">     <span class="keyword">for</span> (Annotation annotation : paramAnnotations[paramIndex]) &#123;</span><br><span class="line">       <span class="keyword">if</span> (annotation <span class="keyword">instanceof</span> Param) &#123;</span><br><span class="line">         hasParamAnnotation = <span class="literal">true</span>;</span><br><span class="line">         name = ((Param) annotation).value();<span class="comment">//获取到&#x27;name&#x27;值</span></span><br><span class="line">         <span class="keyword">break</span>;</span><br><span class="line">       &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">if</span> (name == <span class="literal">null</span>) &#123;</span><br><span class="line">       <span class="comment">// @Param was not specified.</span></span><br><span class="line">       <span class="keyword">if</span> (config.isUseActualParamName()) &#123;<span class="comment">//默认为true,因此编译后参数都是args0,args1之类,因此这里获取的也是args0...</span></span><br><span class="line">         name = getActualParamName(method, paramIndex);</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="comment">//当上面配置为false的时候这里才会使用0,1代替,因此如果未开启则会报错</span></span><br><span class="line">       <span class="keyword">if</span> (name == <span class="literal">null</span>) &#123;</span><br><span class="line">         <span class="comment">// use the parameter index as the name (&quot;0&quot;, &quot;1&quot;, ...)</span></span><br><span class="line">         <span class="comment">// gcode issue #71</span></span><br><span class="line">         name = String.valueOf(map.size());<span class="comment">//上述都没的话则世界使用map的index.</span></span><br><span class="line">       &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     map.put(paramIndex, name);</span><br><span class="line">   &#125;</span><br><span class="line">   names = Collections.unmodifiableSortedMap(map);</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>那么执行完毕后对于上述例子,names里面如下图所示,由于<code>config.isUseActualParamName()</code>为true,所以#{0}这种写法这里并不支持,而且也不建议这种写法,无可读性.<br><img src="http://res.mrdear.cn/1504965737.png"><br>接下来执行<code>method.convertArgsToSqlCommandParam(args)</code>获取到实际输入的参数,对于上面例子我获取到的是个Map集合,如下图所示,对于单一实体例如User那么获取到的就是该实体.<br><img src="http://res.mrdear.cn/1505017418.png"><br>再看我所用的sql写法,那么这里只能获取到name的值,sql处理时就会报错.</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">SELECT * FROM user WHERE username = #&#123;name&#125; AND age = #&#123;age&#125; AND email = #&#123;email&#125; </span><br></pre></td></tr></table></figure>
+<p><strong>由此可见针对多参数的输入</strong>,最佳解决方案是用<code>@Param</code>注解,其次为使用Map集合包裹参数,这样的话<code>method.convertArgsToSqlCommandParam(args)</code>得到的则是该Map集合.</p>
+<h3 id="动态sql渲染解析"><a href="#动态sql渲染解析" class="headerlink" title="动态sql渲染解析"></a>动态sql渲染解析</h3><p>上述流程能得到所有的输入参数,那么接下来就是对sql的解析,下面把我们的sql变得复杂一些.(不要讨论sql的意义…这里只是分析参数如何解析)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//mapper接口</span></span><br><span class="line">  User <span class="title function_">findUser</span><span class="params">(<span class="meta">@Param(&quot;name&quot;)</span> String name, <span class="meta">@Param(&quot;user&quot;)</span> User user,<span class="meta">@Param(&quot;ids&quot;)</span> List&lt;Long&gt; ids)</span>;</span><br><span class="line"><span class="comment">//xml</span></span><br><span class="line">    &lt;select id=<span class="string">&quot;findUser&quot;</span> resultType=<span class="string">&quot;cn.mrdear.users.dao.User&quot;</span>&gt;</span><br><span class="line">		SELECT * FROM user <span class="type">WHERE</span> <span class="variable">username</span> <span class="operator">=</span> #&#123;name&#125; <span class="type">AND</span> <span class="variable">age</span> <span class="operator">=</span> #&#123;user.age&#125; <span class="type">AND</span> <span class="variable">email</span> <span class="operator">=</span> #&#123;user.email&#125;</span><br><span class="line">		OR id in</span><br><span class="line">		&lt;foreach collection=<span class="string">&quot;ids&quot;</span> item=<span class="string">&quot;item&quot;</span> open=<span class="string">&quot;(&quot;</span> close=<span class="string">&quot;)&quot;</span> separator=<span class="string">&quot;,&quot;</span>&gt;</span><br><span class="line">			#&#123;item&#125;</span><br><span class="line">		&lt;/foreach&gt;</span><br><span class="line">	&lt;/select&gt;</span><br></pre></td></tr></table></figure>
+<p>按照上述流程Mybatis解析出来的输入参数如下图<br><img src="http://res.mrdear.cn/1505020777.png"></p>
+<p>接下进入<code>DefaultSqlSession</code>的处理中,在其中有如下方法会多参数进一步判断,可以看出对于单一参数为<code>Collection</code>或者<code>Array</code>时Mybatis都会给默认命名方案.(这里是在3.3.0之前的版本只会处理List)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Object <span class="title function_">wrapCollection</span><span class="params">(<span class="keyword">final</span> Object object)</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (object <span class="keyword">instanceof</span> Collection) &#123;</span><br><span class="line">    StrictMap&lt;Object&gt; map = <span class="keyword">new</span> <span class="title class_">StrictMap</span>&lt;Object&gt;();</span><br><span class="line">    map.put(<span class="string">&quot;collection&quot;</span>, object);</span><br><span class="line">    <span class="keyword">if</span> (object <span class="keyword">instanceof</span> List) &#123;</span><br><span class="line">      map.put(<span class="string">&quot;list&quot;</span>, object);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> map;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (object != <span class="literal">null</span> &amp;&amp; object.getClass().isArray()) &#123;</span><br><span class="line">    StrictMap&lt;Object&gt; map = <span class="keyword">new</span> <span class="title class_">StrictMap</span>&lt;Object&gt;();</span><br><span class="line">    map.put(<span class="string">&quot;array&quot;</span>, object);</span><br><span class="line">    <span class="keyword">return</span> map;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> object;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>到了接下来转到执行器,使用<code>DynamicContext</code>构造动态sql所需要的上下文,对其构造函数分析<br>执行到这里的话参数只有三种情况</p>
+<ol>
+<li>null,无任何参数传入</li>
+<li>Map类型，对于多参数,或者参数本身就是map再或者输入单一参数集合类型,数组类型都会转换为map</li>
+<li>单一POJO类型.<br>Mybatis这里要做的就是把参数的各种形式尽可能都放在<code>ContextMap</code>中,该<code>ContextMap</code>是绑定了Ognl的,方便Ognl直接从其中获取到值.<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="title function_">DynamicContext</span><span class="params">(Configuration configuration, Object parameterObject)</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (parameterObject != <span class="literal">null</span> &amp;&amp; !(parameterObject <span class="keyword">instanceof</span> Map)) &#123;</span><br><span class="line">    <span class="type">MetaObject</span> <span class="variable">metaObject</span> <span class="operator">=</span> configuration.newMetaObject(parameterObject);</span><br><span class="line">    <span class="comment">//对于单个输入数据直接保存在ContentMap中</span></span><br><span class="line">    bindings = <span class="keyword">new</span> <span class="title class_">ContextMap</span>(metaObject);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    bindings = <span class="keyword">new</span> <span class="title class_">ContextMap</span>(<span class="literal">null</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//输入参数形式为 _parameter  : parameterObject</span></span><br><span class="line">  bindings.put(PARAMETER_OBJECT_KEY, parameterObject);</span><br><span class="line">  bindings.put(DATABASE_ID_KEY, configuration.getDatabaseId());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<img src="http://res.mrdear.cn/1505023031.png?imageMogr2/thumbnail/!70p"></li>
+</ol>
+<h4 id="SqlNode"><a href="#SqlNode" class="headerlink" title="SqlNode"></a>SqlNode</h4><p>SqlNode是动态Sql解析和完善<code>ContextMap</code>的地方,对于我上述sql会转换为其三个子类,相关解析方法都在其内部.<br><img src="http://res.mrdear.cn/1505027107.png?imageMogr2/thumbnail/!70p"><br>解析后的sql如下图</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> <span class="keyword">user</span> <span class="keyword">WHERE</span> username <span class="operator">=</span> ? <span class="keyword">AND</span> age <span class="operator">=</span> ? <span class="keyword">AND</span> email <span class="operator">=</span> ?</span><br><span class="line">		<span class="keyword">OR</span> id <span class="keyword">in</span> (  ?, ?, ?)</span><br></pre></td></tr></table></figure>
+<p>此时<code>ContextMap</code>如下,其中有<code>_frch_item_2</code>这种形式的参数,这是Mybatis对foreach解析后所生成的键,便于填充数据,具体可以看<code>ForeachSqlNode</code><br><img src="http://res.mrdear.cn/1505027407.png"><br>那么接下来要做的事情就是一一设置进去这些值.</p>
+<h4 id="ParameterHandler"><a href="#ParameterHandler" class="headerlink" title="ParameterHandler"></a>ParameterHandler</h4><p>顾名思义,其提供<code>void setParameters(PreparedStatement ps)</code>对于sql参数设置的处理.分析下<code>DefaultParameterHandler</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"> <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setParameters</span><span class="params">(PreparedStatement ps)</span> &#123;</span><br><span class="line">   ErrorContext.instance().activity(<span class="string">&quot;setting parameters&quot;</span>).object(mappedStatement.getParameterMap().getId());</span><br><span class="line">   List&lt;ParameterMapping&gt; parameterMappings = boundSql.getParameterMappings();</span><br><span class="line">   <span class="keyword">if</span> (parameterMappings != <span class="literal">null</span>) &#123;</span><br><span class="line">       <span class="comment">//parameterMappings存储着要设置进去的值类型等信息</span></span><br><span class="line">     <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; parameterMappings.size(); i++) &#123;</span><br><span class="line">       <span class="type">ParameterMapping</span> <span class="variable">parameterMapping</span> <span class="operator">=</span> parameterMappings.get(i);</span><br><span class="line">       <span class="keyword">if</span> (parameterMapping.getMode() != ParameterMode.OUT) &#123;</span><br><span class="line">         Object value;</span><br><span class="line">         <span class="type">String</span> <span class="variable">propertyName</span> <span class="operator">=</span> parameterMapping.getProperty();</span><br><span class="line">         <span class="comment">//AdditionalParameter是从ContextMap中copy到的,其没有的话说明是_parameter里面的值.</span></span><br><span class="line">         <span class="keyword">if</span> (boundSql.hasAdditionalParameter(propertyName)) &#123; <span class="comment">// issue #448 ask first for additional params</span></span><br><span class="line">           value = boundSql.getAdditionalParameter(propertyName);</span><br><span class="line">         &#125; <span class="keyword">else</span> <span class="keyword">if</span> (parameterObject == <span class="literal">null</span>) &#123;</span><br><span class="line">           value = <span class="literal">null</span>;</span><br><span class="line">         &#125; <span class="keyword">else</span> <span class="keyword">if</span> (typeHandlerRegistry.hasTypeHandler(parameterObject.getClass())) &#123;</span><br><span class="line">           value = parameterObject;</span><br><span class="line">         &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">             <span class="comment">//获取_parameter里面的值.</span></span><br><span class="line">           <span class="type">MetaObject</span> <span class="variable">metaObject</span> <span class="operator">=</span> configuration.newMetaObject(parameterObject);</span><br><span class="line">           <span class="comment">//其内部是一个递归实现获取.</span></span><br><span class="line">           value = metaObject.getValue(propertyName);</span><br><span class="line">         &#125;</span><br><span class="line">           <span class="comment">//typeHandle的处理</span></span><br><span class="line">         <span class="type">TypeHandler</span> <span class="variable">typeHandler</span> <span class="operator">=</span> parameterMapping.getTypeHandler();</span><br><span class="line">         <span class="type">JdbcType</span> <span class="variable">jdbcType</span> <span class="operator">=</span> parameterMapping.getJdbcType();</span><br><span class="line">         <span class="keyword">if</span> (value == <span class="literal">null</span> &amp;&amp; jdbcType == <span class="literal">null</span>) &#123;</span><br><span class="line">           jdbcType = configuration.getJdbcTypeForNull();</span><br><span class="line">         &#125;</span><br><span class="line">         <span class="keyword">try</span> &#123;</span><br><span class="line">           typeHandler.setParameter(ps, i + <span class="number">1</span>, value, jdbcType);</span><br><span class="line">         &#125; <span class="keyword">catch</span> (TypeException e) &#123;</span><br><span class="line">           <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">TypeException</span>(<span class="string">&quot;Could not set parameters for mapping: &quot;</span> + parameterMapping + <span class="string">&quot;. Cause: &quot;</span> + e, e);</span><br><span class="line">         &#125; <span class="keyword">catch</span> (SQLException e) &#123;</span><br><span class="line">           <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">TypeException</span>(<span class="string">&quot;Could not set parameters for mapping: &quot;</span> + parameterMapping + <span class="string">&quot;. Cause: &quot;</span> + e, e);</span><br><span class="line">         &#125;</span><br><span class="line">       &#125;</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>那么看<code>MetaObject</code>的递归获取,递归是针对参数为<code>user.username</code>这样的话会先从<code>_parameter</code>中找到user,然后再调用user 的getUsername()方法获取到结果.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Object <span class="title function_">getValue</span><span class="params">(String name)</span> &#123;</span><br><span class="line">  <span class="type">PropertyTokenizer</span> <span class="variable">prop</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">PropertyTokenizer</span>(name);</span><br><span class="line">  <span class="comment">//hasNext判断user.username这种类型</span></span><br><span class="line">  <span class="keyword">if</span> (prop.hasNext()) &#123;</span><br><span class="line">    <span class="type">MetaObject</span> <span class="variable">metaValue</span> <span class="operator">=</span> metaObjectForProperty(prop.getIndexedName());</span><br><span class="line">    <span class="keyword">if</span> (metaValue == SystemMetaObject.NULL_META_OBJECT) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">//递归获取</span></span><br><span class="line">      <span class="keyword">return</span> metaValue.getValue(prop.getChildren());</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> objectWrapper.get(prop);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么针对上面的例子,这里先是去boundSql中的addtionParameters中获取参数,该参数一般是sql解析时动态生成的,比如foreach生成的_frch_xx,获取不到的话再去原始的ParamsObject中获取,该处的解析为递归形式了.<br><img src="http://res.mrdear.cn/1505526788.png?imageMogr2/thumbnail/!70p"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>Mybatis的SQL解析总体流程如下:</p>
+<ol>
+<li>构造ParamtersMap,保存输入参数.</li>
+<li>构造ContextMap,为OGNL解析提供数据.</li>
+<li>读取xml.使用SqlSource与SqlNode解析xml中的sql,设置参数值到boundSql的addtionParameters中,其为ContextMap的一个副本.</li>
+<li>根据<code>boundSql.parameterMappings</code>获取到参数,从<code>addtionParameters</code>与<code>ParamtersMap</code>中读取参数设置到<code>PreparedStatement</code>中</li>
+<li>执行sql<br>本文只分析了总体流程,其中有很多细节都忽略了,如遇到问题再看也不迟.</li>
+</ol>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-mybatis-sql-analysis.html">Mybatis源码分析(三)--动态Sql中的参数解析</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-mybatis-sql-analysis.html">https://mrdear.cn/posts/framework-mybatis-sql-analysis.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/framework-mybatis-sql-session.html" title="Mybatis源码分析(二)--Sqlsession的执行流程"><i class="iconfont icon-prev"></i>Mybatis源码分析(二)--Sqlsession的执行流程</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/java_stream3.html" title="Java8 Lambda（三）-强大的collect操作">Java8 Lambda（三）-强大的collect操作<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E6%95%B0%E8%BE%93%E5%85%A5%E8%A7%A3%E6%9E%90"><span class="toc-number">1.</span> <span class="toc-text">参数输入解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81sql%E6%B8%B2%E6%9F%93%E8%A7%A3%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text">动态sql渲染解析</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#SqlNode"><span class="toc-number">2.1.</span> <span class="toc-text">SqlNode</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ParameterHandler"><span class="toc-number">2.2.</span> <span class="toc-text">ParameterHandler</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Guava -- Bloom Filter原理 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/framework-guava-bloomfilter.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="http://res.mrdear.cn/1552703974.png" alt="Guava -- Bloom Filter原理">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Guava -- Bloom Filter原理</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2019-03-16</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/Guava/">Guava</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>去重在软件开发中经常需要用到，在Java当中一般使用Set集合，面对大量数据则可以利用取MD5签名等值后再进行去重，然而Set集合的实现原理决定了如果有大量的key需要判断，必然会需要大量的内存来支撑，且随着数据量增大效率也变得不那么尽人意。另外业务中存在着很多对精确性不需要那么高的场景，此时使用Set集合则是一种资源浪费，因此就可以利用<code>布隆过滤器</code>等算法手段进行去重。</p>
+<h2 id="业务场景"><a href="#业务场景" class="headerlink" title="业务场景"></a>业务场景</h2><p>笔者实习面试的时候，面试官问了个关于怎么判断爬虫URL是否已经爬过的问题，笔者先回答了使用Set集合，然后升级为内存很小，数据量很大怎么办？笔者想了想往数据库插，取签名值后，可以分库分表，利用数据库唯一键来约束。面试官没再追问。。。后来见识到了<code>布隆过滤器</code>，才想起来面试官真正的用意。</p>
+<h2 id="布隆过滤器的原理"><a href="#布隆过滤器的原理" class="headerlink" title="布隆过滤器的原理"></a>布隆过滤器的原理</h2><p>布隆过滤器原理很简单，用一个很大的bit位数组与多个无偏hash函数(即计算出来的hash值呈均匀分布)，当存入一个元素时，使用每一个hash函数进行hash，再与bit数组取模，得出的位置置为1。判断一个元素是否存在时，同样也是利用这样的方法判断对应的数组位是不是否为1。<br><img src="http://res.mrdear.cn/1552347090.png"></p>
+<p>从原理上可以得出布隆过滤器的特性：</p>
+<ol>
+<li>存在不一定真的存在：存在则可能对应的数组位与其他key产生了碰撞。</li>
+<li>不存在则一定不存在：不存在则<strong>一定</strong>不存在，那么这个特性则可以很好的实现去重。</li>
+</ol>
+<p>那么问题又来了，布隆过滤器既然有一定误判率，怎么使这个误判率降低？<br>具体有相关公式，不过一般使用直接计算工具，比如<a target="_blank" rel="noopener" href="https://krisives.github.io/bloom-calculator/">bloom-calculator</a>，100w的数据判断，万分之一的误判率才需要2M内存，优势巨大。<br><img src="http://res.mrdear.cn/1552347883.png"></p>
+<h2 id="常见实现方案"><a href="#常见实现方案" class="headerlink" title="常见实现方案"></a>常见实现方案</h2><h3 id="guava"><a href="#guava" class="headerlink" title="guava"></a>guava</h3><p>在Guava中提供了<code>com.google.common.hash.BloomFilter</code>类，如下所示，可以很方便的实现布隆过滤器。其实现原理中有很多值得学习的点。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line">   <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">test</span><span class="params">()</span> &#123;</span><br><span class="line">       <span class="comment">// 100w bit长度 ,0.01%误判率</span></span><br><span class="line">       <span class="comment">// bf对象则会生成 299534 个long数组,使用13次hash计算.</span></span><br><span class="line">       BloomFilter&lt;String&gt; bf = BloomFilter</span><br><span class="line">           .create(Funnels.stringFunnel(Charset.defaultCharset()), <span class="number">100</span> * <span class="number">10000</span>, <span class="number">0.0001d</span>);</span><br><span class="line">       </span><br><span class="line">       System.out.println(bf.test(<span class="string">&quot;quding&quot;</span>)); <span class="comment">// false</span></span><br><span class="line">       bf.put(<span class="string">&quot;quding&quot;</span>); <span class="comment">// bitCount=13</span></span><br><span class="line">       System.out.println(bf.test(<span class="string">&quot;quding&quot;</span>)); <span class="comment">// true</span></span><br><span class="line">       bf.put(<span class="string">&quot;quding1&quot;</span>); <span class="comment">// bitCount=26</span></span><br><span class="line"></span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="如何表示超长的bit数组？"><a href="#如何表示超长的bit数组？" class="headerlink" title="如何表示超长的bit数组？"></a>如何表示超长的bit数组？</h4><p>在Java中提供的基本类型最小的位Byte，占8bits，最大的为Long，占64bits，因此常见方案是使用Long数组作为bits数组使用，举个例子 128bits可以用long[2]标识，146bits可以用long[3]表示，在Guava中对应的实现为<code>com.google.common.hash.BloomFilterStrategies.LockFreeBitArray</code>。<br>**清单1: **</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> <span class="title class_">LockFreeBitArray</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">LONG_ADDRESSABLE_BITS</span> <span class="operator">=</span> <span class="number">6</span>;</span><br><span class="line">    <span class="comment">// long数组,表示超长bit位,使用Atomic提供原子操作能力,保证线程安全</span></span><br><span class="line">    <span class="keyword">final</span> AtomicLongArray data;</span><br><span class="line">    <span class="comment">// 当前数组中为1的bit位数量,其实现可以看错JDK8中的LongAdder</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LongAddable bitCount;</span><br><span class="line">    </span><br><span class="line">    LockFreeBitArray(<span class="type">long</span> bits) &#123;</span><br><span class="line">        <span class="comment">// 初始化时传入bit位,然后按照64位进行拆分计算,比如传入146bits,则会拆分位long[3]数组</span></span><br><span class="line">      <span class="built_in">this</span>(<span class="keyword">new</span> <span class="title class_">long</span>[Ints.checkedCast(LongMath.divide(bits, <span class="number">64</span>, RoundingMode.CEILING))]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>那么可以想象更新bits位的操作需要先定位到long数组的下标，然后使用将对应bits位置为1，具体做法如清单2所示。<br><strong>清单2: bit位更新操作</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">boolean</span> <span class="title function_">set</span><span class="params">(<span class="type">long</span> bitIndex)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (get(bitIndex)) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 定位到long数组对应的下标</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">longIndex</span> <span class="operator">=</span> (<span class="type">int</span>) (bitIndex &gt;&gt;&gt; LONG_ADDRESSABLE_BITS);</span><br><span class="line">    <span class="comment">// 左移,将对应位置的bit位置为1,其他全是0</span></span><br><span class="line">    <span class="type">long</span> <span class="variable">mask</span> <span class="operator">=</span> <span class="number">1L</span> &lt;&lt; bitIndex; <span class="comment">// only cares about low 6 bits of bitIndex</span></span><br><span class="line"></span><br><span class="line">    <span class="type">long</span> oldValue;</span><br><span class="line">    <span class="type">long</span> newValue;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">      oldValue = data.get(longIndex);</span><br><span class="line">      <span class="comment">// 或操作将对应bit位变成1</span></span><br><span class="line">      newValue = oldValue | mask;</span><br><span class="line">      <span class="keyword">if</span> (oldValue == newValue) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// CAS保证原子性</span></span><br><span class="line">    &#125; <span class="keyword">while</span> (!data.compareAndSet(longIndex, oldValue, newValue));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// We turned the bit on, so increment bitCount.</span></span><br><span class="line">    bitCount.increment();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>扩展一下</strong>，这种拆分思想的应用很多，DB上有分库分表，应用上有各种锁拆分,比如<code>ConcurrentHashMap</code>，<code>LongAdder</code>，那么业务上可以怎么利用呢?想到一种在业务中一个账户的金额如果频繁变动，那么就需要对这个账户不停的做更新操作，到DB那一层则是高并发,那么此时将一个账户拆分为多个呢？比如收入是一个账户，支出是另一个账户，或者按照币种维护，按照业务维度等方法，那么就将一个账户的锁拆分为账户的锁，有效的降低了高并发带来的锁竞争问题。当然一致性上还需要应用层使用事务等机制来解决。</p>
+<h4 id="如何多次hash计算？"><a href="#如何多次hash计算？" class="headerlink" title="如何多次hash计算？"></a>如何多次hash计算？</h4><p>如上图计算，100w元素，0.0001误判率下需要13次hash计算，hash在快次数一多也必然会成为性能瓶颈，在Guava中并没有引入多个Hash函数，而是计算出一个hash值后，其他的使用位移，乘除等方法快速计算出来，其实本身是均匀分布的随机值，也没必要使用多个hash函数。<br><strong>清单3: hash计算</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">MURMUR128_MITZ_32() &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; <span class="type">boolean</span> <span class="title function_">put</span><span class="params">(</span></span><br><span class="line"><span class="params">        T object, Funnel&lt;? <span class="built_in">super</span> T&gt; funnel, <span class="type">int</span> numHashFunctions, LockFreeBitArray bits)</span> &#123;</span><br><span class="line">      <span class="type">long</span> <span class="variable">bitSize</span> <span class="operator">=</span> bits.bitSize();</span><br><span class="line">      <span class="comment">// 计算出一个hash值</span></span><br><span class="line">      <span class="type">long</span> <span class="variable">hash64</span> <span class="operator">=</span> Hashing.murmur3_128().hashObject(object, funnel).asLong();</span><br><span class="line">      <span class="comment">// 取低32位</span></span><br><span class="line">      <span class="type">int</span> <span class="variable">hash1</span> <span class="operator">=</span> (<span class="type">int</span>) hash64;</span><br><span class="line">      <span class="comment">// 取高32位</span></span><br><span class="line">      <span class="type">int</span> <span class="variable">hash2</span> <span class="operator">=</span> (<span class="type">int</span>) (hash64 &gt;&gt;&gt; <span class="number">32</span>);</span><br><span class="line"></span><br><span class="line">      <span class="type">boolean</span> <span class="variable">bitsChanged</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">      <span class="comment">// 根据hash次数分别计算出hash值,然后设置到bits数组中</span></span><br><span class="line">      <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">1</span>; i &lt;= numHashFunctions; i++) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">combinedHash</span> <span class="operator">=</span> hash1 + (i * hash2);</span><br><span class="line">        <span class="comment">// Flip all the bits if it&#x27;s negative (guaranteed positive number)</span></span><br><span class="line">        <span class="keyword">if</span> (combinedHash &lt; <span class="number">0</span>) &#123;</span><br><span class="line">          combinedHash = ~combinedHash;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 填充bits位</span></span><br><span class="line">        bitsChanged |= bits.set(combinedHash % bitSize);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> bitsChanged;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>另外<code>com.google.common.hash.BloomFilterStrategies</code>也是枚举策略模式的典型应用场景，值得学习，关于策略模式可以参考<br><a href="https://mrdear.cn/2018/03/18/experience/design_patterns--strategy/">设计模式–策略模式的思考</a></p>
+<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p>Guava只能本地使用，面对分布式场景时则可以选择一些缓存类组件实现，在Redis4.0版本之后，提供了module支持了布隆过滤器 <a target="_blank" rel="noopener" href="https://oss.redislabs.com/redisbloom/">RedisBloom</a>，主要命令如下所示，具体实现原理不是很了解了，在此也不多讨论。<br><strong>清单1: redis bloom filter命令</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">BF.RESERVE &#123;key&#125; &#123;error_rate&#125; &#123;size&#125;  初始化一个布隆过滤器</span><br><span class="line">BF.ADD &#123;key&#125; &#123;item&#125;  添加单个元素</span><br><span class="line">BF.EXISTS &#123;key&#125; &#123;item&#125; 是否存在</span><br><span class="line">bf.madd &#123;key&#125; &#123;item&#125; [item...]  添加多个元素</span><br><span class="line">BF.MEXISTS &#123;key&#125; &#123;item&#125; [item...]  判断多个元素是否存在</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li>Redis深度历险</li>
+</ol>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/framework-guava-bloomfilter.html">Guava -- Bloom Filter原理</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/framework-guava-bloomfilter.html">https://mrdear.cn/posts/framework-guava-bloomfilter.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/osx_install.html" title="OSX--OSX+WIN10双系统台式机组装经验"><i class="iconfont icon-prev"></i>OSX--OSX+WIN10双系统台式机组装经验</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/framework-spring-jar-in-jar.html" title="Spring Boot -- 如何获取已加载的JAR文件流">Spring Boot -- 如何获取已加载的JAR文件流<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%9A%E5%8A%A1%E5%9C%BA%E6%99%AF"><span class="toc-number">1.</span> <span class="toc-text">业务场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E7%9A%84%E5%8E%9F%E7%90%86"><span class="toc-number">2.</span> <span class="toc-text">布隆过滤器的原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%A1%88"><span class="toc-number">3.</span> <span class="toc-text">常见实现方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#guava"><span class="toc-number">3.1.</span> <span class="toc-text">guava</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E8%A1%A8%E7%A4%BA%E8%B6%85%E9%95%BF%E7%9A%84bit%E6%95%B0%E7%BB%84%EF%BC%9F"><span class="toc-number">3.1.1.</span> <span class="toc-text">如何表示超长的bit数组？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%A4%9A%E6%AC%A1hash%E8%AE%A1%E7%AE%97%EF%BC%9F"><span class="toc-number">3.1.2.</span> <span class="toc-text">如何多次hash计算？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Redis"><span class="toc-number">3.2.</span> <span class="toc-text">Redis</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>

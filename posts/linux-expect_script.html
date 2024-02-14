@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    
+        <title>Linux -- Expect Script入门 | 屈定's Blog</title>
+    
+
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="format-detection" content="telephone=no">
+<meta name="author" content="Qu Ding" />
+<meta name="designer" content="minfive" />
+<meta name="keywords" content="屈定,技术开发,Java"/>
+<meta name="description" content="记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS." />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="robots" content="all" />
+
+
+  <meta name="google-site-verification" content="vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0" />
+
+
+<link rel="canonical" href="https://mrdear.cn/posts/linux-expect_script.html">
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/png" href="/favicon.ico" sizes="32x32">
+
+<!-- Prefetch -->
+
+
+
+
+
+
+<!-- CSS -->
+
+<link rel="stylesheet" href="/scss/base/index.css">
+
+
+<!-- RSS -->
+<link rel="alternate" href="/atom.xml" title="屈定's Blog" type="application/atom+xml">
+
+<!-- 统计 -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0');
+  </script>
+  -->
+    
+    
+    
+<link rel="stylesheet" href="/scss/views/page/post.css">
+
+
+<meta name="generator" content="Hexo 7.1.1"></head>
+<body ontouchstart>
+    
+        <!-- loading 页面 -->
+<div id="page-loading" class="page page-loading" style="background-image: url('https://res.mrdear.cn/loading.gif')"></div>
+    
+
+    <div id="page" class="page js-hidden">
+        
+    <!-- 页头 -->
+<header class="page__small-header page__header--small">
+    <nav class="page__navbar">
+        <div class="page__container navbar-container">
+            <a class="page__logo" href="/" title="屈定's Blog" alt="屈定's Blog">
+                <img src="https://res.mrdear.cn/1518101048.png" alt="屈定's Blog">
+            </a>
+
+            <nav class="page__nav">
+                <ul class="nav__list clearfix">
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/" alt="首页" title="首页">首页</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/archives/" alt="归档" title="归档">归档</a>
+                        </li>
+                    
+                        
+                        <li class="nav__item">
+                            <a href="/about/" alt="关于" title="关于">关于</a>
+                        </li>
+                    
+                </ul>
+            </nav>
+
+            <button class="page__menu-btn" type="button">
+                <i class="iconfont icon-menu"></i>
+            </button>
+        </div>
+    </nav>
+</header>
+
+
+        
+    <main class="page__container page__main">
+    <div class="page__content">
+        <article class="page__post">
+    <div class="post__cover">
+        <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门">
+    </div>
+
+    <header class="post__info">
+        <h1 class="post__title">Linux -- Expect Script入门</h1>
+
+        <div class="post__mark">
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-write"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item">
+                        <a href="/">屈定</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-time"></i>
+                <ul class="mark__list clearfix">
+                    <li class="mark__item"><span>2022-07-16</span></li>
+                </ul>
+            </div>
+
+            <div class="mark__block">
+                <i class="mark__icon iconfont icon-tab"></i>
+                <ul class="mark__list clearfix">
+                    
+                        <li class="mark__item">
+                            <a href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                        </li>
+                    
+                </ul>
+            </div>
+
+            
+        </div>
+    </header>
+
+    <div class="post__content">
+        <p>我们习惯于在Linux上使用shell脚本自动化一些重复性的人力工作，比如批量登录远程机器并执行指定命令，或者连接ftp服务器下载指定文件。这些场景下shell难以做到完全自动化，本质原因是ssh,ftp类似程序属于交互式程序，这些程序会交互式的期望用户输入信息并响应输入。因此expect诞生了，expect是一款专门控制交互式程序的程序，我们可以用expect模拟人与程序以及终端输出(stdout)的各种交互，从而节省大量重复性人力消耗，博主用的最多的就是自动通过跳板机登录开发机，然后切换到应用目录。</p>
+<h2 id="Expect命令"><a href="#Expect命令" class="headerlink" title="Expect命令"></a>Expect命令</h2><table>
+<thead>
+<tr>
+<th align="center">Command</th>
+<th align="center">解释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">spawn</td>
+<td align="center">通常用来启动给定程序进程，并开始与之交互，比如 <code>spawn ssh user@host</code>启动ssh进程</td>
+</tr>
+<tr>
+<td align="center">expect</td>
+<td align="center">expect命令会等待程序输出，匹配规则为正则表达式，停止条件为匹配到指定输出，程序输出结束仍然未匹配，或者达到超时时间</td>
+</tr>
+<tr>
+<td align="center">expect_user</td>
+<td align="center">对用户输入进行匹配，该指令会等待用户输入信息，然后按照指定模式将数据暂存到$expect_out数组变量中</td>
+</tr>
+<tr>
+<td align="center">send</td>
+<td align="center">将字符串输入到当前进程，该命令是交互式核心，用于模拟用户输入信息</td>
+</tr>
+<tr>
+<td align="center">interact</td>
+<td align="center">将当前进程的交互控制权转交给用户，转交给用户后，脚本不再继续执行</td>
+</tr>
+<tr>
+<td align="center">send_user</td>
+<td align="center">将信息发送到stdout，用于给用户信息提示</td>
+</tr>
+<tr>
+<td align="center">set</td>
+<td align="center">该指令既可以修改全局变量，比如<code>set timeout 10</code>修改超时时间，也可以获取命令行参数并赋值<code>set username [lindex $argv 0]</code>获取脚本参数</td>
+</tr>
+<tr>
+<td align="center">close</td>
+<td align="center">关闭当前进程</td>
+</tr>
+<tr>
+<td align="center">[lindex $argv 0]</td>
+<td align="center">获取脚本参数，0代表第一个参数，一般常配合set指令，这样后续脚本可以直接是用$xxx访问</td>
+</tr>
+</tbody></table>
+<p>一般一个简单的expect脚本通常是下列形式，首先指定shebang为expect程序，然后使用spawn启动交互式程序，使用expect确定启动成功，最后使用send发送要执行的命令。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/usr/bin/expect</span></span><br><span class="line">spawn service username@ip_server</span><br><span class="line">expect <span class="string">&quot;last character of the command&quot;</span></span><br><span class="line">send <span class="string">&quot;your command\r&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Expect案例"><a href="#Expect案例" class="headerlink" title="Expect案例"></a>Expect案例</h2><p>Expect脚本更多的是通过实例学习，博主现在掌握的实例并不多，因此本文后续会将遇到的案例追加上来，以此作为样板，读者可以根据样例实现自己的自动化逻辑</p>
+<h3 id="简易登录ssh并执行命令"><a href="#简易登录ssh并执行命令" class="headerlink" title="简易登录ssh并执行命令"></a>简易登录ssh并执行命令</h3><p>本案例从<a target="_blank" rel="noopener" href="https://sysadminote.com/how-to-learn-the-basics-of-expect-script/">How to Learn The Basics of Expect Script?</a>中摘抄出来，作为入门案例，描述了spawn，expect，send等指令的基本用法，详细分析写到注释中。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/usr/bin/expect -f</span></span><br><span class="line">spawn ssh root@192.168.56.227 <span class="comment"># 启动一个ssh进程</span></span><br><span class="line"><span class="built_in">set</span> <span class="built_in">timeout</span> 5 <span class="comment"># 设置全局expect超时时间，超过5s没匹配，则终止</span></span><br><span class="line">expect <span class="string">&quot;Password:&quot;</span> <span class="comment"># 匹配程序输出，期望是login，这里匹配不成功，整个脚本不会继续</span></span><br><span class="line">send <span class="string">&quot;qwerty\r&quot;</span> <span class="comment"># 执行到这里，说明expect匹配成功，send命令是向程序的输入发送qwerty，\r标识输入完毕</span></span><br><span class="line">expect <span class="string">&quot;*# &quot;</span> <span class="comment"># 匹配默认shell</span></span><br><span class="line">send <span class="string">&quot;free -m\r&quot;</span> <span class="comment"># 执行命令</span></span><br><span class="line">expect <span class="string">&quot;*# &quot;</span> <span class="comment"># 匹配默认shell</span></span><br><span class="line">send <span class="string">&quot;exit\r&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://res.mrdear.cn/uPic/linux-expect-2_1657938179.gif" alt="img"></p>
+<h3 id="expect解析用户参数"><a href="#expect解析用户参数" class="headerlink" title="expect解析用户参数"></a>expect解析用户参数</h3><p>这个案例是大多数程序的前提，我们假设要实现一个自动化脚本，该脚本需要用户输入 host，user，password三个变量，当用户没有输入user或者password的时候，需要主动提醒，让其输入。</p>
+<p>该脚本的核心为 <strong>set 指令获取用户参数</strong>，以及使用 <strong>expect_user 匹配用户输入</strong></p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/usr/bin/expect</span></span><br><span class="line"><span class="comment"># 定义变量 机器、用户、密码</span></span><br><span class="line"><span class="built_in">set</span> host <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="built_in">set</span> user <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="built_in">set</span> password <span class="string">&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># debug时使用</span></span><br><span class="line">send_user <span class="string">&quot;argc is <span class="variable">$argc</span>  argv is <span class="variable">$argv</span> \n&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 解析参数</span></span><br><span class="line"><span class="keyword">if</span> &#123; <span class="variable">$argc</span> == 3 &#125; &#123;</span><br><span class="line">		<span class="comment"># 输入值为3个变量，则各自赋值</span></span><br><span class="line">    <span class="built_in">set</span> host [lindex <span class="variable">$argv</span> 0]</span><br><span class="line">    <span class="built_in">set</span> user [lindex <span class="variable">$argv</span> 1]</span><br><span class="line">    <span class="built_in">set</span> password [lindex <span class="variable">$argv</span> 2]</span><br><span class="line">&#125; elseif &#123; <span class="variable">$argc</span> == 2 &#125; &#123;</span><br><span class="line">		<span class="comment"># 输入值为2个变量，为host和user</span></span><br><span class="line">    <span class="built_in">set</span> host [lindex <span class="variable">$argv</span> 0]</span><br><span class="line">    <span class="built_in">set</span> user [lindex <span class="variable">$argv</span> 1]</span><br><span class="line">&#125; elseif &#123; <span class="variable">$argc</span> == 1 &#125; &#123;</span><br><span class="line">		<span class="comment"># 输入值为1个变量，为host</span></span><br><span class="line">    <span class="built_in">set</span> host [lindex <span class="variable">$argv</span> 0]</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    send_user <span class="string">&quot;Invalid args!\n Usage: need \[target_home\] username password\n&quot;</span></span><br><span class="line">    <span class="built_in">exit</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">set</span> <span class="built_in">timeout</span> -1</span><br><span class="line"><span class="comment"># 如果账户密码为空</span></span><br><span class="line"><span class="keyword">if</span> &#123; <span class="variable">$user</span> == <span class="string">&quot;&quot;</span> &#125; &#123;</span><br><span class="line">    <span class="comment"># 获取用户名</span></span><br><span class="line">    send_user <span class="string">&quot;Enter your domain ID: &quot;</span></span><br><span class="line">    expect_user -re <span class="string">&quot;(.*)\n&quot;</span> <span class="comment"># 读取用户输入变量，并暂存到expect中</span></span><br><span class="line">    <span class="built_in">set</span> user <span class="string">&quot;<span class="variable">$expect_out</span>(1,string)&quot;</span> <span class="comment"># 从变量表中获取之前的输入，获取后清空</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> &#123; <span class="variable">$password</span> == <span class="string">&quot;&quot;</span> &#125; &#123;</span><br><span class="line">    <span class="comment"># 获取密码</span></span><br><span class="line">    <span class="built_in">stty</span> -<span class="built_in">echo</span> <span class="comment"># （stty -echo是屏蔽输入回显）</span></span><br><span class="line">    send_user <span class="string">&quot;Enter your password: &quot;</span></span><br><span class="line">    expect_user -re <span class="string">&quot;(.*)\n&quot;</span> </span><br><span class="line">    <span class="built_in">stty</span> <span class="built_in">echo</span></span><br><span class="line">    <span class="built_in">set</span> password <span class="string">&quot;<span class="variable">$expect_out</span>(1,string)&quot;</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment"># debug时使用</span></span><br><span class="line">send_user <span class="string">&quot;user is <span class="variable">$user</span>  passwd is <span class="variable">$password</span> \n&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://res.mrdear.cn/uPic/expect_1657942393.gif" alt="expect"></p>
+<h3 id="更加完善的登录ssh判断"><a href="#更加完善的登录ssh判断" class="headerlink" title="更加完善的登录ssh判断"></a>更加完善的登录ssh判断</h3><p>该脚本相较于第一个登录案例，增加了变量，以及异常情况判断，主要用到的是<strong>expect多分支</strong>匹配。这三个案例加起来，博主觉得足以满足绝大多数情况了，况且还可以将shell和expect配合使用，在shell中调用expect脚本，以达到更加灵活的操作。</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/usr/bin/expect</span></span><br><span class="line"><span class="comment"># 为缩短演示脚本长度，这里指定设置值，复杂情况可以配合上个案例获取参数</span></span><br><span class="line"><span class="built_in">set</span> host <span class="string">&quot;192.168.2.1&quot;</span></span><br><span class="line"><span class="built_in">set</span> user <span class="string">&quot;quding&quot;</span></span><br><span class="line"><span class="built_in">set</span> password <span class="string">&quot;quding&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">set</span> <span class="built_in">timeout</span> -1 <span class="comment"># 设置不超时，否则自动中断</span></span><br><span class="line"></span><br><span class="line">spawn ssh <span class="variable">$user</span>@<span class="variable">$host</span> <span class="comment"># 发送登录指令</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 循环，直到登录成功</span></span><br><span class="line"><span class="keyword">while</span> &#123;1&#125; &#123;</span><br><span class="line">    <span class="comment"># 根据返回结果发送相应命令</span></span><br><span class="line">    expect &#123;</span><br><span class="line">        <span class="comment"># 账户异常</span></span><br><span class="line">        <span class="string">&quot;Authentication failed*&quot;</span> &#123;</span><br><span class="line">            <span class="built_in">exit</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment"># 添加known_ssh_host</span></span><br><span class="line">        <span class="string">&quot;(yes/no)?&quot;</span> &#123;</span><br><span class="line">            send <span class="string">&quot;yes\n&quot;</span>; exp_continue</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment"># 输入密码</span></span><br><span class="line">        <span class="string">&quot;password*:&quot;</span> &#123;</span><br><span class="line">            send <span class="string">&quot;<span class="variable">$password</span>\n&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment"># 匹配到用户名登录成功</span></span><br><span class="line">        <span class="string">&quot;<span class="variable">$user</span>*]&quot;</span> &#123;</span><br><span class="line">            send_user <span class="string">&quot;login success\n&quot;</span>;</span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment"># 上面登录成功后，这里可以继续执行指令</span></span><br><span class="line">send <span class="string">&#x27;date \n&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 恢复人工交互</span></span><br><span class="line">interact</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://sysadminote.com/how-to-learn-the-basics-of-expect-script/">How to Learn The Basics of Expect Script?</a></p>
+
+        
+        <blockquote class="post-announce">
+            <ul>
+                <li>版权声明: 感谢您的阅读，本文由<a href="https://mrdear.cn">屈定's Blog</a>版权所有。如若转载，请注明出处。 </li>
+                <li>文章标题: <a href="https://mrdear.cn/posts/linux-expect_script.html">Linux -- Expect Script入门</a> </li>
+                <li>文章链接: <a href="https://mrdear.cn/posts/linux-expect_script.html">https://mrdear.cn/posts/linux-expect_script.html</a> </li>
+            </ul>
+        </blockquote>
+        
+        <div class="post__prevs">
+            <div class="post__prev">
+                
+                <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考"><i class="iconfont icon-prev"></i>设计模式--访问者模式的思考</a>
+                
+            </div>
+            <div class="post__prev post__prev--right">
+                
+                <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">读书笔记 -- 通用源码阅读指南<i class="iconfont icon-next"></i></a>
+                
+            </div>
+        </div>
+    </div>
+</article>
+
+        
+            <div id="comment-container" class="giscus"></div>
+        
+        
+    </div>
+
+    <aside class="page__sidebar">
+    <!-- 
+        <div class="sidebar__img">
+            <img src="https://res.mrdear.cn/1588682282.png" alt="屈定's Blog" title="屈定's Blog">
+        </div>
+     -->
+
+    <form id="page-search-from" class="page__search-from" action="/search/">
+        <label class="search-form__item">
+            <input class="input" type="text" name="search" placeholder="Search...">
+            <i class="iconfont icon-search"></i>
+        </label>
+    </form>
+
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">简介</h3>
+            <p class="block__text">记录成为程序员以来的历程,分享自己的认知,如果对你有帮助可以订阅最下方的RSS.</p>
+        </div>
+    
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章分类</h3>
+        <ul class="block-list"><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%BD%AC%E8%BD%BD/">转载</a><span class="block-list-count">3</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a><span class="block-list-count">6</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/">设计模式专题</a><span class="block-list-count">16</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a><span class="block-list-count">15</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/">杂七杂八</a><span class="block-list-count">7</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a><span class="block-list-count">1</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%B7%A5%E5%85%B7/">工具</a><span class="block-list-count">8</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/">实战总结</a><span class="block-list-count">12</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/">夯实Java基础</a><span class="block-list-count">20</span></li><li class="block-list-item"><a class="block-list-link" href="/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/">Spring系列专题</a><span class="block-list-count">10</span></li></ul>
+    </div>
+
+    
+        <div class="sidebar__block" id="sidebar-toc">
+            <h3 class="block__title">文章目录</h3>
+            <div class="post-toc">
+                <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Expect%E5%91%BD%E4%BB%A4"><span class="toc-number">1.</span> <span class="toc-text">Expect命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Expect%E6%A1%88%E4%BE%8B"><span class="toc-number">2.</span> <span class="toc-text">Expect案例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%80%E6%98%93%E7%99%BB%E5%BD%95ssh%E5%B9%B6%E6%89%A7%E8%A1%8C%E5%91%BD%E4%BB%A4"><span class="toc-number">2.1.</span> <span class="toc-text">简易登录ssh并执行命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#expect%E8%A7%A3%E6%9E%90%E7%94%A8%E6%88%B7%E5%8F%82%E6%95%B0"><span class="toc-number">2.2.</span> <span class="toc-text">expect解析用户参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%B4%E5%8A%A0%E5%AE%8C%E5%96%84%E7%9A%84%E7%99%BB%E5%BD%95ssh%E5%88%A4%E6%96%AD"><span class="toc-number">2.3.</span> <span class="toc-text">更加完善的登录ssh判断</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">3.</span> <span class="toc-text">参考</span></a></li></ol>
+            </div>
+        </div>
+    
+    <!--
+    
+        <div class="sidebar__block">
+            <h3 class="block__title">推荐</h3>
+            <div class="block-image">
+                <img style="height: 100%;width: 100%" src="https://res.mrdear.cn/jikeshijian-jvm.png">
+            </div>
+        </div>
+     -->
+    <!-- 最新文章 -->
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">最新文章</h3>
+        
+        <ul class="block-list latest-post-list">
+            
+                    <li class="latest-post-item">
+                        <a href="/posts/work-read-rome-source.html" title="实践 -- Rome源码阅读">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/blog_mrdear_work.png" alt="实践 -- Rome源码阅读" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">实践 -- Rome源码阅读</h3>
+                                <span class="item__text">2022-10-08</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/readnote-source-mybatis.html" title="读书笔记 -- 通用源码阅读指南">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/blog/uPic/readnotes-mybatis.png" alt="读书笔记 -- 通用源码阅读指南" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">读书笔记 -- 通用源码阅读指南</h3>
+                                <span class="item__text">2022-10-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/linux-expect_script.html" title="Linux -- Expect Script入门">
+                            <div class="item__cover">
+                                <img src="https://res.mrdear.cn/linux.png" alt="Linux -- Expect Script入门" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">Linux -- Expect Script入门</h3>
+                                <span class="item__text">2022-07-16</span>
+                            </div>
+                        </a>
+                    </li>
+                
+                    <li class="latest-post-item">
+                        <a href="/posts/design-patterns-visitor.html" title="设计模式--访问者模式的思考">
+                            <div class="item__cover">
+                                <img src="http://res.mrdear.cn/designpattern.png" alt="设计模式--访问者模式的思考" />
+                            </div>
+                            <div class="item__info">
+                                <h3 class="item__title">设计模式--访问者模式的思考</h3>
+                                <span class="item__text">2022-07-03</span>
+                            </div>
+                        </a>
+                    </li>
+                
+        </ul>
+    
+    </div> -->
+
+    <div class="sidebar__block">
+        <h3 class="block__title">文章标签</h3>
+        
+        <ul class="block-list tag-list clearfix">
+            
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Alfred/">Alfred</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Dubbo/">Dubbo</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Guava/">Guava</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/IntelliJ/">IntelliJ</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JUC/">JUC</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/JWT/">JWT</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Java/">Java</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mockito/">Mockito</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/MySQL/">MySQL</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Mybatis/">Mybatis</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Netty/">Netty</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/OSX/">OSX</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/Spring/">Spring</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%8A%A8%E6%BC%AB/">动漫</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%AE%9E%E6%88%98/">实战</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E5%B7%A5%E4%BD%9C/">工作</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">读书笔记</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AC%E8%BD%BD/">转载</a>
+                    </li>  
+                
+                    <li class="tag-item">
+                        <a class="tag-link" href="/tags/%E8%BD%AE%E5%AD%90/">轮子</a>
+                    </li>  
+                
+        </ul>
+    
+    </div>
+
+    <!-- <div class="sidebar__block">
+        <h3 class="block__title">友情链接</h3>
+        <ul class="block-list">
+            
+        </ul>
+    </div> -->
+</aside>
+</main>
+
+
+        
+            <!-- 页脚 -->
+<footer class="page__footer">
+    <section class="footer__top">
+        <div class="page__container footer__container">
+            
+            <div class="footer-top__item footer-top__item--2">
+                <h3 class="item__title">关于</h3>
+                <div class="item__content">
+                    <p class="item__text">编程是一件幸福的事情,不要让你的工作变得索然无味.</p>
+                    <ul class="footer__contact-info">
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span>HangZhou, China</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-email2"></i>
+                            <span>niudear@foxmail.com</span>
+                        </li>
+                        <li class="contact-info__item">
+                            <i class="iconfont icon-address"></i>
+                            <span><a target="_blank" rel="noopener" href="http://beian.miit.gov.cn" style="color: #69747a;text-decoration:none">2017 皖ICP备20002403号</a></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            
+            
+                <div class="footer-top__item footer__image">
+                    <img src="https://res.mrdear.cn/1588682282.png" alt="logo" title="屈定's Blog">
+                </div>
+            
+            
+            
+            
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">友情链接</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="http://www.kuranado.com/" title="有上进心的学弟" target="_blank">KURANADO</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://blog.alswl.com/" title="公司前辈" target="_blank">log4D</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="http://razertory.me" title="Ruby爱好者,编程小伙伴" target="_blank">Razertory</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://dongzl.github.io" title="很谦虚的大佬" target="_blank">董宗磊</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+                    <div class="footer-top__item">
+                        <h3 class="item__title">构建工具</h3>
+                        <div class="item__content">
+                            <ul class="footer-top__list">
+                                
+                                    <li class="list-item">
+                                        <a href="https://hexo.io/" title="Blog Framework" target="_blank">Hexo</a>
+                                    </li>
+                                
+                                    <li class="list-item">
+                                        <a href="https://github.com/Mrminfive/hexo-theme-skapp" title="Blog Theme" target="_blank">hexo-theme-skapp</a>
+                                    </li>
+                                
+                            </ul>
+                        </div>
+                    </div>
+                
+            
+        </div>
+    </section>
+    <section class="footer__bottom">
+        <div class="page__container footer__container">
+            <div style="display: inline-flex;font-size: 12px;align-items: center;">
+                <p class="footer__copyright">©
+                    <a href="https://github.com/Mrminfive/hexo-theme-skapp" target="_blank">Skapp</a> 2017 powered by
+                    <a href="http://hexo.io/" target="_blank">Hexo</a>, made by 
+                    <a href="https://github.com/Mrminfive" target="_blank">minfive</a>,
+                </p>
+                <div style="width: 50px;margin-bottom: -5px;">
+                    <a href="https://www.upyun.com/?utm_source=lianmeng&utm_medium=referral" target="_blank">
+                        <img style="max-width:100%; max-height:100%" src='/img/youpaiyun.png'/>
+                    </a>
+                </div>提供CND加速/云存储服务.
+            </div>
+            <ul class="footer__social-network clearfix">
+                
+                
+                    <li class="social-network__item">
+                        <a href="https://github.com/mrdear" target="_blank" title="github">
+                            <i class="iconfont icon-github"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="https://www.zhihu.com/people/niu.dear/activities" target="_blank" title="知乎">
+                            <i class="iconfont icon-zhihu"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="mailto:niudear@foxmail.com" target="_blank" title="email">
+                            <i class="iconfont icon-email"></i>
+                        </a>
+                    </li>
+                
+                    <li class="social-network__item">
+                        <a href="/atom.xml" target="_blank" title="rss">
+                            <i class="iconfont icon-rss"></i>
+                        </a>
+                    </li>
+                
+                
+            </ul>
+        </div>
+    </section>
+</footer>
+        
+
+        
+            <!-- 返回顶部 -->
+<div id="back-top" class="back-top back-top--hidden js-hidden">
+    <i class="iconfont icon-top"></i>
+</div>
+        
+    </div>
+
+    <!-- build:js /js/common.js -->
+        <script type="text/javascript" src="/js/common/utils.js"></script>
+        <script type="text/javascript" src="/js/common/pack.js"></script>
+        <script type="text/javascript" src="/js/common/animation.js"></script>
+        <script type="text/javascript" src="/js/layout/loading.js"></script>
+        <script type="text/javascript" src="/js/layout/header.js"></script>
+        <script type="text/javascript" src="/js/layout/back-top.js"></script>
+        <script type="text/javascript" src="/js/layout/sidebar.js"></script>
+        <script type="text/javascript" src="/js/layout/post.js"></script>
+    <!-- endbuild -->
+
+    
+    
+<script src="/js/page/post.js"></script>
+
+
+
+    
+    
+    <script src="https://giscus.app/client.js"
+            data-repo="mrdear/mrdear.cn"
+            data-repo-id="R_kgDOIEi9fQ"
+            data-category="General"
+            data-category-id="DIC_kwDOIEi9fc4CRrm_"
+            data-mapping="url"
+            data-strict="0"
+            data-reactions-enabled="1"
+            data-emit-metadata="0"
+            data-input-position="top"
+            data-theme="light"
+            data-lang="zh-CN"
+            data-loading="lazy"
+            crossorigin="anonymous"
+            async>
+    </script>
+
+
+
+
+    <!-- 不蒜子统计 -->
+
+
+
+
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":true,"debug":false,"model":{"jsonPath":"/live2dw/assets/koharu.model.json"},"display":{"position":"left","width":100,"height":150},"mobile":{"show":true,"scale":0.5},"react":{"opacityDefault":1,"opacityOnHover":1},"log":false});</script>
+
+     
+
+
+
+
+
+
+
+
+</body>
+</html>
