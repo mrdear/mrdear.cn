@@ -1,0 +1,17 @@
+{
+  "promptDelete": true,
+  "newFileLocation": "current",
+  "showUnsupportedFiles": false,
+  "attachmentFolderPath": "./attachment",
+  "readableLineLength": true,
+  "strictLineBreaks": false,
+  "showLineNumber": false,
+  "rightToLeft": false,
+  "focusNewTab": true,
+  "userIgnoreFilters": [
+    "attachment",
+    "node_modules/",
+    "public/",
+    "themes/"
+  ]
+}

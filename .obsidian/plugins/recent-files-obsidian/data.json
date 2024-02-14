@@ -1,0 +1,39 @@
+{
+  "recentFiles": [
+    {
+      "basename": "谈谈编程中的顿悟",
+      "path": "source/_drafts/谈谈编程中的顿悟.md"
+    },
+    {
+      "basename": "index",
+      "path": "source/categories/index.md"
+    },
+    {
+      "basename": "post",
+      "path": "scaffolds/post.md"
+    },
+    {
+      "basename": "page",
+      "path": "scaffolds/page.md"
+    },
+    {
+      "basename": "draft",
+      "path": "scaffolds/draft.md"
+    },
+    {
+      "basename": "hadoop--map_reduce",
+      "path": "source/_drafts/hadoop--map_reduce.md"
+    },
+    {
+      "basename": "hive--study1",
+      "path": "source/_drafts/hive--study1.md"
+    },
+    {
+      "basename": "algorithm_review_recursive",
+      "path": "source/_drafts/algorithm_review_recursive.md"
+    }
+  ],
+  "omittedPaths": [],
+  "maxLength": 10,
+  "openType": "tab"
+}

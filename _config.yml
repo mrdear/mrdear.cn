@@ -148,16 +148,6 @@ google_statistic: vI-8_Ee7chpyEu09yCt-bC91dWWmTx08Bb_Mv1gltl0
 # 卜算子统计关闭
 busuanzi: false
 
-# disqus
-# disqus_shortname: mrdear
-gitTalk:
-  clientId: 33c4810e1cf354cd8d8b
-  clientSecret: de14850e06ba2ad7aa41f7de960b4a48f09edafd
-  repo: blog-comment
-  owner: mrdear
-  admin: [mrdear]
-  proxy: https://cors.mrdear.cn/https://github.com/login/oauth/access_token
-
 # pwa
 offline:
   maximumFileSizeToCacheInBytes: 5242880
