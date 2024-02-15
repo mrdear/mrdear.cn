@@ -4,17 +4,15 @@
     "type": "split",
     "children": [
       {
-        "id": "96b751fdbdd4df43",
+        "id": "1afcf5efd9a14725",
         "type": "tabs",
         "children": [
           {
-            "id": "89f5c62de0a1a06c",
+            "id": "33fb4ce8d0b50f44",
             "type": "leaf",
-            "pinned": true,
             "state": {
               "type": "empty",
-              "state": {},
-              "pinned": true
+              "state": {}
             }
           }
         ]
@@ -46,7 +44,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#待完成",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -75,7 +73,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 260.5
+    "width": 366.5
   },
   "right": {
     "id": "d3dddf435faeeccd",
@@ -150,8 +148,9 @@
       "attachment-uploader:上传附件": false
     }
   },
-  "active": "89f5c62de0a1a06c",
+  "active": "33fb4ce8d0b50f44",
   "lastOpenFiles": [
+    "source/_posts/experience/work--how_to_design_user_model.md",
     "source/_drafts/谈谈编程中的顿悟.md",
     "source/categories/index.md",
     "scaffolds/post.md",
@@ -204,7 +203,6 @@
     "01_工作笔记/架构设计/离线数仓打标架构.canvas",
     "02_读书笔记/大模型/OpenAI：GPT 最佳实践.md",
     "02_读书笔记/大模型/Prompt-论文翻译.md",
-    "02_读书笔记/大模型/大模型RAG相关资料.md",
     "未命名.canvas",
     "工作笔记/A_TODO事项.canvas"
   ]
