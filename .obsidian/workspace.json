@@ -11,8 +11,12 @@
             "id": "33fb4ce8d0b50f44",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {}
+              "type": "markdown",
+              "state": {
+                "file": "source/_drafts/hadoop--map_reduce.md",
+                "mode": "source",
+                "source": false
+              }
             }
           }
         ]
@@ -89,6 +93,7 @@
             "state": {
               "type": "backlink",
               "state": {
+                "file": "source/_drafts/hadoop--map_reduce.md",
                 "collapseAll": false,
                 "extraContext": true,
                 "sortOrder": "alphabetical",
@@ -105,6 +110,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
+                "file": "source/_drafts/hadoop--map_reduce.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -126,7 +132,9 @@
             "type": "leaf",
             "state": {
               "type": "outline",
-              "state": {}
+              "state": {
+                "file": "source/_drafts/hadoop--map_reduce.md"
+              }
             }
           }
         ],
@@ -144,19 +152,23 @@
       "daily-notes:打开/创建今天的日记": false,
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
-      "custom-sort:Toggle custom sorting": false,
-      "attachment-uploader:上传附件": false
+      "custom-sort:Toggle custom sorting": false
     }
   },
   "active": "33fb4ce8d0b50f44",
   "lastOpenFiles": [
+    "source/_drafts/Quarkus--核心笔记.md",
+    "source/_drafts/hadoop--map_reduce.md",
+    "source/_drafts/hive--study2.md",
+    "source/_drafts/attachment/Pasted image 20240215131541.png",
+    "source/_drafts/attachment",
+    "source/_posts/design-pattern/设计模式--访问者模式.md",
     "source/_posts/experience/work--how_to_design_user_model.md",
     "source/_drafts/谈谈编程中的顿悟.md",
     "source/categories/index.md",
     "scaffolds/post.md",
     "scaffolds/page.md",
     "scaffolds/draft.md",
-    "source/_drafts/hadoop--map_reduce.md",
     "source/_drafts/hive--study1.md",
     "source/_drafts/algorithm_review_recursive.md",
     "template",
@@ -191,18 +203,12 @@
     "01_工作笔记/方案设计/attachment/Pasted image 20240115101646.png",
     "02_读书笔记/Rust/读书笔记-Rust In Action.todo.md",
     "01_工作笔记/方案设计/attachment/Pasted image 20240113220619.png",
-    "01_工作笔记/方案设计/attachment/Pasted image 20240113220048.png",
     "01_工作笔记/方案设计/attachment",
-    "01_工作笔记/OKR",
     "01_工作笔记/方案设计/离线数仓合规架构.canvas",
     "01_工作笔记/架构设计/离线数仓合规架构.canvas",
     "09_读书笔记/Rust/读书笔记-Rust In Action.md",
     "01_工作笔记/专利/血缘扩散追踪能力.todo.md",
-    "00_INBOX/Task面板.md",
-    "01_工作笔记/专利/(已提交)一种汇率路由方式.md",
     "01_工作笔记/架构设计/离线数仓打标架构.canvas",
-    "02_读书笔记/大模型/OpenAI：GPT 最佳实践.md",
-    "02_读书笔记/大模型/Prompt-论文翻译.md",
     "未命名.canvas",
     "工作笔记/A_TODO事项.canvas"
   ]

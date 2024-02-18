@@ -1,7 +1,0 @@
-{
-  "uploadService": "uPic",
-  "uploadCommand": "/Applications/uPic.app/Contents/MacOS/uPic -o url -u %s",
-  "uploadFileFormat": ".png\n.jpg\n.jpeg\n.gif\n.webp\n.ico\n.svg\n.bmp",
-  "testFilePath": "",
-  "isDeleteSourceFile": true
-}

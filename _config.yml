@@ -168,6 +168,12 @@ offline:
       handler: cacheFirst
       options:
         origin: mrdear.cn
+gitTalk:
+  clientId: 33c4810e1cf354cd8d8b
+  clientSecret: de14850e06ba2ad7aa41f7de960b4a48f09edafd
+  repo: blog-comment
+  owner: mrdear
+  admin: [mrdear]
 
 # Feed Atom
 feed:

@@ -1,6 +1,22 @@
 {
   "recentFiles": [
     {
+      "basename": "hadoop--map_reduce",
+      "path": "source/_drafts/hadoop--map_reduce.md"
+    },
+    {
+      "basename": "hive--study2",
+      "path": "source/_drafts/hive--study2.md"
+    },
+    {
+      "basename": "Pasted image 20240215131541",
+      "path": "source/_drafts/attachment/Pasted image 20240215131541.png"
+    },
+    {
+      "basename": "设计模式--访问者模式",
+      "path": "source/_posts/design-pattern/设计模式--访问者模式.md"
+    },
+    {
       "basename": "work--how_to_design_user_model",
       "path": "source/_posts/experience/work--how_to_design_user_model.md"
     },
@@ -19,22 +35,6 @@
     {
       "basename": "page",
       "path": "scaffolds/page.md"
-    },
-    {
-      "basename": "draft",
-      "path": "scaffolds/draft.md"
-    },
-    {
-      "basename": "hadoop--map_reduce",
-      "path": "source/_drafts/hadoop--map_reduce.md"
-    },
-    {
-      "basename": "hive--study1",
-      "path": "source/_drafts/hive--study1.md"
-    },
-    {
-      "basename": "algorithm_review_recursive",
-      "path": "source/_drafts/algorithm_review_recursive.md"
     }
   ],
   "omittedPaths": [],
