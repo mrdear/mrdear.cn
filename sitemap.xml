@@ -128,15 +128,6 @@
   </url>
   
   <url>
-    <loc>https://mrdear.cn/posts/tools-cors-anywhere.html</loc>
-    
-    <lastmod>2021-02-21</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://mrdear.cn/posts/java_threadpool_completablefuture.html</loc>
     
     <lastmod>2021-02-20</lastmod>
@@ -308,27 +299,9 @@
   </url>
   
   <url>
-    <loc>https://mrdear.cn/posts/tools-v2ray-cloudflare.html</loc>
-    
-    <lastmod>2020-03-21</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://mrdear.cn/posts/java-string-pool.html</loc>
     
     <lastmod>2020-03-15</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://mrdear.cn/posts/idea_plugin_decompile.html</loc>
-    
-    <lastmod>2020-03-14</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -407,15 +380,6 @@
   </url>
   
   <url>
-    <loc>https://mrdear.cn/posts/tools-hosts.html</loc>
-    
-    <lastmod>2019-04-07</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://mrdear.cn/posts/framework-spring-jar-in-jar.html</loc>
     
     <lastmod>2019-03-19</lastmod>
@@ -428,15 +392,6 @@
     <loc>https://mrdear.cn/posts/framework-guava-bloomfilter.html</loc>
     
     <lastmod>2019-03-16</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://mrdear.cn/posts/anime_recommed.html</loc>
-    
-    <lastmod>2019-03-04</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -491,15 +446,6 @@
     <loc>https://mrdear.cn/posts/readnote-regex.html</loc>
     
     <lastmod>2018-11-03</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://mrdear.cn/posts/tools-dalgen.html</loc>
-    
-    <lastmod>2018-10-27</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -563,15 +509,6 @@
     <loc>https://mrdear.cn/posts/framework-netty-bytebuf.html</loc>
     
     <lastmod>2018-07-18</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://mrdear.cn/posts/tools-excel.html</loc>
-    
-    <lastmod>2018-07-03</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -758,15 +695,6 @@
   </url>
   
   <url>
-    <loc>https://mrdear.cn/posts/alibaba_code_style_exam.html</loc>
-    
-    <lastmod>2018-03-14</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://mrdear.cn/posts/design-patterns-adapter.html</loc>
     
     <lastmod>2018-03-14</lastmod>
@@ -931,7 +859,7 @@
 
   <url>
     <loc>https://mrdear.cn/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -939,140 +867,140 @@
   
   <url>
     <loc>https://mrdear.cn/tags/%E5%AE%9E%E6%88%98/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/JWT/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/OSX/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/Java/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/JUC/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/%E8%BD%AC%E8%BD%BD/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/%E8%BD%AE%E5%AD%90/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/IntelliJ/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/Alfred/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/%E5%B7%A5%E4%BD%9C/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/%E5%8A%A8%E6%BC%AB/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/Dubbo/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/Guava/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/Mockito/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/MySQL/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/Mybatis/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/Netty/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/tags/Spring/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -1081,70 +1009,70 @@
   
   <url>
     <loc>https://mrdear.cn/categories/%E5%AE%9E%E6%88%98%E6%80%BB%E7%BB%93/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/%E6%9D%82%E4%B8%83%E6%9D%82%E5%85%AB/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E4%B8%93%E9%A2%98/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/%E5%A4%AF%E5%AE%9EJava%E5%9F%BA%E7%A1%80/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/%E8%BD%AC%E8%BD%BD/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/%E5%B7%A5%E5%85%B7/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/Spring%E7%B3%BB%E5%88%97%E4%B8%93%E9%A2%98/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://mrdear.cn/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
-    <lastmod>2024-02-18</lastmod>
+    <lastmod>2025-04-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
