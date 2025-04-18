@@ -70,7 +70,32 @@
         },
 
         initSearch: function(data) {
-            this.index = lunr.Index.load(data.index);
+            var self = this;
+
+            // Create a new lunr index using the function-based approach
+            this.index = lunr(function() {
+                // Define the fields to search
+                this.field('title', { boost: 10 });
+                this.field('body');
+                this.field('desc');
+                this.field('tags', { boost: 5 });
+                this.field('categories', { boost: 5 });
+                this.ref('href');
+
+                // Add documents to the index
+                for (var key in data.store) {
+                    var item = data.store[key];
+                    this.add({
+                        title: item.title,
+                        desc: item.desc || "",
+                        body: item.desc || "",
+                        tags: (item.tags || []).join(','),
+                        categories: (item.cates || []).join(','),
+                        href: key
+                    });
+                }
+            });
+
             this.sourceData = data.store;
             this.result = this.index.search(this.queryString);
             this.filteredData = this.filterSourceData();
@@ -113,7 +138,6 @@
             var result = (this.config.language == 'en'?'Sorry,the content of your search does not exist!':'抱歉，您要的内容似乎没有哦，不如换个关键字试试吧。');
             var self = this;
 
-            console.log("this:"+JSON.stringify(this));
             if (filteredData.length) {
                 this.filteredData = this.filteredData.map(function(item) {
                     item.tagsHtml = self.compileTemplate(self.tagsTpl, item.tagArr);
@@ -142,9 +166,9 @@
             var self = this,
                 filteredData = [],
                 minNum = self.config.minNum;
-                
+
             this.result.forEach(function(row, idx){
-                if (self.config.minScore > row.score && idx >= self.config.minScore.minNum) {
+                if (self.config.minScore > row.score && idx >= self.config.minNum) {
                     return;
                 }
                 filteredData.push(self.sourceData[row.ref])

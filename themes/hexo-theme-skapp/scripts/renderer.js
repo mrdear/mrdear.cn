@@ -70,7 +70,39 @@ hexo.extend.generator.register('lunr', function(locals){
             this.field('tags', {boost:5});
             this.field('categories', {boost:5});
             this.ref('href');
+
+            // Add documents inside the lunr initialization function
+            res[yearKey].forEach(function(post){
+                let tags = [];
+                let cates = [];
+                let tagArr = [];
+                if (post.tags) {
+                    post.tags.each(function(tag){
+                        tags.push(tag.name);
+                        tagArr.push({
+                            name: tag.name,
+                            path: config.root + tag.path
+                        });
+                    });    
+                }
+                if (post.categories) {
+                    post.categories.each(function(cate){
+                        cates.push(cate.name);    
+                    });
+                }
+                let bodyText = lunrConfig.fulltext ? post.content : post.excerpt;
+                this.add({
+                    title: post.title,
+                    desc: post.subtitle || "",
+                    body: bodyText || "",
+                    tags: tags.join(','),
+                    cates: cates.join(','),
+                    href: '/' + post.path
+                });
+            }, this);
         });
+
+        // Process posts for store data
         res[yearKey].forEach(function(post){
             tags = [];
             cates = [];
@@ -89,16 +121,7 @@ hexo.extend.generator.register('lunr', function(locals){
                     cates.push(cate.name);    
                 });
             }
-            bodyText = lunrConfig.fulltext ? post.content : post.excerpt;
-            searchIdx.add({
-                title: post.title,
-                desc: post.subtitle || "",
-                body: bodyText || "",
-                tags: tags.join(','),
-                cates: cates.join(','),
-                href: '/' + post.path
-            });
-            
+
             store['/' + post.path] = {
                 url: '/' + post.path,
                 title: post.title,
