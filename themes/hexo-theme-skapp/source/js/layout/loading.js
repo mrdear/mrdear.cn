@@ -1,17 +1,8 @@
 // loading
 document.onreadystatechange = function(){
-    console.log(document.readyState)
-    var timeout;
-    if (document.readyState === 'interactive') {
-        timeout = window.setTimeout(function(){
-            disableLoad();
-        },1000);
-    }
-
     if (document.readyState === 'complete') {
-        clearTimeout(timeout)
-        var page2 = document.getElementById('page');
-        if (page2.classList.contains('js-hidden')) {
+        var page = document.getElementById('page');
+        if (page.classList.contains('js-hidden')) {
             disableLoad();
         }
     }
@@ -22,6 +13,18 @@ function disableLoad(){
     page = document.getElementById('page'),
     loading = document.getElementById('page-loading');
 
-    loading.classList.add('js-hidden');
+    // Add transition classes for smooth animation
+    loading.classList.add('js-ease-out-leave');
+    page.classList.add('js-ease-out-leave', 'js-ease-out-leave-active');
+
+    // Show the page first with animation
     page.classList.remove('js-hidden');
+    setTimeout(function() {
+        page.classList.add('js-ease-out-enter-active');
+
+        // Hide the loading element after the page animation starts
+        setTimeout(function() {
+            loading.classList.add('js-hidden');
+        }, 100);
+    }, 10);
 }
