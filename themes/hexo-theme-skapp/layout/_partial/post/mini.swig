@@ -1,4 +1,4 @@
-<article itemscope itemtype="http://schema.org/Article" class="page__mini-article">
+<article itemscope itemtype="https://schema.org/Article" class="page__mini-article">
     <div class="mini-article__cover">
         {% if not post.cover %}
             <img itemprop="image" src="{{ get_setting('default_cover') }}" alt="{{ post.title }}"/>
@@ -21,7 +21,7 @@
             <a itemprop="url" href="{{ url_for(post.path) }}" title="{{ post.title }}">{{ post.title }}</a>
         </h3>
         <p class="mini-article__author">by 
-            <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span itemprop="author" itemscope itemtype="https://schema.org/Person">
                 <a itemprop="url" href="{{ post.author.link }}" target="_blank">
                     <span itemprop="name">{{ titlecase(post.author.nick) }}</span>
                 </a>

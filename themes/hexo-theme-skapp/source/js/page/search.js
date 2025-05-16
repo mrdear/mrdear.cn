@@ -22,7 +22,7 @@
             ].join('');
             this.articleTpl = [
                 '<div class="page__post">',
-                    '<article itemscope itemtype="http://schema.org/Article" class="page__mini-article">',
+                    '<article itemscope itemtype="https://schema.org/Article" class="page__mini-article">',
                         '<div class="mini-article__cover">',
                             '<img itemprop="image" src="{{ cover }}" alt="{{ title }}"/>',
                             '<div itemprop="datePublished" content="{{ date }}" class="mini-article__date">',
@@ -36,7 +36,7 @@
                                 '<a itemprop="url" href="{{ url }}" title="{{ title }}">{{ title }}</a>',
                             '</h3>',
                             '<p class="mini-article__author">by ',
-                                '<span itemprop="author" itemscope itemtype="http://schema.org/Person">',
+                                '<span itemprop="author" itemscope itemtype="https://schema.org/Person">',
                                     '<a itemprop="url" href="{{ authorLink }}" target="_blank">',
                                         '<span itemprop="name">{{ authorNick }}</span>',
                                     '</a>',

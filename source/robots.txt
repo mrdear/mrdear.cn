@@ -5,5 +5,4 @@ Allow: /archives/
 Allow: /categories/
 Allow: /tags/
 
-Sitemap: http://mrdear.cn/sitemap.xml
-Sitemap: http://mrdear.cn/baidusitemap.xml
+Sitemap: https://mrdear.cn/sitemap.xml
