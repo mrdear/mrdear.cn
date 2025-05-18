@@ -1,6 +1,7 @@
 // loading
 document.onreadystatechange = function(){
-    if (document.readyState === 'complete') {
+    // Change from 'complete' to 'interactive' to hide loading animation earlier
+    if (document.readyState === 'interactive') {
         var page = document.getElementById('page');
         if (page.classList.contains('js-hidden')) {
             disableLoad();
