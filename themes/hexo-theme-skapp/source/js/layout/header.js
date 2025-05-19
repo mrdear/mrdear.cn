@@ -10,7 +10,7 @@ window.addEventListener('load', function() {
 
         headerEle && document.addEventListener('scroll', toggleNavStyle);
     })();
-    
+
     (function() {
         var 
             btn = document.querySelector('button.page__menu-btn'),
@@ -29,7 +29,7 @@ window.addEventListener('load', function() {
 
     (function() {
         var header = document.getElementById('page-header');
-        
+
         if (!header) return;
 
         var
