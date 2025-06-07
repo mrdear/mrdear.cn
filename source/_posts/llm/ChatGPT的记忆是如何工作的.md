@@ -1,7 +1,7 @@
 ---
 title: How ChatGPT Memory Works
 subtitle: Eric Hayes针对GPT的记忆进行的逆向工程分析，值得学习
-cover: https://resource.libx.fun/pic/2024/12/build_effective_agents.png
+cover: https://resource.libx.fun/pic/2025/06/20250607142022320.png
 author: 
   nick: Eric Hayes
 tags:
