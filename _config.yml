@@ -15,7 +15,7 @@ timezone: Asia/Singapore
 ## If your site is put in a subdirectory, set url as 'http://example.com/child' and root as '/child/'
 url: https://mrdear.cn
 root: /
-permalink: posts/:urlname.html
+permalink: posts/:urlname
 permalink_defaults:
 pretty_urls:
   trailing_index: true # Set to false to remove trailing 'index.html' from permalinks
@@ -178,6 +178,8 @@ gitTalk:
 feed:
   type: atom
   path: atom.xml
+  content: true
+  order_by: -date
   limit: 20
 
 # 自动生成sitemap
