@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="mobile-web-app-capable" content="yes" />
+<meta name="google-adsense-account" content="ca-pub-9024176106571603">
 <meta name="robots" content="all" />
 
 {% if theme.google_site_verification %}
