@@ -26,7 +26,12 @@
                data-ad-slot="2898525450"
                data-ad-format="auto"
                data-full-width-responsive="true"></ins>
-          <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+          <script>
+              // 延迟 500ms 再请求广告，确保 CSS 已经渲染完毕
+              setTimeout(function() {
+                  (adsbygoogle = window.adsbygoogle || []).push({});
+              }, 200);
+          </script>
       </div>
 
     <div class="sidebar__block">
@@ -56,7 +61,11 @@
             data-ad-slot="4020035436"
             data-ad-format="auto"
             data-full-width-responsive="true"></ins>
-       <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+       <script>
+           setTimeout(function() {
+               (adsbygoogle = window.adsbygoogle || []).push({});
+           }, 300);
+       </script>
    </div>
 
 </aside>
