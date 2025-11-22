@@ -283,3 +283,7 @@ $title-falg-w: 4px      !default;
   }
 }
 
+.sidebar__block:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+  display: none !important;
+}
+
