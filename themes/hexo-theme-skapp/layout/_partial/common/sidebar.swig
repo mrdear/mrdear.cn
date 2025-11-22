@@ -19,7 +19,7 @@
         </div>
     {% endif %}
 
-          <div class="sidebar__block">
+          <div class="sidebar__block ads-container">
                 <ins class="adsbygoogle"
                      style="display:block"
                      data-ad-client="ca-pub-9024176106571603"
@@ -73,7 +73,7 @@
         </ul>
     </div> -->
 
-        <div class="sidebar__block">
+        <div class="sidebar__block ads-container">
             <ins class="adsbygoogle"
                  style="display:block"
                  data-ad-client="ca-pub-9024176106571603"
