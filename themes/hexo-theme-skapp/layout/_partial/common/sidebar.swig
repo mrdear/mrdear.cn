@@ -21,10 +21,11 @@
 
           <div class="sidebar__block ads-container">
                 <ins class="adsbygoogle"
-                     style="display:block"
+                     style="display:block; width: 100%; height: 280px;"
                      data-ad-client="ca-pub-9024176106571603"
                      data-ad-slot="2898525450"
-                     data-full-width-responsive="true"></ins>
+                     data-ad-format="rectangle"
+                     data-full-width-responsive="false"></ins>
                 <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
             </div>
 
@@ -74,10 +75,11 @@
 
         <div class="sidebar__block ads-container">
             <ins class="adsbygoogle"
-                 style="display:block"
+                 style="display:block; width: 100%; height: 280px;"
                  data-ad-client="ca-pub-9024176106571603"
                  data-ad-slot="2898525450"
-                 data-full-width-responsive="true"></ins>
+                 data-ad-format="rectangle"
+                 data-full-width-responsive="false"></ins>
             <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
         </div>
 </aside>

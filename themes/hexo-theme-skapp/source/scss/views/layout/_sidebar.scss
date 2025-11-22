@@ -274,12 +274,11 @@ $title-falg-w: 4px      !default;
 
 .ads-container {
   width: 100%;
-  overflow: hidden; /* 防止广告撑破布局 */
+  min-height: 280px; /* 占位，防止高度塌陷 */
+  overflow: hidden;
 
   .adsbygoogle {
-    display: block;
-    width: 100%;
-    min-height: 280px; /* 根据侧边栏广告通常高度设置，如250px或280px，给个预留高度 */
+    display: block !important; /* 强制显示 */
   }
 }
 
