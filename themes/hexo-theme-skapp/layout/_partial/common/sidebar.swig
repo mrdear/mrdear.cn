@@ -19,6 +19,15 @@
         </div>
     {% endif %}
 
+          <div class="sidebar__block">
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-9024176106571603"
+                     data-ad-slot="2898525450"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+            </div>
+
     <div class="sidebar__block">
         <h3 class="block__title">{{ __('aside.categorie') }}</h3>
         {{ list_categories({ order: -1, class: 'block' }) }}
@@ -62,4 +71,13 @@
             {% endfor %}
         </ul>
     </div> -->
+
+        <div class="sidebar__block">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-9024176106571603"
+                 data-ad-slot="2898525450"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+        </div>
 </aside>
