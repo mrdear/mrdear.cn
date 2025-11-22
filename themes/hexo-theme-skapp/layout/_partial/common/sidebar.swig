@@ -26,6 +26,7 @@
                      data-ad-slot="2898525450"
                      data-ad-format="auto"
                      data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
             </div>
 
     <div class="sidebar__block">
@@ -79,5 +80,6 @@
                  data-ad-slot="2898525450"
                  data-ad-format="auto"
                  data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
         </div>
 </aside>

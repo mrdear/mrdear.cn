@@ -1,7 +1,5 @@
 <!-- Global site tag (gtag.js) - Google Analytics -->
 
-<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-
 {% if config.google_statistic %}
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PXMBKW99SD"></script>
   <script>
