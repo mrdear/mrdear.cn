@@ -44,7 +44,7 @@
                  crossorigin="anonymous"></script>
 
 <!-- Prefetch -->
-{% include './prefetch.swig' %}
+<!-- {% include './prefetch.swig' %} -->
 
 <!-- CSS -->
 {{ css('scss/base/index') }}
