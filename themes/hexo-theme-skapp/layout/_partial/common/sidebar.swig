@@ -24,7 +24,6 @@
                style="display:block; width: 100%; text-align: center; height: 280px;"
                data-ad-client="ca-pub-9024176106571603"
                data-ad-slot="2898525450"
-               data-ad-format="auto"
                data-full-width-responsive="true"></ins>
           <script>
               // 延迟 500ms 再请求广告，确保 CSS 已经渲染完毕
@@ -56,10 +55,9 @@
 
    <div class="sidebar__block ads-container">
        <ins class="adsbygoogle"
-            style="display:block; width: 100%; text-align: center; height: 500px;"
+            style="display:block; width: 100%; text-align: center; height: 280px;"
             data-ad-client="ca-pub-9024176106571603"
             data-ad-slot="4020035436"
-            data-ad-format="auto"
             data-full-width-responsive="true"></ins>
        <script>
            setTimeout(function() {
