@@ -195,9 +195,9 @@ body {
     & > i {
         display: block;
     }
+}
 
-  .ads-container {
-    display: block;
-    min-height: 50px; /* 确保容器有一个最小高度，防止它完全折叠 */
-  }
+.ads-container {
+  display: block;
+  min-height: 50px; /* 确保容器有一个最小高度，防止它完全折叠 */
 }
