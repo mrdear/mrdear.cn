@@ -19,15 +19,15 @@
         </div>
     {% endif %}
 
-          <div class="sidebar__block ads-container">
-                <ins class="adsbygoogle"
-                     style="display:block; width: 100%; height: 280px;"
-                     data-ad-client="ca-pub-9024176106571603"
-                     data-ad-slot="2898525450"
-                     data-ad-format="rectangle"
-                     data-full-width-responsive="false"></ins>
-                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-            </div>
+    <div class="sidebar__block ads-container">
+          <ins class="adsbygoogle"
+               style="display:block; width: 100%; text-align: center; height: 280px;"
+               data-ad-client="ca-pub-9024176106571603"
+               data-ad-slot="2898525450"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
+          <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      </div>
 
     <div class="sidebar__block">
         <h3 class="block__title">{{ __('aside.categorie') }}</h3>
@@ -42,44 +42,21 @@
             </div>
         </div>
     {% endif %}
-    <!--
-    {% if get_setting('recommend_img') %}
-        <div class="sidebar__block">
-            <h3 class="block__title">{{ __('aside.recommend') }}</h3>
-            <div class="block-image">
-                <img style="height: 100%;width: 100%" src="{{ get_setting('recommend_img') }}">
-            </div>
-        </div>
-    {% endif %} -->
-    <!-- 最新文章 -->
-    <!-- <div class="sidebar__block">
-        <h3 class="block__title">{{ __('aside.latest_post') }}</h3>
-        {{ latest_post(4) }}
-    </div> -->
 
     <div class="sidebar__block">
         <h3 class="block__title">{{ __('aside.tag') }}</h3>
         {{ tags({ order: -1 }) }}
     </div>
 
-    <!-- <div class="sidebar__block">
-        <h3 class="block__title">{{ __('aside.friend_links') }}</h3>
-        <ul class="block-list">
-            {% for item in site.data.link %}
-                <li class="block-list-item">
-                    <a class="block-list-link" href="{{ item.link }}" title="{{ item.desc }}" target="_blank">{{ item.name }}</a>
-                </li>
-            {% endfor %}
-        </ul>
-    </div> -->
 
-        <div class="sidebar__block ads-container">
-            <ins class="adsbygoogle"
-                 style="display:block; width: 100%; height: 280px;"
-                 data-ad-client="ca-pub-9024176106571603"
-                 data-ad-slot="2898525450"
-                 data-ad-format="rectangle"
-                 data-full-width-responsive="false"></ins>
-            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-        </div>
+   <div class="sidebar__block ads-container">
+       <ins class="adsbygoogle"
+            style="display:block; width: 100%; text-align: center; height: 500px;"
+            data-ad-client="ca-pub-9024176106571603"
+            data-ad-slot="4020035436"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+       <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+   </div>
+
 </aside>
