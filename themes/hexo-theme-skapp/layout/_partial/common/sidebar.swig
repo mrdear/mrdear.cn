@@ -21,7 +21,7 @@
 
     <div class="sidebar__block ads-container">
           <ins class="adsbygoogle"
-               style="display:block; width: 100%; text-align: center; height: 280px;"
+               style="display:block; width: 100%; text-align: center; min-height: 280px;"
                data-ad-client="ca-pub-9024176106571603"
                data-ad-slot="2898525450"
                data-full-width-responsive="true"></ins>
@@ -29,7 +29,7 @@
               // 延迟 500ms 再请求广告，确保 CSS 已经渲染完毕
               setTimeout(function() {
                   (adsbygoogle = window.adsbygoogle || []).push({});
-              }, 200);
+              }, 500);
           </script>
       </div>
 
@@ -55,14 +55,14 @@
 
    <div class="sidebar__block ads-container">
        <ins class="adsbygoogle"
-            style="display:block; width: 100%; text-align: center; height: 280px;"
+            style="display:block; width: 100%; text-align: center; min-height: 280px;"
             data-ad-client="ca-pub-9024176106571603"
             data-ad-slot="4020035436"
             data-full-width-responsive="true"></ins>
        <script>
            setTimeout(function() {
                (adsbygoogle = window.adsbygoogle || []).push({});
-           }, 300);
+           }, 800);
        </script>
    </div>
 
