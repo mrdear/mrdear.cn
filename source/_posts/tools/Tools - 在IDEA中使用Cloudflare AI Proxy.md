@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 实战
-categories: 实战总结
+categories: 工具
 urlname: work-tools-cloudflare-ai-proxy
 date: 2025-11-30 12:00:00
 updated: 2025-11-30 12:00:00
