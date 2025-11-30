@@ -9,7 +9,7 @@ tags:
 categories: 实战总结
 urlname: work-intellij-ollama
 date: 2025-05-05 11:37:36
-updated: 2025-05-05 08:46:00
+updated: 2025-05-05 12:00:00
 ---
 
 ## 前言
