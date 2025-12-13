@@ -1,7 +1,7 @@
 ---
 title: 使用UV构建MCP的过程记录
 subtitle: UV构建MCP过程中遇到的问题
-cover: https://resource.libx.fun/pic/2025/05/20250524125130519.png
+cover: https://res.mrdear.cn/pic/2025/05/20250524125130519.png
 author: 
   nick: 屈定
 tags:
@@ -86,4 +86,4 @@ base64mcp = "base64mcp.main:main_cli"
 ## Example
 - https://github.com/mrdear/mcp-example
 
-![https://resource.libx.fun/pic/2025/05/20250524124618414.png](https://resource.libx.fun/pic/2025/05/20250524124618414.png)
+![https://res.mrdear.cn/pic/2025/05/20250524124618414.png](https://res.mrdear.cn/pic/2025/05/20250524124618414.png)

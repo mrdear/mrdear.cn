@@ -17,7 +17,7 @@ updated: 2025-05-05 12:00:00
 
 随之而来的就是quota不够用。不过好在还有其他模型的AK，初步设想是IDEA支持本地的ollama调用，那么使用cloudflare worker做一个ollama的api中转服务。
 
-![这个月前三分之一已经用掉了大量的quota](https://resource.libx.fun/pic/2025/05/20250505215456201.png)
+![这个月前三分之一已经用掉了大量的quota](https://res.mrdear.cn/pic/2025/05/20250505215456201.png)
 
 ## IDEA中对Ollama的依赖
 
@@ -29,4 +29,4 @@ updated: 2025-05-05 12:00:00
 
 参考github的readme部署后，在IDEA连接，即可愉快的使用自己的API
 
-![](https://resource.libx.fun/pic/2025/05/20250505220020880.png)
+![](https://res.mrdear.cn/pic/2025/05/20250505220020880.png)

@@ -23,7 +23,7 @@ updated: 2025-11-30 12:00:00
 - 📊 **请求日志**：内置日志记录
 - 多模型配置：Gemini、Grok等，通过AI Gateway灵活扩展
 
-![](https://resource.libx.fun/pic/2025/11/20251130143423750.png)
+![](https://res.mrdear.cn/pic/2025/11/20251130143423750.png)
 
 ## 部署项目
 
@@ -39,7 +39,7 @@ updated: 2025-11-30 12:00:00
    - 替换`your-worker.workers.dev`和`YOUR_PROXY_API_KEY`
 4. 点击`Test Connection`
 
-![IDEA连接成功](https://resource.libx.fun/pic/2025/11/20251130142643513.png)
+![IDEA连接成功](https://res.mrdear.cn/pic/2025/11/20251130142643513.png)
 
 ## Claude Code配置
 1. open `~/.claude/setting.json`
@@ -56,7 +56,7 @@ updated: 2025-11-30 12:00:00
 ```
 3. 重启claude
 
-![Claude Code](https://resource.libx.fun/pic/2025/11/20251130142912566.png)
+![Claude Code](https://res.mrdear.cn/pic/2025/11/20251130142912566.png)
 
 ## API使用示例
 

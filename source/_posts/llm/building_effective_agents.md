@@ -1,7 +1,7 @@
 ---
 title: Building effective agents
 subtitle: Anthropic年底针对Agent的总结，很值得一看
-cover: https://resource.libx.fun/pic/2024/12/build_effective_agents.png
+cover: https://res.mrdear.cn/pic/2024/12/build_effective_agents.png
 author: 
   nick: Anthropic
 tags:
@@ -59,7 +59,7 @@ In this section, we’ll <LibPopover title="探索">explore</LibPopover> the <Li
 
 ### Building block: The augmented LLM
 The <LibPopover title="基本构建模块">basic building block</LibPopover> of <LibPopover title="代理系统">agentic systems</LibPopover> is an LLM <LibPopover title="增强">enhanced</LibPopover> with <LibPopover title="扩展功能">augmentations</LibPopover> such as <LibPopover title="检索">retrieval</LibPopover>, <LibPopover title="工具">tools</LibPopover>, and <LibPopover title="记忆">memory</LibPopover>. Our current models can <LibPopover title="主动使用">actively use</LibPopover> these <LibPopover title="能力">capabilities</LibPopover>—<LibPopover title="生成它们自己的搜索查询">generating their own search queries</LibPopover>, <LibPopover title="选择合适的工具">selecting appropriate tools</LibPopover>, and <LibPopover title="决定保留哪些信息">determining what information to retain</LibPopover>.
-![The augmented LLM](https://resource.libx.fun/pic/2024/12/20241221101726639.png)
+![The augmented LLM](https://res.mrdear.cn/pic/2024/12/20241221101726639.png)
 
 We recommend <LibPopover title="专注于">focusing on</LibPopover> two <LibPopover title="关键方面">key aspects</LibPopover> of the <LibPopover title="实施">implementation</LibPopover>: <LibPopover title="根据你的特定用例定制">tailoring these capabilities to your specific use case</LibPopover> and <LibPopover title="确保它们为你的大型语言模型提供简单，文档完善的界面">ensuring they provide an easy, well-documented interface for your LLM</LibPopover>. While there are many ways to <LibPopover title="实现这些增强">implement these augmentations</LibPopover>, one approach is through our recently released <LibPopover title="模型上下文协议">Model Context Protocol</LibPopover>, which allows developers to <LibPopover title="集成到日益增长的第三方工具生态系统中">integrate with a growing ecosystem of third-party tools</LibPopover> with a <LibPopover title="简单的客户端实现">simple client implementation</LibPopover>.
 
@@ -68,7 +68,7 @@ For the remainder of this post, we'll <LibPopover title="假设">assume</LibPopo
 ### Workflow: Prompt chaining
 <LibPopover title="提示链接">Prompt chaining</LibPopover> <LibPopover title="将任务分解为一系列步骤">decomposes a task into a sequence of steps</LibPopover>, where each LLM call processes the <LibPopover title="前一个的输出">output of the previous one</LibPopover>. You can add <LibPopover title="程序化检查">programmatic checks</LibPopover> (see “gate” in the diagram below) on any <LibPopover title="中间步骤">intermediate steps</LibPopover> to <LibPopover title="确保过程仍在正轨上">ensure that the process is still on track</LibPopover>.
 
-![The prompt chaining workflow](https://resource.libx.fun/pic/2024/12/20241221101852476.png)
+![The prompt chaining workflow](https://res.mrdear.cn/pic/2024/12/20241221101852476.png)
 
 When to use this workflow: This workflow is <LibPopover title="理想">ideal</LibPopover> for situations where the task can be <LibPopover title="容易且清晰地分解">easily and cleanly decomposed</LibPopover> into <LibPopover title="固定的子任务">fixed subtasks</LibPopover>. The main goal is to <LibPopover title="权衡延迟以获得更高的准确性">trade off latency for higher accuracy</LibPopover>, by making each LLM call an <LibPopover title="更容易的任务">easier task</LibPopover>.
 
@@ -80,7 +80,7 @@ When to use this workflow: This workflow is <LibPopover title="理想">ideal</Li
 ### Workflow: Routing
 <LibPopover title="路由">Routing</LibPopover> <LibPopover title="对输入进行分类">classifies an input</LibPopover> and <LibPopover title="将其定向到特定的后续任务">directs it to a specialized followup task</LibPopover>. This workflow allows for <LibPopover title="关注点分离">separation of concerns</LibPopover>, and <LibPopover title="构建更专业的提示">building more specialized prompts</LibPopover>. Without this workflow, <LibPopover title="优化一种输入">optimizing for one kind of input</LibPopover> can <LibPopover title="损害其他输入的性能">hurt performance on other inputs</LibPopover>.
 
-![The routing workflow](https://resource.libx.fun/pic/2024/12/20241221102027407.png)
+![The routing workflow](https://res.mrdear.cn/pic/2024/12/20241221102027407.png)
 
 When to use this workflow: Routing works well for <LibPopover title="复杂任务">complex tasks</LibPopover> where there are <LibPopover title="不同的类别">distinct categories</LibPopover> that are better handled separately, and where <LibPopover title="分类可以准确处理">classification can be handled accurately</LibPopover>, either by an LLM or a more <LibPopover title="传统的分类模型/算法">traditional classification model/algorithm</LibPopover>.
 
@@ -95,7 +95,7 @@ LLMs can sometimes work simultaneously on a task and have their outputs <LibPopo
 - <LibPopover title="分段">Sectioning</LibPopover>: <LibPopover title="将任务分解为并行运行的独立子任务">Breaking a task into independent subtasks run in parallel</LibPopover>.
 - <LibPopover title="投票">Voting</LibPopover>: <LibPopover title="多次运行同一任务以获得不同的输出">Running the same task multiple times to get diverse outputs</LibPopover>.
 
-![The parallelization workflow](https://resource.libx.fun/pic/2024/12/20241221102308037.png)
+![The parallelization workflow](https://res.mrdear.cn/pic/2024/12/20241221102308037.png)
 
 When to use this workflow: <LibPopover title="并行化">Parallelization</LibPopover> is <LibPopover title="有效">effective</LibPopover> when the <LibPopover title="划分的子任务">divided subtasks</LibPopover> can be <LibPopover title="为了速度并行化">parallelized for speed</LibPopover>, or when <LibPopover title="需要多个视角或尝试">multiple perspectives or attempts are needed</LibPopover> for higher <LibPopover title="置信度结果">confidence results</LibPopover>. For <LibPopover title="复杂任务">complex tasks</LibPopover> with multiple considerations, LLMs generally perform better when each consideration is handled by a separate LLM call, allowing <LibPopover title="专注于每个特定方面">focused attention on each specific aspect</LibPopover>.
 
@@ -111,7 +111,7 @@ Examples where parallelization is useful:
 ### Workflow: Orchestrator-workers
 In the <LibPopover title="协调器-工作器">orchestrator-workers</LibPopover> workflow, a central LLM <LibPopover title="动态地分解任务">dynamically breaks down tasks</LibPopover>, <LibPopover title="将其委托给工作器大型语言模型">delegates them to worker LLMs</LibPopover>, and <LibPopover title="综合他们的结果">synthesizes their results</LibPopover>.
 
-![The orchestrator-workers workflow](https://resource.libx.fun/pic/2024/12/20241221102452947.png)
+![The orchestrator-workers workflow](https://res.mrdear.cn/pic/2024/12/20241221102452947.png)
 
 When to use this workflow: This workflow is <LibPopover title="非常适合">well-suited</LibPopover> for <LibPopover title="复杂任务">complex tasks</LibPopover> where you can’t predict the <LibPopover title="需要的子任务">subtasks needed</LibPopover> (in coding, for example, the number of files that need to be changed and the nature of the change in each file likely depend on the task). Whereas it’s <LibPopover title="在地形上相似">topographically similar</LibPopover>, the key difference from <LibPopover title="并行化">parallelization</LibPopover> is its flexibility—subtasks aren't pre-defined, but determined by the <LibPopover title="协调器">orchestrator</LibPopover> based on the specific input.
 
@@ -123,7 +123,7 @@ When to use this workflow: This workflow is <LibPopover title="非常适合">wel
 ### Workflow: Evaluator-optimizer
 In the <LibPopover title="评估器-优化器">evaluator-optimizer</LibPopover> workflow, one LLM call <LibPopover title="生成响应">generates a response</LibPopover> while another provides <LibPopover title="评估和反馈">evaluation and feedback</LibPopover> in a loop.
 
-![The evaluator-optimizer workflow](https://resource.libx.fun/pic/2024/12/20241221102612665.png)
+![The evaluator-optimizer workflow](https://res.mrdear.cn/pic/2024/12/20241221102612665.png)
 
 When to use this workflow: This workflow is <LibPopover title="特别有效">particularly effective</LibPopover> when we have <LibPopover title="明确的评估标准">clear evaluation criteria</LibPopover>, and when <LibPopover title="迭代改进">iterative refinement</LibPopover> provides <LibPopover title="可衡量的价值">measurable value</LibPopover>. The two signs of good fit are, first, that LLM responses can be <LibPopover title="显著提高">demonstrably improved</LibPopover> when a human articulates their feedback; and second, that the LLM can provide such feedback. This is <LibPopover title="类似于">analogous to</LibPopover> the <LibPopover title="迭代写作过程">iterative writing process</LibPopover> a human writer might go through when producing a polished document.
 
@@ -137,7 +137,7 @@ When to use this workflow: This workflow is <LibPopover title="特别有效">par
 
 Agents can handle <LibPopover title="复杂的任务">sophisticated tasks</LibPopover>, but their implementation is often straightforward. They are typically just LLMs using tools based on <LibPopover title="环境反馈">environmental feedback</LibPopover> in a loop. It is therefore crucial to design toolsets and their documentation clearly and thoughtfully. We expand on best practices for tool development in Appendix 2 ("<LibPopover title="提示工程你的工具">Prompt Engineering your Tools</LibPopover>").
 
-![Autonomous agent](https://resource.libx.fun/pic/2024/12/20241221102757741.png)
+![Autonomous agent](https://res.mrdear.cn/pic/2024/12/20241221102757741.png)
 
 When to use agents: Agents can be used for <LibPopover title="开放式问题">open-ended problems</LibPopover> where it’s difficult or impossible to predict the required number of steps, and where you can’t <LibPopover title="硬编码固定的路径">hardcode a fixed path</LibPopover>. The LLM will potentially operate for many turns, and you must have some level of trust in its decision-making. Agents' <LibPopover title="自主性">autonomy</LibPopover> makes them ideal for <LibPopover title="在受信任的环境中扩展任务">scaling tasks in trusted environments</LibPopover>.
 
@@ -150,7 +150,7 @@ The following examples are from our own implementations:
 - A coding Agent to <LibPopover title="解决 SWE-bench 任务">resolve SWE-bench tasks</LibPopover>, which involve edits to many files based on a task description;
 - Our “computer use” reference implementation, where Claude uses a computer to accomplish tasks.
 
-![High-level flow of a coding agent](https://resource.libx.fun/pic/2024/12/20241221102845194.png)
+![High-level flow of a coding agent](https://res.mrdear.cn/pic/2024/12/20241221102845194.png)
 
 ### Combining and customizing these patterns
 These <LibPopover title="构建模块">building blocks</LibPopover> aren't <LibPopover title="规定性的">prescriptive</LibPopover>. They're <LibPopover title="常见模式">common patterns</LibPopover> that developers can <LibPopover title="塑造和组合">shape and combine</LibPopover> to fit different use cases. The key to success, as with any LLM features, is <LibPopover title="衡量性能">measuring performance</LibPopover> and <LibPopover title="迭代实施">iterating on implementations</LibPopover>. To repeat: you should consider adding complexity only when it <LibPopover title="可以证明可以改善结果">demonstrably improves outcomes</LibPopover>.

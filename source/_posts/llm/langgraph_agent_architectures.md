@@ -1,7 +1,7 @@
 ---
 title: Agent architectures
 subtitle: LangGraph针对Agent的一些阐述
-cover: https://resource.libx.fun/pic/2025/01/20250105032832395.png
+cover: https://res.mrdear.cn/pic/2025/01/20250105032832395.png
 author: 
     nick: LangGraph
 tags:
@@ -25,7 +25,7 @@ Instead of <LibPopover title="硬编码固定的控制流程">hard-coding a fixe
 - An LLM can decide whether the <LibPopover title="生成的答案">generated answer</LibPopover> is <LibPopover title="足够了">sufficient</LibPopover> or more work is needed
 As a result, there are many different types of <LibPopover title="代理架构">agent architectures</LibPopover>, which give an LLM <LibPopover title="不同程度的控制">varying levels of control</LibPopover>.
 
-![](https://resource.libx.fun/pic/2025/01/20250105024724178.png)
+![](https://res.mrdear.cn/pic/2025/01/20250105024724178.png)
 
 
 ## Router
@@ -55,7 +55,7 @@ This architecture allows for more complex and flexible agent behaviors, going be
 Tools are useful whenever you want an agent to <LibPopover title="与外部系统交互">interact with external systems</LibPopover>. External systems (e.g., APIs) often require a particular <LibPopover title="输入模式或有效负载">input schema or payload</LibPopover>, rather than natural language. When we <LibPopover title="绑定一个API">bind an API</LibPopover>, for example, as a tool, we give the model <LibPopover title="对所需输入模式的感知">awareness of the required input schema</LibPopover>. The model will choose to call a tool based upon the natural language input from the user and it will return an output that <LibPopover title="遵守工具所需的模式">adheres to the tool's required schema</LibPopover>.
 
 Many LLM providers support tool calling and tool calling interface in LangChain is simple: you can simply pass any Python `function` into `ChatModel.bind_tools(function)`.
-![](https://resource.libx.fun/pic/2025/01/20250105025032726.png)
+![](https://res.mrdear.cn/pic/2025/01/20250105025032726.png)
 
 ### Memory
 <LibPopover title="记忆对于智能体至关重要">Memory is crucial for agents</LibPopover>, enabling them to retain and utilize information across multiple steps of problem-solving. It operates on different scales:
