@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 实战
-categories: 实战总结
+categories: 工程实践与运维
 urlname: work-design-common-selected
 date: 2020-01-05 00:03:27
 updated: 2020-01-05 00:03:32

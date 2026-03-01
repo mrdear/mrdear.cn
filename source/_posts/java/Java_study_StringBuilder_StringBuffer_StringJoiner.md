@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Java
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java_stringbuilder
 date: 2018-02-12 09:02:51
 updated: 2018-02-12 09:02:56

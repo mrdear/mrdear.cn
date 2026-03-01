@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-future-callback
 date: 2018-08-11 10:08:31
 updated: 2018-08-11 10:08:39

@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Java    
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java_enum
 date: 2018-03-10 01:03:13
 updated: 2018-03-10 01:03:15

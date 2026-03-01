@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 读书笔记
-categories: 读书笔记
+categories: 阅读与资料
 urlname: readnote-pro-git
 date: 2018-10-21 11:32:01
 updated: 2018-10-21 11:32:01

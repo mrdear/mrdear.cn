@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Spring
-categories: Spring系列专题
+categories: 后端框架与中间件
 urlname: framework-spring-autoconfig
 date: 2019-01-19 10:19:45
 updated: 2019-01-19 10:19:51

@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - MySQL
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: mysql-distributed-lock
 date: 2019-10-07 09:06:02
 updated: 2019-10-07 09:06:06

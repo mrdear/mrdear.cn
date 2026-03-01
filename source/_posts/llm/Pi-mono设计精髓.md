@@ -7,7 +7,7 @@ author:
 tags:
   - LLM
   - Agent
-categories: LLM
+categories: AI与LLM
 urlname: pi_mono_ai_framework
 date: 2026-02-24 12:43:53
 updated: 2026-02-24 12:43:56

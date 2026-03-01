@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Mybatis    
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-mybatis-sql-session
 date: 2017-09-09 19:49:52
 updated:  2017-09-09 19:49:52

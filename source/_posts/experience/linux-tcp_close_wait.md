@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 实战
-categories: 实战总结
+categories: 工程实践与运维
 urlname: linux_tcp_close_wait
 date: 2018-05-03 12:05:04
 updated: 2018-05-03 12:05:06

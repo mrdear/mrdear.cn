@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-decorator-model
 date: 2018-03-08 09:03:29
 updated: 2018-06-23 10:06:20

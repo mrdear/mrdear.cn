@@ -7,7 +7,7 @@ author:
 tags:
   - Java   
   - 实战 
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java_metaspace
 date: 2020-10-18 10:51:55
 updated: 2020-10-18 10:51:58

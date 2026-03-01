@@ -6,7 +6,7 @@ author:
   nick: 李豪
 tags:
   - Java
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java_deque
 date: 2018-02-23 11:02:59
 updated: 2018-02-23 11:02:01

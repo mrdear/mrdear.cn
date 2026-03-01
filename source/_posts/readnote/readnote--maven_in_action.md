@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 读书笔记
-categories: 读书笔记
+categories: 阅读与资料
 urlname: readnote-maven_in_action
 date: 2022-02-01 20:36:35
 updated: 2022-02-01 20:36:38

@@ -7,7 +7,7 @@ author:
 tags:
   - 轮子
   - Alfred
-categories: 工具
+categories: 工程实践与运维
 urlname: tools-time-convert
 date: 2019-01-30 21:38:22
 updated: 2019-01-30 21:38:25

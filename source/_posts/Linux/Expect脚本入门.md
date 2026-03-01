@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 实战
-categories: 实战总结
+categories: 工程实践与运维
 urlname: linux-expect_script
 date: 2022-07-16 11:25:12
 updated: 2022-07-16 11:25:18

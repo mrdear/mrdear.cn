@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 实战
-categories: 实战总结
+categories: 工程实践与运维
 urlname: work-how_config_log
 date: 2020-03-29 17:20:38
 updated: 2020-03-29 17:20:42

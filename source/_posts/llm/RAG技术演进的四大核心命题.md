@@ -8,7 +8,7 @@ tags:
     - LLM
     - Agent
     - 转载
-categories: LLM
+categories: AI与LLM
 urlname: llm_rag_analysis
 date: 2025-04-19 12:43:53
 updated: 2025-04-19 12:43:56

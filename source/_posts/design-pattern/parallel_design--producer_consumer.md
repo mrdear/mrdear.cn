@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-producer-consumer
 date: 2018-06-09 01:06:01
 updated: 2018-06-09 01:06:03

@@ -8,7 +8,7 @@ tags:
   - LLM
   - Agent
   - 转载
-categories: LLM
+categories: AI与LLM
 urlname: manus_context_engineering_for_ai_agent
 date: 2025-08-02 12:43:53
 updated: 2025-08-02 12:43:56

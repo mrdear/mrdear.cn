@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - JWT
-categories: 实战总结
+categories: 工程实践与运维
 urlname: work-design-jwt
 date: 2018-03-29 11:03:32
 updated: 2018-03-29 11:03:35

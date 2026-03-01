@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Spring
-categories: Spring系列专题
+categories: 后端框架与中间件
 urlname: framework-spring-schedule
 date: 2019-09-22 11:29:20
 updated: 2019-09-22 11:29:24

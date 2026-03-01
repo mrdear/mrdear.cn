@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - MySQL
-categories: 读书笔记
+categories: 阅读与资料
 urlname: readnote-mysql-45-summary
 date: 2019-04-14 22:50:25
 updated: 2019-04-14 22:50:29

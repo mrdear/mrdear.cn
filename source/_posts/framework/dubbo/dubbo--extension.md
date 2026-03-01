@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Dubbo
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-double-extension
 date: 2018-06-01 10:06:14
 updated: 2018-12-17 08:10:56

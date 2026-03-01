@@ -7,7 +7,7 @@ author:
 tags:
   - Mybatis    
   - 设计模式
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-mybatis-mapper-proxy
 date: 2017-09-07 22:04:05
 updated: 2017-09-07 22:04:05

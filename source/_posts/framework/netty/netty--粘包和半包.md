@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Netty
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-netty-half-packet
 date: 2020-12-19 13:47:51
 updated: 2020-12-19 13:47:47

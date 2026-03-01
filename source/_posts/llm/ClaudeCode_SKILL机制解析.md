@@ -7,7 +7,7 @@ author:
 tags:
   - LLM
   - Agent
-categories: LLM
+categories: AI与LLM
 urlname: claude_code_skill_load
 date: 2026-02-27 12:43:53
 updated: 2026-02-27 12:43:56

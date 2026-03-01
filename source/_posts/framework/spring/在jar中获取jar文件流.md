@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Spring
-categories: Spring系列专题
+categories: 后端框架与中间件
 urlname: framework-spring-jar-in-jar
 date: 2019-03-19 08:59:25
 updated: 2019-03-19 08:59:28

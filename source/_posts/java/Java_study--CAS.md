@@ -7,7 +7,7 @@ author:
 tags:
   - Java
   - JUC
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java_cas
 date: 2018-04-06 12:04:52
 updated: 2018-04-06 12:04:55

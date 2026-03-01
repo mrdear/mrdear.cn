@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Guava
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-guava-bloomfilter
 date: 2019-03-16 10:41:49
 updated: 2019-03-16 10:41:54

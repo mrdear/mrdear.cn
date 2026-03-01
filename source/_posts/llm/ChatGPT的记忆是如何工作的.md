@@ -8,7 +8,7 @@ tags:
   - LLM
   - Agent
   - 转载
-categories: LLM
+categories: AI与LLM
 urlname: llm_how_chatgpt_memory_works
 date: 2025-06-07 12:43:53
 updated: 2025-06-07 12:43:56

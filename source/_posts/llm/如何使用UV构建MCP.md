@@ -7,7 +7,7 @@ author:
 tags:
   - LLM
   - MCP
-categories: LLM
+categories: AI与LLM
 urlname: llm_uv_mcp
 date: 2025-05-23 12:43:53
 updated: 2025-05-23 12:43:56

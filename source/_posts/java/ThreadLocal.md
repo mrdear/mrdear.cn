@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Java
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java_threadlocal
 date: 2020-11-28 00:02:46
 updated: 2020-11-28 00:02:42

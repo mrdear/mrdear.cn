@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Spring
-categories: Spring系列专题
+categories: 后端框架与中间件
 urlname: framework-springmvc-framework
 date: 2018-04-15 09:04:14
 updated: 2018-04-15 09:04:16

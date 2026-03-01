@@ -7,7 +7,7 @@ author:
 tags:
   - Java
   - JUC
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java_readwritelock
 date: 2018-06-23 02:08:58
 updated: 2018-06-23 02:08:01

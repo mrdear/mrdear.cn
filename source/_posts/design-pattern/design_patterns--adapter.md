@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-adapter
 date: 2018-03-14 10:03:51
 updated: 2018-03-14 10:03:54

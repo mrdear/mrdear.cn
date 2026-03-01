@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - OSX
-categories: 杂七杂八
+categories: 工程实践与运维
 urlname: osx_app_switcher
 date: 2020-08-01 12:43:53
 updated: 2020-08-01 12:43:56

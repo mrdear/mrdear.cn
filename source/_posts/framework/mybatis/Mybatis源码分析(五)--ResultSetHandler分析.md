@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Mybatis    
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-mybatis-result-set-handler
 date: 2018-01-14 23:15:45
 updated: 2018-01-14 23:15:47

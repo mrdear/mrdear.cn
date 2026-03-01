@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 工作
-categories: 杂七杂八
+categories: 工程实践与运维
 urlname: job_interview_2018
 date: 2018-09-07 09:09:42
 updated: 2018-09-07 09:09:44

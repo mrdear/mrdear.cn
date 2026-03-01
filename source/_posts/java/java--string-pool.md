@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   -  Java
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java-string-pool
 date: 2020-03-15 12:52:08
 updated: 2020-03-15 12:52:11

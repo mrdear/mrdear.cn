@@ -22,6 +22,11 @@
         </div>
     {% endif %}
 
+    <div class="sidebar__block">
+        <h3 class="block__title">{{ __('aside.categorie') }}</h3>
+        {{ list_categories({ order: -1, class: 'block' }) }}
+    </div>
+
     {% if adsense && adsense.enable && adsense.client && adsense_sidebar && adsense_sidebar.enable && adsense_sidebar.slot %}
         <div class="sidebar__block sidebar__block--ads js-sidebar-ads">
             {% if adsense_sidebar.title %}
@@ -39,11 +44,6 @@
             </div>
         </div>
     {% endif %}
-
-    <div class="sidebar__block">
-        <h3 class="block__title">{{ __('aside.categorie') }}</h3>
-        {{ list_categories({ order: -1, class: 'block' }) }}
-    </div>
 
     {% if page.content && page.path != 'about/index.html' %}
         <div class="sidebar__block" id="sidebar-toc">

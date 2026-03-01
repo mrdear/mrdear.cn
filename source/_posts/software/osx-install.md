@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - OSX
-categories: 杂七杂八
+categories: 工程实践与运维
 urlname: osx_install
 date: 2019-02-17 18:21:45
 updated: 2021-12-26 20:31:05

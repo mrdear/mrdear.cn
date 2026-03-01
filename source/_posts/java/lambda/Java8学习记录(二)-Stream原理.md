@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   -  Java
-categories:  夯实Java基础
+categories: Java与JVM
 urlname: java_stream2
 date: 2017-05-20 19:06:51
 updated:  2017-05-20 19:06:51

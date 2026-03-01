@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 实战总结
+categories: 工程实践与运维
 urlname: work-design-command-model-in-action
 date: 2018-07-01 03:07:11
 updated: 2018-07-01 03:07:13

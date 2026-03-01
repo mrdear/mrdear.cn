@@ -5,7 +5,7 @@ author:
   nick: 屈定
 tags:
   - Dubbo    
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-double-replace
 date: 2017-07-23 09:07:41
 updated:  2017-07-23 09:07:41

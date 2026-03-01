@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Dubbo
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-double-loadbalance
 date: 2018-05-29 09:05:32
 updated: 2020-08-17 22:10:24

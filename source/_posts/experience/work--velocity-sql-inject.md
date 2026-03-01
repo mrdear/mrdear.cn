@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 实战
-categories: 实战总结
+categories: 工程实践与运维
 urlname: work-design-velocity-sql-inject
 date: 2020-01-11 10:53:06
 updated: 2020-01-11 10:53:10

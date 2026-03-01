@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 实战
-categories: 实战总结
+categories: 工程实践与运维
 urlname: work-read-rome-source
 date: 2022-10-08 18:31:33
 updated: 2022-10-08 18:31:30

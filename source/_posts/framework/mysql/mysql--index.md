@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - MySQL
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: mysql-index-guide
 date: 2019-12-29 12:36:56
 updated: 2020-03-28 11:03:00

@@ -2,7 +2,7 @@
 title: Hello World
 author: 
   nick: 屈定
-categories: 杂七杂八
+categories: 工程实践与运维
 urlname: hello-world
 date: 2017-03-09 00:00:00
 updated:  2017-03-09 00:00:00

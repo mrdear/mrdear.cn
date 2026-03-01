@@ -7,7 +7,7 @@ author:
 tags:
   -  Java
   - JUC
-categories: 夯实Java基础
+categories: Java与JVM
 urlname: java_deadlock
 date: 2018-06-16 07:06:36
 updated: 2018-06-16 07:06:41

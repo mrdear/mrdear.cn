@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 读书笔记
-categories: 操作系统
+categories: 工程实践与运维
 urlname: storage-ssd
 date: 2021-05-05 14:40:52
 updated: 2021-05-05 14:40:49

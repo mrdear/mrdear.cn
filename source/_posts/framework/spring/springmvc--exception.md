@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Spring
-categories: Spring系列专题
+categories: 后端框架与中间件
 urlname: framework-springmvc-exception
 date: 2018-04-23 09:04:31
 updated: 2018-04-23 09:04:37

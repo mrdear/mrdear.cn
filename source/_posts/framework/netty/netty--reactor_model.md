@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Netty
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-netty-reactor-model
 date: 2018-08-07 05:08:49
 updated: 2020-12-12 13:24:57

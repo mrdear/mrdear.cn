@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Netty
-categories: 框架与中间件
+categories: 后端框架与中间件
 urlname: framework-netty-bytebuf
 date: 2018-07-18 09:07:39
 updated: 2018-07-18 09:07:42 

@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-chain-of-responsibility
 date: 2018-03-20 11:03:47
 updated: 2022-02-01 19:55:39

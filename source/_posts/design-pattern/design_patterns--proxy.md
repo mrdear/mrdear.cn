@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-proxy
 date: 2018-05-13 11:05:41
 updated: 2018-05-13 11:05:43

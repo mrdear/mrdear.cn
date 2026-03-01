@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - Spring
-categories: Spring系列专题
+categories: 后端框架与中间件
 urlname: framework-spring-cache
 date: 2019-09-28 18:09:56
 updated: 2020-06-20 21:15:04

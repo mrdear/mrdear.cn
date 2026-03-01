@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-thread-specific-storge
 date: 2018-05-20 08:05:34
 updated: 2018-07-30 08:07:07

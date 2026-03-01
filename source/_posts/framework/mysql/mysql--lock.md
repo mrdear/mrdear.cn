@@ -6,7 +6,7 @@ author:
   nick: 何登成
 tags:
   - MySQL
-categories: 转载
+categories: 阅读与资料
 urlname: mysql-lock-handle
 date: 2019-01-26 17:57:20
 updated: 2019-01-26 17:57:24

@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-event_design
 date: 2020-06-14 17:31:01
 updated: 2020-06-14 17:31:05

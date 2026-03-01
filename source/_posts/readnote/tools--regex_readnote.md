@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 读书笔记
-categories: 读书笔记
+categories: 阅读与资料
 urlname: readnote-regex
 date: 2018-11-03 09:20:13
 updated: 2018-11-03 09:20:19

@@ -6,7 +6,7 @@ author:
   nick: 屈定
 tags:
   - 设计模式
-categories: 设计模式专题
+categories: 软件设计与架构
 urlname: design-patterns-flyweight
 date: 2020-05-10 09:08:14
 updated: 2020-05-10 09:08:17
