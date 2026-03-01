@@ -42,10 +42,51 @@
 <link rel="manifest" href="/manifest.json" />
 <link rel="icon" type="image/png" href="{{ get_setting('favicon_ico') }}" sizes="32x32">
 
+{% if config.google_statistic %}
+  <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+  <link rel="dns-prefetch" href="//www.googletagmanager.com">
+{% endif %}
+
+{% if adsense && adsense.enable && adsense.client %}
+  <link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin>
+  <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
+{% endif %}
+
 <!-- Google Adsense -->
 {% if adsense && adsense.enable && adsense.client %}
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense.client }}"
-                  crossorigin="anonymous"></script>
+  <script>
+    (function (w, d, client) {
+      if (!client) return;
+
+      function loadAdsense() {
+        if (w.__adsenseScriptLoading) return;
+        w.__adsenseScriptLoading = true;
+
+        var script = d.createElement('script');
+        script.async = true;
+        script.defer = true;
+        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(client);
+        script.crossOrigin = 'anonymous';
+        d.head.appendChild(script);
+      }
+
+      function scheduleLoad() {
+        if ('requestIdleCallback' in w) {
+          w.requestIdleCallback(loadAdsense, { timeout: 2500 });
+          return;
+        }
+        setTimeout(loadAdsense, 1500);
+      }
+
+      if (d.readyState === 'complete' || d.readyState === 'interactive') {
+        scheduleLoad();
+      } else {
+        d.addEventListener('DOMContentLoaded', scheduleLoad);
+      }
+
+      setTimeout(loadAdsense, 6000);
+    })(window, document, '{{ adsense.client }}');
+  </script>
 {% endif %}
 
 <!-- Prefetch -->

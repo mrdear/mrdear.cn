@@ -85,12 +85,28 @@ window.addEventListener('load', function () {
                 attributeFilter: ['data-ad-status']
             });
 
-            try {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-            } catch (e) {
-                clearTimeout(timer);
-                observer.disconnect();
-                hideAdBlock(block);
+            var retryCount = 0;
+            var maxRetryCount = 20;
+
+            function tryPushAds() {
+                try {
+                    (window.adsbygoogle = window.adsbygoogle || []).push({});
+                    return true;
+                } catch (e) {
+                    retryCount += 1;
+                    if (retryCount >= maxRetryCount) {
+                        clearTimeout(timer);
+                        observer.disconnect();
+                        hideAdBlock(block);
+                        return false;
+                    }
+
+                    setTimeout(tryPushAds, 500);
+                    return false;
+                }
+            }
+
+            if (!tryPushAds()) {
                 return;
             }
 

@@ -1,12 +1,45 @@
 <!-- Global site tag (gtag.js) - Google Analytics -->
 
 {% if config.google_statistic %}
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PXMBKW99SD"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+    (function (w, d, measurementId) {
+      if (!measurementId) return;
 
-    gtag('config', 'G-PXMBKW99SD');
+      w.dataLayer = w.dataLayer || [];
+      w.gtag = w.gtag || function () {
+        w.dataLayer.push(arguments);
+      };
+
+      w.gtag('js', new Date());
+      w.gtag('config', measurementId);
+
+      function loadGtag() {
+        if (w.__gtagScriptLoading) return;
+        w.__gtagScriptLoading = true;
+
+        var script = d.createElement('script');
+        script.async = true;
+        script.defer = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(measurementId);
+        script.crossOrigin = 'anonymous';
+        d.head.appendChild(script);
+      }
+
+      function scheduleLoad() {
+        if ('requestIdleCallback' in w) {
+          w.requestIdleCallback(loadGtag, { timeout: 2000 });
+          return;
+        }
+        setTimeout(loadGtag, 1200);
+      }
+
+      if (d.readyState === 'complete' || d.readyState === 'interactive') {
+        scheduleLoad();
+      } else {
+        d.addEventListener('DOMContentLoaded', scheduleLoad);
+      }
+
+      setTimeout(loadGtag, 5000);
+    })(window, document, '{{ config.google_statistic }}');
   </script>
 {% endif %}
