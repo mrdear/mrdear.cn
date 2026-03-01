@@ -45,15 +45,6 @@
         </div>
     {% endif %}
 
-    {% if page.content && page.path != 'about/index.html' %}
-        <div class="sidebar__block" id="sidebar-toc">
-            <h3 class="block__title">{{ __('aside.article_categiry') }}</h3>
-            <div class="post-toc">
-                {{ toc(page.content) }}
-            </div>
-        </div>
-    {% endif %}
-
     <div class="sidebar__block">
         <h3 class="block__title">{{ __('aside.tag') }}</h3>
         {{ tags({ order: -1 }) }}

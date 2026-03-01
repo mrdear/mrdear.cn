@@ -4,7 +4,25 @@
     </div>
 
     <header class="post__info">
-        <h1 class="post__title">{{ page.title }}</h1>
+        <div class="post__title-row">
+            <h1 class="post__title">{{ page.title }}</h1>
+
+            {% if page.content %}
+                <div class="post__toc-anchor js-post-toc">
+                    <button class="post-toc__button js-post-toc-trigger" type="button" aria-expanded="false" aria-controls="post-toc-panel">
+                        <i class="iconfont icon-menu"></i>
+                        <span>目录</span>
+                    </button>
+
+                    <div id="post-toc-panel" class="post-toc__panel js-post-toc-panel" aria-hidden="true">
+                        <h3 class="post-toc__title">目录</h3>
+                        <div class="post-toc">
+                            {{ toc(page.content) }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
 
         <div class="post__mark">
             <div class="mark__block">
