@@ -1,7 +1,7 @@
 ---
 title: Java--为什么需要主动关闭文件？
 subtitle: 关于Java中资源释放的一些思考。
-cover: http://res.mrdear.cn/javastudy.png
+cover: https://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:
@@ -16,7 +16,7 @@ updated: 2018-08-04 08:08:43
 ## 应用是如何操作文件的？
 在Linux系统中有一种一切皆文件的说法，无论是真实的文件，还是网络的Socket连接，或者是挂载的磁盘等等，操作系统所规定只要内核才有权限操作这些文件，应用的文件操作则必须委托操作系统内核来执行，这也是常说的内核态与用户态。那么在内核与应用之间就需要有一个关联关系，来标识用户所要操作的文件，在Linux下就是文件描述符。换句话说文件描述符的存在是为应用程序与基础操作系统之间的交互提供了通用接口。
 引用[网上一张图片](https://blog.csdn.net/cywosp/article/details/38965239)
-![](http://res.mrdear.cn/1533374536.png)
+![](https://res.mrdear.cn/1533374536.png)
 那么由图可知以下特性：
 - 每一个进程有自己的文件描述符表
 - 不同的描述符可能指向同一个文件，文件描述符这个数字只是针对当前进程有意义。
@@ -40,7 +40,7 @@ private final Object closeLock = new Object();
 // 文件关闭标识
 private volatile boolean closed = false;
 ```
-其中`FileDescriptor`文件描述符就是Java与操作系统之间关于文件的连接，那么`FileDescriptor fd;`是在什么时候赋值的呢？[这里取自YuKai's blog相关内容](http://yukai.space/2017/07/07/java%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/)
+其中`FileDescriptor`文件描述符就是Java与操作系统之间关于文件的连接，那么`FileDescriptor fd;`是在什么时候赋值的呢？[这里取自YuKai's blog相关内容](https://yukai.space/2017/07/07/java%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6/)
 
 **清单2：FileInputStream打开一个文件**
 ```java

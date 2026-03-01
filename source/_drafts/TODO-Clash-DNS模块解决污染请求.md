@@ -1,7 +1,7 @@
 ---
 title: Clash - 利用DNS模块解决污染问题
 subtitle: 利用alfred写的常用命令搜索插件
-cover: http://res.mrdear.cn/zaolunzi2.png
+cover: https://res.mrdear.cn/zaolunzi2.png
 author: 
   nick: 屈定
 tags:

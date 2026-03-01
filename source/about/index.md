@@ -1,6 +1,6 @@
 ---
 title: about
-cover: http://res.mrdear.cn/wallhaven-599727.jpg
+cover: https://res.mrdear.cn/wallhaven-599727.jpg
 date: 2017-03-10 23:39:09
 type: "about"
 author: 

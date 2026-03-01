@@ -1,7 +1,7 @@
 ---
 title: 实践 -- Rome源码阅读
 subtitle: 按照通用源码阅读指南进行阅读，实践下方法
-cover: http://res.mrdear.cn/blog_mrdear_work.png
+cover: https://res.mrdear.cn/blog_mrdear_work.png
 author: 
   nick: 屈定
 tags:

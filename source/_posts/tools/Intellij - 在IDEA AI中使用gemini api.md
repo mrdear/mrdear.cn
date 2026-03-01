@@ -1,7 +1,7 @@
 ---
 title: IntelliJ - 在IDEA AI中使用gemini api
 subtitle: 使用Cloudflare worker针对IDEA中的ollama做转发
-cover: http://res.mrdear.cn/blog_mrdear_work.png
+cover: https://res.mrdear.cn/blog_mrdear_work.png
 author: 
   nick: 屈定
 tags:

@@ -1,7 +1,7 @@
 ---
 title: Spring Boot -- 自动配置原理
 subtitle: Spring Boot自动配置的原理分析
-cover: http://res.mrdear.cn/mrdearblog-springboot.png
+cover: https://res.mrdear.cn/mrdearblog-springboot.png
 author: 
   nick: 屈定
 tags:

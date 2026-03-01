@@ -1,7 +1,7 @@
 ---
 title: 实践 -- 响应式编程改造DAG
 subtitle: LLM这里按照传统DAG思路，写了一个编排框架，但是在推理模型问世后，单个推理模型耗时能达到120s以上，按照以往阻塞式编程的方式，线程池很快被占满，导致服务不可用，因此需要改造为响应式链路。
-cover: http://res.mrdear.cn/javastudy.png
+cover: https://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:

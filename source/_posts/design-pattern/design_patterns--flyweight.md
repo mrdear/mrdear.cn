@@ -1,7 +1,7 @@
 ---
 title: 设计模式 -- 享元模式的思考
 subtitle: 关于享元模式的一些案例
-cover: http://res.mrdear.cn/designpattern.png
+cover: https://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:

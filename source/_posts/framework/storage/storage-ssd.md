@@ -1,7 +1,7 @@
 ---
 title: 存储技术 -- SSD原理简介
 subtitle: 《深入浅出SSD-固态存储核心技术》读书笔记
-cover: http://res.mrdear.cn/uPic/SSD_1620197401.png
+cover: https://res.mrdear.cn/uPic/SSD_1620197401.png
 author: 
   nick: 屈定
 tags:

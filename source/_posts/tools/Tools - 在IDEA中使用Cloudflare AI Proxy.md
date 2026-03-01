@@ -1,7 +1,7 @@
 ---
 title: Tools - ClaudeCode和Jetbrains使用Cloudflare AI Proxy
 subtitle: 通过Cloudflare Worker代理Gemini等多模型到AI Assistant
-cover: http://res.mrdear.cn/blog_mrdear_work.png
+cover: https://res.mrdear.cn/blog_mrdear_work.png
 author:
   nick: 屈定
 tags:

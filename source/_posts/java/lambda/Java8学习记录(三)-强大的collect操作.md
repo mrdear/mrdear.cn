@@ -1,7 +1,7 @@
 ---
 title: Java8 Lambda（三）-强大的collect操作
 subtitle: Java8学习记录(三)-强大的collect操作
-cover: http://res.mrdear.cn/javastudy.png
+cover: https://res.mrdear.cn/javastudy.png
 author: 
   nick: 屈定
 tags:

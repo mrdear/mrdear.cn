@@ -1,7 +1,7 @@
 ---
 title: 设计模式--责任链模式的思考
 subtitle: 关于责任链模式的一些思考，不仅仅是会写出设计模式的代码，更重要的是理解其背后的设计之道.
-cover: http://res.mrdear.cn/designpattern.png
+cover: https://res.mrdear.cn/designpattern.png
 author: 
   nick: 屈定
 tags:
@@ -67,7 +67,7 @@ private List<SecurityFilterChain> filterChains;
     }
 ```
 那么这个结构因为这个设计模式就很清晰了(这也是熟悉了设计模式之后的优势，看源码可以有一种全局把控感)
-![](http://res.mrdear.cn/1521468002.png)
+![](https://res.mrdear.cn/1521468002.png)
 
 还有一个问题，链是如何自由执行的?
 这一点与Java Filter一模一样，Spring Security实现了一个`org.springframework.security.web.FilterChainProxy.VirtualFilterChain`类，该类同样实现了`FilterChain`接口，里面的调用逻辑也与tomcat方式一致.具体就不讨论了.
@@ -146,7 +146,7 @@ public class InterceptorChain {
   }
 ```
 那么这种构造出的链大概如下面这种嵌套结构，这种链可以说是彻底的功能链，其一旦组装好就无法变化了.当然这种也适合Mybatis这种从配置中就定死了执行链.
-![](http://res.mrdear.cn/1521471003.png)
+![](https://res.mrdear.cn/1521471003.png)
 
 ### 业务开发中可以常用到的链
 在业务开发中常常能遇到这类需求，比如退款操作，退款后可以恢复商品库存，恢复活动库存，退掉用户的优惠券，退掉用户的活动资格等等，该一系列的操作就是一条线性链，那么就可以利用责任链的思想来完成在这样的需求.

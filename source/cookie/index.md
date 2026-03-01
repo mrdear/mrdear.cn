@@ -1,6 +1,6 @@
 ---
 title: Cookie Policy
-cover: http://res.mrdear.cn/wallhaven-599727.jpg
+cover: https://res.mrdear.cn/wallhaven-599727.jpg
 date: 2017-03-10 00:00:00
 author: 
   nick: 屈定

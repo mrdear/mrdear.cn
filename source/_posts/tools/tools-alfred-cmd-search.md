@@ -1,7 +1,7 @@
 ---
 title: 造轮子--Command Search Alfred
 subtitle: 利用alfred写的常用命令搜索插件
-cover: http://res.mrdear.cn/zaolunzi2.png
+cover: https://res.mrdear.cn/zaolunzi2.png
 author: 
   nick: 屈定
 tags:
@@ -99,7 +99,7 @@ updated: 2021-02-22 22:36:02
 ## 更多变量支持
 变量的支持依赖于alfred，可以在自己的脚本中配置多个变量，在后面使用`Utils`工具替换。
 
-![](http://res.mrdear.cn/1539613678.png)
+![](https://res.mrdear.cn/1539613678.png)
 
 ## 演示
 
