@@ -272,6 +272,10 @@ $title-falg-w: 4px      !default;
     display: none !important;
 }
 
+.sidebar-ads-hidden {
+    display: none !important;
+}
+
 .ads-container {
   width: 100%;
   margin-top: 15px;
@@ -287,4 +291,3 @@ $title-falg-w: 4px      !default;
 .sidebar__block:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
   display: none !important;
 }
-

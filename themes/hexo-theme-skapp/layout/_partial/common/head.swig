@@ -9,7 +9,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="mobile-web-app-capable" content="yes" />
-<meta name="google-adsense-account" content="ca-pub-9024176106571603">
+{% set adsense = get_setting('adsense') %}
+{% if adsense && adsense.enable && adsense.client %}
+  <meta name="google-adsense-account" content="{{ adsense.client }}">
+{% endif %}
 <meta name="robots" content="all" />
 
 {% if theme.google_site_verification %}
@@ -40,8 +43,10 @@
 <link rel="icon" type="image/png" href="{{ get_setting('favicon_ico') }}" sizes="32x32">
 
 <!-- Google Adsense -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9024176106571603"
-                 crossorigin="anonymous"></script>
+{% if adsense && adsense.enable && adsense.client %}
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense.client }}"
+                  crossorigin="anonymous"></script>
+{% endif %}
 
 <!-- Prefetch -->
 <!-- {% include './prefetch.swig' %} -->

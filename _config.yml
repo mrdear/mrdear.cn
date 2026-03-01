@@ -144,6 +144,21 @@ live2d:
 
 google_statistic: G-PXMBKW99SD
 
+# Google AdSense（广告单元手动控制）
+# 1) enable=true 后会在侧边栏渲染广告位
+# 2) client 填写你的发布商 ID（ca-pub-xxxx）
+# 3) slot 填写侧边栏广告单元的广告位 ID
+adsense:
+  enable: true
+  client: ca-pub-9024176106571603
+  sidebar:
+    enable: true
+    title: AD
+    slot: "4712420831"
+    format: auto
+    full_width_responsive: false
+    style: display:block
+
 # 卜算子统计关闭
 busuanzi: false
 
