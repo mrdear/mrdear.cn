@@ -61,7 +61,7 @@ hexo.extend.helper.register('blog_archive_menu', function(page) {
     });
 
     menu = menu
-        .sort((first, next) => first < next)
+        .sort((first, next) => Number(next) - Number(first))
         .map((item, idx) => {
             let baseLink = idx === 0 ? `${this.config.archive_dir}/` : Util.format(`${this.config.archive_dir}/%d/`, item);
             return {
@@ -136,11 +136,15 @@ hexo.extend.helper.register('archive_index_paginator', function(size = 2) {
     }
 
     function fixLink(link = '') {
+        if (!link) return link;
+
         let linkArr = link.split('/');
         let archiveDirIdx = linkArr.findIndex(item => archiveDir === item);
+        if (archiveDirIdx === -1) return link;
         
         if (linkArr[archiveDirIdx + 1] == paginationDir) {
-            linkArr.splice(archiveDirIdx, 0, label);
+            // /archives/page/2/ -> /archives/{year}/page/2/
+            linkArr.splice(archiveDirIdx + 1, 0, label);
         }
 
         if (linkArr[linkArr.length - 1] == paginationDir) {
