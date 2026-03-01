@@ -139,10 +139,17 @@
                 margin-right: .8em;
                 text-align: right;
                 color: #8f908a;
+                white-space: nowrap;
             }
         }
 
         .code {
+            pre {
+                white-space: pre-wrap;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+            }
+
             .tag {
                 .name {
                     color: #F92672;
@@ -182,6 +189,12 @@
                 }
             }
         }
+    }
+
+    pre > code {
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     code {

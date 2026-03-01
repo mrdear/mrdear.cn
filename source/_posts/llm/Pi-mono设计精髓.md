@@ -14,7 +14,7 @@ updated: 2026-02-24 12:43:56
 ---
 
 Pi-mono的AI相关模块代码量非常少，但其支撑了复杂的OpenClaw，因此值得学习下其中的设计精髓。
-该篇主要涉及`pi-ai`,`pi-ageng-core`两个模块。
+该篇主要涉及`pi-ai`,`pi-agent-core`两个模块。
 
 # pi-ai
 
