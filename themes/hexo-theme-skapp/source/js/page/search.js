@@ -63,9 +63,8 @@
         getData: function() {
             var self = this;
 
-            axios
-                .get('/assets/lunr/all.json')
-                .then(function(res) { return res.data; })
+            fetch('/assets/lunr/all.json')
+                .then(function(res) { return res.json(); })
                 .then(function(data) { self.initSearch(data); });
         },
 

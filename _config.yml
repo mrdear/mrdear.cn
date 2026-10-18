@@ -103,10 +103,6 @@ theme: hexo-theme-skapp
 # Sass
 sass:
   outputStyle: compressed # "expanded" or "compressed"
-node_sass:
-  outputStyle: nested
-  precision: 5
-  sourceComments: false
 
 # Autoprefixer
 autoprefixer:
@@ -118,7 +114,6 @@ autoprefixer:
 # Lunr
 lunr:
   field: all
-  fulltext: false
   path: assets/lunr/
 
 live2d:
@@ -155,33 +150,13 @@ adsense:
     enable: true
     title: AD
     slot: "4712420831"
-    format: auto
+    format: rectangle
     full_width_responsive: false
     style: display:block
 
 # 卜算子统计关闭
 busuanzi: false
 
-# pwa
-offline:
-  maximumFileSizeToCacheInBytes: 5242880
-  staticFileGlobs:
-    - public/**/*.{js,html,css,svg,eot,ttf,woff,woff2}
-  stripPrefix: public
-  verbose: true
-  runtimeCaching:
-    - urlPattern: /^https:\/\/res\.mrdear\.cn
-      handler: networkOnly
-      options:
-        origin: res.mrdear.cn
-    - urlPattern: /^https:\/\/mrdear.cn\/$/
-      handler: networkOnly
-      options:
-        origin: mrdear.cn
-    - urlPattern: /^https:\/\/**
-      handler: cacheFirst
-      options:
-        origin: mrdear.cn
 gitTalk:
   clientId: 33c4810e1cf354cd8d8b
   clientSecret: de14850e06ba2ad7aa41f7de960b4a48f09edafd
@@ -202,9 +177,6 @@ sitemap:
   path: sitemap.xml
   tags: false
   categories: false
-
-baidusitemap:
-  path: baidusitemap.xml
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
