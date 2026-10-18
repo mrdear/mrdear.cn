@@ -1,4 +1,4 @@
-window.addEventListener('load', function() {
+document.addEventListener('DOMContentLoaded', function() {
     var postContent = document.querySelector('article.page__post');
 
     if (!postContent) return;

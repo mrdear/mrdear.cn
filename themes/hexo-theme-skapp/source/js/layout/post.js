@@ -1,4 +1,4 @@
-window.addEventListener('load', function() {
+document.addEventListener('DOMContentLoaded', function() {
 
     var posts = document.querySelectorAll('article.page__mini-article');
 

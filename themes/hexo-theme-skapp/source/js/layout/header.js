@@ -1,4 +1,4 @@
-window.addEventListener('load', function() {
+document.addEventListener('DOMContentLoaded', function() {
     (function() {
         var headerEle = document.getElementById('page-header');
 
